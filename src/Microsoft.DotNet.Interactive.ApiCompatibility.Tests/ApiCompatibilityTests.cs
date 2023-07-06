@@ -88,6 +88,13 @@ public class ApiCompatibilityTests
         this.Assent(contract, _configuration);
     }
 
+    [Fact(Skip = "need to use signature files")]
+    public void spiral_api_is_not_changed()
+    {
+        var contract = ApiContract.GenerateContract<SpiralKernel>();
+        this.Assent(contract, _configuration);
+    }
+
     [FactSkipLinux("Testing api contract changes, not needed on Linux too")]
     public void powershell_api_is_not_changed()
     {

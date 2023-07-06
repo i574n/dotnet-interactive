@@ -14,16 +14,17 @@ The following languages are supported by Polyglot Notebooks:
 
 | Language                                    | Variable sharing supported                             |
 |---------------------------------------------|-------------------------------------------------------|
-| C#                                          |        ✅                                             |
-| F#                                          |        ✅                                             |
-| PowerShell                                  |        ✅                                             |
-| JavaScript                                  |        ✅                                             |
-| SQL                                         |        ✅                                             |
-| KQL ([Kusto Query Language](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/))    |        ✅       |
-| HTML                                        |        ⛔                                             |
-| [Mermaid](https://mermaid.js.org/intro/)    |        ⛔                                             |
-| [Python](https://github.com/dotnet/interactive/blob/main/docs/jupyter-in-polyglot-notebooks.md) (Preview)     |        ✅       |
-| [R](https://github.com/dotnet/interactive/blob/main/docs/jupyter-in-polyglot-notebooks.md) (Preview)          |        ✅       |
+| C#                                          |        ?                                             |
+| F#                                          |        ?                                             |
+| Spiral                                      |        ?                                             |
+| PowerShell                                  |        ?                                             |
+| JavaScript                                  |        ?                                             |
+| SQL                                         |        ?                                             |
+| KQL ([Kusto Query Language](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/))    |        ?       |
+| HTML                                        |        ?                                             |
+| [Mermaid](https://mermaid.js.org/intro/)    |        ?                                             |
+| [Python](https://github.com/dotnet/interactive/blob/main/docs/jupyter-in-polyglot-notebooks.md) (Preview)     |        ?       |
+| [R](https://github.com/dotnet/interactive/blob/main/docs/jupyter-in-polyglot-notebooks.md) (Preview)          |        ?       |
   
 ## Features
 
@@ -94,6 +95,6 @@ Read our [privacy statement](https://go.microsoft.com/fwlink/?LinkId=521839) to 
 
 ## License
 
-Copyright © .NET Foundation, and contributors.
+Copyright � .NET Foundation, and contributors.
 
 The source code to this extension is available on [https://github.com/dotnet/interactive](https://github.com/dotnet/interactive) and licensed under the [MIT license](https://github.com/dotnet/interactive/blob/main/License.txt).

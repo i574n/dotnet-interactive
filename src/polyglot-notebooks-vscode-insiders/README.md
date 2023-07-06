@@ -23,6 +23,7 @@ The following languages are supported by Polyglot Notebooks:
 | Python (Preview)                            |        ✅                 |          
 | R (Preview)                                 |        ✅                 |          
   
+| Spiral                                          |        ⛔                 |
 ## Features
 
 - Run and execute code for all featured languages

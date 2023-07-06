@@ -265,6 +265,7 @@ export function registerFileCommands(context: vscode.ExtensionContext, parserSer
         const languagesAndKernelNames: { [key: string]: string } = {
             'C#': 'csharp',
             'F#': 'fsharp',
+            'Spiral': 'spiral',
             'HTML': 'html',
             'JavaScript': 'javascript',
             'KQL': 'kql',

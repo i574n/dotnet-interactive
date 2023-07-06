@@ -29,6 +29,7 @@ using Microsoft.DotNet.Interactive.Jupyter;
 using Microsoft.DotNet.Interactive.Jupyter.Formatting;
 using Microsoft.DotNet.Interactive.Mermaid;
 using Microsoft.DotNet.Interactive.PowerShell;
+using Microsoft.DotNet.Interactive.Spiral;
 using Microsoft.DotNet.Interactive.Telemetry;
 using Microsoft.DotNet.Interactive.VSCode;
 using Microsoft.Extensions.DependencyInjection;
@@ -486,6 +487,9 @@ public static class CommandLineParser
                 .UseMathAndLaTeX()
                 .UseValueSharing(),
             new[] { "f#", "F#" });
+
+        compositeKernel.Add(
+            new SpiralKernel());
 
         compositeKernel.Add(
             new PowerShellKernel()
