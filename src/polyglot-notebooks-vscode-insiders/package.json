@@ -130,6 +130,7 @@
           "enum": [
             "csharp",
             "fsharp",
+            "spiral",
             "html",
             "javascript",
             "kql",
@@ -141,6 +142,7 @@
           "enumDescriptions": [
             "C#",
             "F#",
+            "Spiral",
             "HTML",
             "JavaScript",
             "KQL",

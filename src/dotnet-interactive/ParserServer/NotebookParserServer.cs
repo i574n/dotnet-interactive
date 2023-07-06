@@ -31,6 +31,7 @@ public class NotebookParserServer : IDisposable
     {
         new("csharp", languageName: "C#", aliases: new[] { "c#", "cs" }),
         new("fsharp", languageName: "F#", aliases: new[] { "f#", "fs" }),
+        new("spiral", languageName: "Spiral", aliases: new[] { "spi", "spir" }),
         new("pwsh", languageName: "PowerShell", aliases: new[] { "powershell" }),
         new("javascript", languageName: "JavaScript", aliases: new[] { "js" }),
         new("html", languageName: "HTML"),

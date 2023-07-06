@@ -386,6 +386,7 @@ var f = new { Field= ""string value""};", Language.CSharp.LanguageName()));
                 "kql",
                 "csharp",
                 "fsharp",
+                "spiral",
                 "pwsh",
                 "html",
                 "javascript",
