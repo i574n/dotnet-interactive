@@ -4,9 +4,10 @@
 using Assent;
 using FluentAssertions;
 using FluentAssertions.Primitives;
-using Microsoft.DotNet.Interactive.Formatting.Tests.Utility;
+using System.Linq;
+using System;
 
-namespace Microsoft.DotNet.Interactive.Formatting.Tests;
+namespace Microsoft.DotNet.Interactive.Formatting.Tests.Utility;
 
 public static class AssertionExtensions
 {
@@ -18,9 +19,11 @@ public static class AssertionExtensions
 
         var actual = subject.IndentHtml();
 
+        expected = expected.IndentHtml();
+
         var diff = new DefaultStringComparer(true).Compare(
             actual,
-            expected.IndentHtml()).Error;
+            expected).Error;
 
         (diff ?? "")
             .Replace("Received:", "\nActual:\n")
@@ -31,6 +34,38 @@ public static class AssertionExtensions
         return new AndWhichConstraint<StringAssertions, string>(
             subject.Should(),
             subject);
+    }
+
+    public static AndWhichConstraint<StringAssertions, string> ContainEquivalentHtmlFragments(
+        this StringAssertions assertions,
+        params string[] expectedItems)
+    {
+        var subject = assertions.Subject;
+
+        var actual = subject.IndentHtml();
+
+        for (var i = 0; i < expectedItems.Length; i++)
+        {
+            var expected = expectedItems[i];
+
+            var expectedIndented = expected.IndentHtml();
+
+            var actualTrimmed = actual.TrimStartOfEachLine();
+
+            var expectedTrimmed = expectedIndented.TrimStartOfEachLine();
+
+            actualTrimmed.Should().Contain(expectedTrimmed);
+        }
+
+        return new AndWhichConstraint<StringAssertions, string>(
+            subject.Should(),
+            subject);
+    }
+
+    private static string TrimStartOfEachLine(this string input)
+    {
+        var lines = input.Split(new[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+        return string.Join("\n", lines.Select(l => l.TrimStart()));
     }
 
     public static AndWhichConstraint<StringAssertions, string> BeExceptingWhitespace(

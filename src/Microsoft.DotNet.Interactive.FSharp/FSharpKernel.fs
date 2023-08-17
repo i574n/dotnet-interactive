@@ -394,12 +394,12 @@ type FSharpKernel () as this =
                 context.Fail(requestValue, message=(sprintf "Value '%s' not found in kernel %s" requestValue.Name this.Name))
         }
 
-    let createPackageRestoreContext registerForDisposal =
-        let packageRestoreContext = new PackageRestoreContext()
+    let createPackageRestoreContext (useResultsCache:bool) (registerForDisposal) =
+        let packageRestoreContext = new PackageRestoreContext(useResultsCache)
         do registerForDisposal(fun () -> packageRestoreContext.Dispose())
         packageRestoreContext
 
-    let _packageRestoreContext = lazy createPackageRestoreContext this.RegisterForDisposal
+    let mutable _packageRestoreContext = lazy createPackageRestoreContext true this.RegisterForDisposal
 
     member this.GetValues() =
         script.Value.Fsi.GetBoundValues()
@@ -421,13 +421,13 @@ type FSharpKernel () as this =
         | _ ->
             false
 
-    member _.RestoreSources = _packageRestoreContext.Value.RestoreSources;
+    member _.RestoreSources with get () = _packageRestoreContext.Value.RestoreSources
 
-    member _.RequestedPackageReferences = _packageRestoreContext.Value.RequestedPackageReferences;
+    member _.RequestedPackageReferences with get () = _packageRestoreContext.Value.RequestedPackageReferences;
 
-    member _.ResolvedPackageReferences = _packageRestoreContext.Value.ResolvedPackageReferences;
+    member _.ResolvedPackageReferences with get () = _packageRestoreContext.Value.ResolvedPackageReferences;
 
-    member _.PackageRestoreContext = _packageRestoreContext.Value
+    member _.PackageRestoreContext with get () = _packageRestoreContext.Value
 
     interface IKernelCommandHandler<RequestCompletions> with
         member this.HandleAsync(command: RequestCompletions, context: KernelInvocationContext) = handleRequestCompletions command context
@@ -463,6 +463,9 @@ type FSharpKernel () as this =
 
         member _.GetOrAddPackageReference(packageName: string, packageVersion: string) =
             this.PackageRestoreContext.GetOrAddPackageReference (packageName, packageVersion)
+
+        member _.Configure(useResultsCache:bool) =
+             _packageRestoreContext <- lazy createPackageRestoreContext useResultsCache this.RegisterForDisposal
 
         member _.RestoreAsync() = 
             this.PackageRestoreContext.RestoreAsync()
