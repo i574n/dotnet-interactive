@@ -50,11 +50,30 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     member _.Fsi = fsi
 
     member _.Eval(code: string, ?cancellationToken: CancellationToken) =
+
+        let timeout = 5000
+        let codeAsync =
+            code
+            |> Polyglot.Supervisor.compileCode timeout
+            |> Polyglot.Async.runWithTimeoutAsync timeout
         let cancellationToken = defaultArg cancellationToken CancellationToken.None
-        let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
-        match ch with
-        | Choice1Of2 v -> Ok(v), errors
-        | Choice2Of2 ex -> Error(ex), errors
+        let code =
+            Async.RunSynchronously (codeAsync, -1, cancellationToken)
+            |> Option.flatten
+        match code with
+        | Some code ->
+            let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
+            match ch with
+            | Choice1Of2 v -> Ok(v), errors
+            | Choice2Of2 ex -> Error(ex), errors
+        | None ->
+            Error (Exception "Spiral error or timeout"),
+            [|
+                FSharpDiagnostic.Create (
+                    FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero
+                )
+            |]
+
 
     /// Get the available completion items from the code at the specified location.
     ///
