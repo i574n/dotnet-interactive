@@ -12,6 +12,9 @@ open FSharp.Compiler.Interactive.Shell
 open FSharp.Compiler.Diagnostics
 open FSharp.Compiler.EditorServices
 
+open Polyglot
+open Polyglot.Common
+
 [<RequireQualifiedAccess>]
 type LangVersion =
     | V47
@@ -50,24 +53,48 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     member _.Fsi = fsi
 
     member _.Eval(code: string, ?cancellationToken: CancellationToken) =
+        let code = code |> String.replace "\r\n" "\n"
+
+        let lines = code |> String.split [| '\n' |]
+
+        let lastBlock =
+            lines
+            |> Array.tryFindBack (fun line ->
+                line |> String.length > 0
+                && line.[0] <> ' '
+            )
+
+        let hasMain =
+            lastBlock
+            |> Option.exists (fun line ->
+                line |> String.startsWith "inl main "
+                || line |> String.startsWith "let main "
+            )
+
+        let code =
+            if hasMain
+            then code
+            else code + "\ninl main () = ()\n"
 
         let timeout = 5000
         let codeAsync =
             code
-            |> Polyglot.Supervisor.compileCode timeout
-            |> Polyglot.Async.runWithTimeoutAsync timeout
+            |> Supervisor.compileCode timeout cancellationToken
+            |> Async.runWithTimeoutAsync timeout
         let cancellationToken = defaultArg cancellationToken CancellationToken.None
         let code =
             Async.RunSynchronously (codeAsync, -1, cancellationToken)
             |> Option.flatten
         match code with
         | Some code ->
+            trace Info (fun () -> $"SpiralScriptHelpers.Eval / code:\n{code}") getLocals
+
             let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
             match ch with
             | Choice1Of2 v -> Ok(v), errors
-            | Choice2Of2 ex -> Error(ex), errors
+            | Choice2Of2 ex -> Result.Error(ex), errors
         | None ->
-            Error (Exception "Spiral error or timeout"),
+            Result.Error (Exception "Spiral error or timeout"),
             [|
                 FSharpDiagnostic.Create (
                     FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero

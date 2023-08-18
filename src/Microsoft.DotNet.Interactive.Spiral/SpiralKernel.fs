@@ -196,7 +196,12 @@ type SpiralKernel () as this =
         task {
             let codeSubmissionReceived = CodeSubmissionReceived(codeSubmission)
             context.Publish(codeSubmissionReceived)
-            let tokenSource = cancellationTokenSource
+            let tokenSource =
+                CancellationTokenSource.CreateLinkedTokenSource
+                    [|
+                        cancellationTokenSource.Token
+                        context.CancellationToken
+                    |]
             let result, fsiDiagnostics =
                 try
                     script.Value.Eval(codeSubmission.Code, tokenSource.Token)
