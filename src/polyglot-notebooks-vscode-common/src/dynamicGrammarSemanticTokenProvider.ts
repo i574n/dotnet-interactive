@@ -78,6 +78,7 @@ export class DynamicGrammarSemanticTokenProvider {
     }
 
     private buildSemanticTokensLegendAndCustomScopes(packageJSON: any) {
+        // console.log(`DynamicGrammarSemanticTokenProvider.buildSemanticTokensLegendAndCustomScopes / packageJSON: ${JSON.stringify(packageJSON, null, 2)}`);
         if (Array.isArray(packageJSON?.contributes?.semanticTokenScopes)) {
             for (const semanticTokenScope of packageJSON.contributes.semanticTokenScopes) {
                 if (semanticTokenScope?.scopes) {
@@ -135,6 +136,7 @@ export class DynamicGrammarSemanticTokenProvider {
 
     async getTokens(notebookUri: vscodeLike.Uri, initialKernelName: string, code: string): Promise<SemanticToken[]> {
         let registry = this._documentGrammarRegistries.get(notebookUri);
+        // console.log(`DynamicGrammarSemanticTokenProvider.getTokens / registry: ${JSON.stringify(registry, null, 2)} / notebookUri: ${notebookUri} / initialKernelName: ${initialKernelName} / code: ${code}`);
         if (!registry) {
             // no grammar registry for this notebook, nothing to provide
             return [];
@@ -262,6 +264,9 @@ export class DynamicGrammarSemanticTokenProvider {
             if (Array.isArray(extension.packageJSON?.contributes?.grammars)) {
                 for (let grammarIndex = 0; grammarIndex < extension.packageJSON.contributes.grammars.length; grammarIndex++) {
                     const grammar = extension.packageJSON.contributes.grammars[grammarIndex];
+
+                    // console.log(`DynamicGrammarSemanticTokenProvider.buildInstalledLanguageInfosMap / grammar / grammar: ${JSON.stringify(grammar, null, 2)}`);
+
                     if (typeof grammar?.scopeName === 'string' &&
                         typeof grammar?.path === 'string') {
                         // ensure language is in the map
@@ -283,6 +288,8 @@ export class DynamicGrammarSemanticTokenProvider {
                 for (let languageIndex = 0; languageIndex < extension.packageJSON.contributes.languages.length; languageIndex++) {
                     const language = extension.packageJSON.contributes.languages[languageIndex];
                     const languageId = normalizeLanguageName(<string>language.id);
+
+                    // console.log(`DynamicGrammarSemanticTokenProvider.buildInstalledLanguageInfosMap / language / language: ${JSON.stringify(language, null, 2)}`);
 
                     // set language configuration
                     let languageConfigurationObject: any | undefined = undefined;
@@ -326,6 +333,14 @@ export class DynamicGrammarSemanticTokenProvider {
                 }
             }
         }
+
+        // console.log(`DynamicGrammarSemanticTokenProvider.buildInstalledLanguageInfosMap / _languageNameInfoMap: ${JSON.stringify(this._languageNameInfoMap, null, 2)} / _languageNameConfigurationMap: ${JSON.stringify(this._languageNameConfigurationMap, null, 2)} / extensionData: ${JSON.stringify(extensionData.map(extension => {
+        //     return {
+        //         id: extension.id,
+        //         extensionPath: extension.extensionPath,
+        //         name: extension.packageJSON.name
+        //     };
+        // }), null, 2)}`);
     }
 
     private createLanguageInfoFromGrammar(languageName: string, scopeName: string, grammarPath: string): LanguageInfo {

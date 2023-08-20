@@ -14,6 +14,7 @@ open FSharp.Compiler.EditorServices
 
 open Polyglot
 open Polyglot.Common
+open Polyglot.FileSystem
 
 [<RequireQualifiedAccess>]
 type LangVersion =
@@ -21,7 +22,7 @@ type LangVersion =
     | V50
     | Preview
 
-type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVersion) =
+type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVersion) as self =
 
     let additionalArgs = defaultArg additionalArgs [||]
     let quiet = defaultArg quiet true
@@ -48,14 +49,143 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     let fsi = FsiEvaluationSession.Create (config, argv, stdin, stdout, stderr)
 
+    let log (text : string) =
+        try
+            let tmpPath = Path.GetTempPath ()
+            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+            Directory.CreateDirectory logDir |> ignore
+            let logFile = Path.Combine (logDir, "log.txt")
+            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+            let fileName = "SpiralScriptHelpers"
+            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+        with ex ->
+            trace Debug (fun () -> $"SpiralScriptHelpers.log / ex: {ex |> printException}") getLocals
+
+    do
+        log $"SpiralScript () / argv: %A{argv}"
+
+    let tmpSpiralPath = Path.GetTempPath () </> "!dotnet-interactive-spiral"
+    let tmpCodePath = tmpSpiralPath </> "code"
+    let tmpTokensPath = tmpSpiralPath </> "tokens"
+
+    do
+        [tmpSpiralPath; tmpCodePath; tmpTokensPath]
+        |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
+
+    let stream, disposable = watchDirectory true tmpCodePath
+
+    do
+        let streamAsyncChild =
+            stream
+            |> FSharp.Control.AsyncSeq.iterAsyncParallel (fun (ticks, event) -> async {
+                try
+                    let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
+                    match event with
+                    | FileSystemChange.Created (path, Some code) ->
+                        let! tokens = code |> Supervisor.getCodeTokenRange 5000 None
+                        match tokens with
+                        | Some tokens ->
+                            do! tokens |> FSharp.Json.Json.serialize |> writeAllTextAsync (tmpTokensPath </> path)
+                        | None ->
+                            log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
+                    | _ -> ()
+                with ex ->
+                    log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / ex: {ex |> printException} / {getLocals ()}"
+            })
+            |> Async.StartChild
+
+        let existingFilesChild =
+            tmpCodePath
+            |> System.IO.Directory.GetFiles
+            |> Array.map (fun codePath -> async {
+                try
+                    let tokensPath = tmpTokensPath </> (codePath |> System.IO.Path.GetFileName)
+                    if File.Exists tokensPath |> not then
+                        let! code = codePath |> readAllTextAsync
+                        let! tokens = code |> Supervisor.getCodeTokenRange 5000 None
+                        match tokens with
+                        | Some tokens ->
+                            do! tokens |> FSharp.Json.Json.serialize |> writeAllTextAsync tokensPath
+                        | None ->
+                            log $"SpiralScriptHelpers.watchDirectory / GetFiles / tokens: None / {getLocals ()}"
+                with ex ->
+                    log $"SpiralScriptHelpers.watchDirectory / GetFiles / ex: {ex |> printException} / {getLocals ()}"
+            })
+            |> Async.Sequential
+            |> Async.Ignore
+            |> Async.StartChild
+
+        async {
+            do! Async.Sleep 3000
+            let! _ = streamAsyncChild
+            let! _ = existingFilesChild
+            ()
+        }
+        |> Async.StartImmediate
+
+    let mutable allCode = ""
+
+
     member _.ValueBound = fsi.ValueBound
 
     member _.Fsi = fsi
 
-    member _.Eval(code: string, ?cancellationToken: CancellationToken) =
-        let code = code |> String.replace "\r\n" "\n"
+    member _.mapErrors (severity, errors) =
+        let allCodeLineLength =
+            allCode |> String.split [| '\n' |] |> Array.length
 
-        let lines = code |> String.split [| '\n' |]
+        errors
+        |> List.map (fun (_, error) ->
+            match error with
+            | Supervisor.FatalError message ->
+                FSharpDiagnostic.Create (
+                    severity, message, 0, Text.range.Zero
+                )
+                |> List.singleton
+            | Supervisor.TracedError data ->
+                data.trace
+                |> List.truncate 5
+                |> List.append [ data.message ]
+                |> List.map (fun message ->
+                    FSharpDiagnostic.Create (
+                        severity, message, 0, Text.range.Zero
+                    )
+                )
+            | Supervisor.PackageErrors data
+            | Supervisor.TokenizerErrors data
+            | Supervisor.ParserErrors data
+            | Supervisor.TypeErrors data ->
+                data.errors
+                |> List.filter (fun ((rangeStart, _), _) ->
+                    trace Debug (fun () -> $"SpiralScriptHelpers.mapErrors / rangeStart.line: {rangeStart.line} / allCodeLineLength: {allCodeLineLength} / filtered: {rangeStart.line > allCodeLineLength}") getLocals
+                    rangeStart.line > allCodeLineLength
+                )
+                |> List.map (fun ((rangeStart, rangeEnd), message) ->
+                    FSharpDiagnostic.Create (
+                        severity,
+                        message,
+                        0,
+                        Text.Range.mkRange
+                            (data.uri |> System.IO.Path.GetFileName)
+                            (Text.Position.mkPos (rangeStart.line - allCodeLineLength) rangeStart.character)
+                            (Text.Position.mkPos (rangeEnd.line - allCodeLineLength) rangeEnd.character)
+                    )
+                )
+        )
+        |> List.collect id
+        |> List.toArray
+
+    member _.Eval(code: string, ?cancellationToken: CancellationToken) =
+        log $"Eval / code: %A{code}"
+
+        if code = "//// trace" then
+            if traceLevel = Info
+            then traceLevel <- Verbose
+            else traceLevel <- Info
+
+        let cellCode = code |> String.replace "\r\n" "\n"
+
+        let lines = cellCode |> String.split [| '\n' |]
 
         let lastBlock =
             lines
@@ -71,29 +201,43 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 || line |> String.startsWith "let main "
             )
 
-        let code =
+        let cellCode =
             if hasMain
-            then code
-            else code + "\ninl main () = ()\n"
+            then cellCode
+            else cellCode + "\n\ninl main () = ()\n"
+
+
+        let newAllCode = $"{allCode}\n\n{cellCode}"
 
         let timeout = 5000
         let codeAsync =
-            code
-            |> Supervisor.compileCode timeout cancellationToken
+            newAllCode
+            |> Supervisor.buildCode timeout cancellationToken
             |> Async.runWithTimeoutAsync timeout
         let cancellationToken = defaultArg cancellationToken CancellationToken.None
         let code =
             Async.RunSynchronously (codeAsync, -1, cancellationToken)
-            |> Option.flatten
         match code with
-        | Some code ->
+        | Some (Some code, spiralErrors) ->
+            let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors)
             trace Info (fun () -> $"SpiralScriptHelpers.Eval / code:\n{code}") getLocals
 
             let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
+            let errors =
+                errors
+                |> Array.map (fun error ->
+                    FSharpDiagnostic.Create (error.Severity, error.Message, error.ErrorNumber, Text.range.Zero)
+                )
+                |> Array.append spiralErrors
             match ch with
-            | Choice1Of2 v -> Ok(v), errors
+            | Choice1Of2 v ->
+                allCode <- newAllCode
+                Ok(v), errors
             | Choice2Of2 ex -> Result.Error(ex), errors
-        | None ->
+        | Some (None, errors) when errors |> List.isEmpty |> not ->
+            errors.[0] |> fst |> Exception |> Result.Error,
+            self.mapErrors (FSharpDiagnosticSeverity.Error, errors)
+        | _ ->
             Result.Error (Exception "Spiral error or timeout"),
             [|
                 FSharpDiagnostic.Create (
@@ -108,6 +252,8 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     /// <param name="line">The 1-based line index</param>
     /// <param name="column">The 0-based column index</param>
     member _.GetCompletionItems(text: string, line: int, column: int) =
+        log $"GetCompletionItems / text: %A{text} / line: %A{line} / column: %A{column}"
+
         task {
             let parseResults, checkResults, _projectResults = fsi.ParseAndCheckInteraction(text)
             let lineText = text.Split('\n').[line - 1]
@@ -118,4 +264,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     interface IDisposable with
         member _.Dispose() =
+            log $"Dispose"
             (fsi :> IDisposable).Dispose()
+            disposable.Dispose ()
