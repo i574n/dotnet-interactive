@@ -39,6 +39,8 @@ type SpiralKernel () as this =
     do this.KernelInfo.LanguageVersion <- "2.3"
     do this.KernelInfo.DisplayName <- $"{this.KernelInfo.LocalName} - Spiral Script"
 
+    do Polyglot.Common.traceLevel <- Polyglot.Common.TraceLevel.Info
+
     static let lockObj = Object();
 
     let createScript () =
@@ -57,7 +59,47 @@ type SpiralKernel () as this =
 
     [<DefaultValue>] val mutable workingDirectory : string
 
+    let log (text : string) =
+        try
+            let tmpPath = Path.GetTempPath ()
+            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+            Directory.CreateDirectory logDir |> ignore
+            let logFile = Path.Combine (logDir, "log.txt")
+            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+            let fileName = "SpiralKernel"
+            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+        with ex ->
+            Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+
+    let serialize1 obj =
+        try
+            obj |> FSharp.Json.Json.serializeEx (FSharp.Json.JsonConfig.create false)
+        with ex ->
+            log $"SpiralKernel.serialize1 / ex: {ex |> Polyglot.Common.printException}"
+            "Serialize error"
+
+    let serialize2 obj =
+        try
+            Json.JsonSerializer.Serialize (
+                    obj,
+                    Json.JsonSerializerOptions (
+                        ReferenceHandler = Json.Serialization.ReferenceHandler.IgnoreCycles,
+                        WriteIndented = true
+                    )
+            )
+        with ex ->
+            log $"SpiralKernel.serialize2 / ex: {ex |> Polyglot.Common.printException}"
+            "Serialize error"
+
+    let serialize obj =
+        let result = serialize1 obj
+        if result = "Serialize error"
+        then serialize2 obj
+        else $"%A{obj}"
+
     let getKindString (glyph: FSharpGlyph) =
+        log $"getKindString / glyph: %A{glyph}"
+
         match glyph with
         | FSharpGlyph.Class -> WellKnownTags.Class
         | FSharpGlyph.Constant -> WellKnownTags.Constant
@@ -83,6 +125,8 @@ type SpiralKernel () as this =
         | FSharpGlyph.Error -> WellKnownTags.Error
 
     let getFilterText (declarationItem: DeclarationListItem) =
+        log $"getFilterText / declarationItem: %A{declarationItem}"
+
         match declarationItem.NamespaceToOpen, declarationItem.NameInList.Split '.' with
         // There is no namespace to open and the item name does not contain dots, so we don't need to pass special FilterText to Roslyn.
         | None, [|_|] -> null
@@ -91,6 +135,8 @@ type SpiralKernel () as this =
         | _, idents -> Array.last idents
 
     let tryGetXmlDocument xmlFile =
+        log $"tryGetXmlDocument / xmlFile: %A{xmlFile}"
+
         match xmlDocuments.TryGetValue(xmlFile) with
         | true, doc -> Some doc
         | _ ->
@@ -109,6 +155,8 @@ type SpiralKernel () as this =
                     None
 
     let tryGetDocumentationByXmlFileAndKey xmlFile key =
+        log $"tryGetDocumentationByXmlFileAndKey / xmlFile: %A{xmlFile}, key: %A{key}"
+
         tryGetXmlDocument xmlFile
         |> Option.bind (fun doc ->
             match doc.SelectSingleNode(sprintf "doc/members/member[@name='%s']" key) with
@@ -119,6 +167,8 @@ type SpiralKernel () as this =
                 | summaryNode -> Some summaryNode.InnerText)
 
     let tryGetDocumentationByToolTipElementData (dataList: ToolTipElementData list) =
+        log $"tryGetDocumentationByToolTipElementData / dataList: %A{dataList}"
+
         let text =
             let xmlData =
                 dataList
@@ -142,6 +192,8 @@ type SpiralKernel () as this =
         else Some text
 
     let getDocumentation (declarationItem: DeclarationListItem) =
+        log $"getDocumentation / declarationItem: %A{declarationItem}"
+
         task {
             match declarationItem.Description with
             | ToolTipText(elements) ->
@@ -158,6 +210,8 @@ type SpiralKernel () as this =
         }
 
     let getCompletionItem (declarationItem: DeclarationListItem) =
+        log $"getCompletionItem / declarationItem: %A{declarationItem}"
+
         task {
             let kind = getKindString declarationItem.Glyph
             let filterText = getFilterText declarationItem
@@ -172,6 +226,8 @@ type SpiralKernel () as this =
         }
 
     let getDiagnostic (error: FSharpDiagnostic) =
+        log $"getDiagnostic / error: %A{error}"
+
         // F# errors are 1-based but should be 0-based for diagnostics, however, 0-based errors are still valid to report
         let diagLineDelta = if error.Start.Line = 0 then 0 else -1
         let startPos = LinePosition(error.Start.Line + diagLineDelta, error.Start.Column)
@@ -187,15 +243,21 @@ type SpiralKernel () as this =
         Diagnostic(linePositionSpan, severity, errorId, error.Message)
 
     let handleChangeWorkingDirectory (changeDirectory: ChangeWorkingDirectory) (context: KernelInvocationContext) =
+        log $"handleChangeWorkingDirectory / changeDirectory: %A{changeDirectory |> serialize2}"
+
         task {
             this.workingDirectory <- changeDirectory.WorkingDirectory;
             return Task.CompletedTask;
         }
 
     let handleSubmitCode (codeSubmission: SubmitCode) (context: KernelInvocationContext) =
+        log $"handleSubmitCode / codeSubmission: %A{codeSubmission |> serialize2}"
+
         task {
             let codeSubmissionReceived = CodeSubmissionReceived(codeSubmission)
             context.Publish(codeSubmissionReceived)
+            log $"handleSubmitCode / Publish(CodeSubmissionReceived): %A{codeSubmissionReceived |> serialize2}"
+
             let tokenSource =
                 CancellationTokenSource.CreateLinkedTokenSource
                     [|
@@ -211,6 +273,8 @@ type SpiralKernel () as this =
             // script.Eval can succeed with error diagnostics, see https://github.com/dotnet/interactive/issues/691
             let isError = fsiDiagnostics |> Array.exists (fun d -> d.Severity = FSharpDiagnosticSeverity.Error)
 
+            log $"handleSubmitCode / fsiDiagnostics:\n{fsiDiagnostics |> Array.map (fun x -> x.ToString ()) |> serialize}"
+
             if fsiDiagnostics.Length > 0 then
                 let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> fun x -> x.ToImmutableArray()
 
@@ -220,6 +284,7 @@ type SpiralKernel () as this =
                     |> Array.map (fun text -> new FormattedValue(PlainTextFormatter.MimeType, text))
 
                 context.Publish(DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics))
+                log $"handleSubmitCode / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics) |> serialize2}"
 
             match result with
             | Ok(result) when not isError ->
@@ -228,6 +293,9 @@ type SpiralKernel () as this =
                     let value = value.ReflectionValue
                     let formattedValues = FormattedValue.CreateManyFromObject(value)
                     context.Publish(ReturnValueProduced(value, codeSubmission, formattedValues))
+                    log $"handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(value, codeSubmission, formattedValues) |> serialize2}"
+
+
                 | Some _
                 | None -> ()
             | _ ->
@@ -238,23 +306,32 @@ type SpiralKernel () as this =
                     | Ok _ ->
                         let ex = CodeSubmissionCompilationErrorException(Exception(aggregateError))
                         context.Fail(codeSubmission, ex, aggregateError)
+                        log $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex} / aggregateError: %A{aggregateError}"
                     | Error ex ->
                         context.Fail(codeSubmission, ex, null)
+                        log $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}"
                 else
                     context.Fail(codeSubmission, null, "Command cancelled")
+                    log $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / Command cancelled"
         }
 
     let handleRequestCompletions (requestCompletions: RequestCompletions) (context: KernelInvocationContext) =
+        // log $"handleRequestCompletions / requestCompletions: %A{requestCompletions |> serialize}"
+
         task {
-            let! declarationItems = script.Value.GetCompletionItems(requestCompletions.Code, requestCompletions.LinePosition.Line + 1, requestCompletions.LinePosition.Character)
-            let! completionItems =
-                declarationItems
-                |> Array.map getCompletionItem
-                |> Task.WhenAll
-            context.Publish(CompletionsProduced(completionItems, requestCompletions))
+            ()
+            // let! declarationItems = script.Value.GetCompletionItems(requestCompletions.Code, requestCompletions.LinePosition.Line + 1, requestCompletions.LinePosition.Character)
+            // let! completionItems =
+            //     declarationItems
+            //     |> Array.map getCompletionItem
+            //     |> Task.WhenAll
+            // context.Publish(CompletionsProduced(completionItems, requestCompletions))
+            // log $"handleRequestCompletions / Publish(CompletionsProduced): %A{CompletionsProduced(completionItems, requestCompletions)}"
         }
 
     let handleRequestHoverText (requestHoverText: RequestHoverText) (context: KernelInvocationContext) =
+        log $"handleRequestHoverText / requestHoverText: %A{requestHoverText |> serialize2}"
+
         task {
             let fsiModuleRx = System.Text.RegularExpressions.Regex @"FSI_[0-9]+\."
             let stdinRx = System.Text.RegularExpressions.Regex @"Stdin\."
@@ -296,6 +373,8 @@ type SpiralKernel () as this =
                         | None -> return None
                     | None -> return None
                 }
+
+            log $"handleRequestHoverText / requestHoverText: %A{serialize2 requestHoverText} / parse: %A{parse} / check: %A{check} / res: %A{serialize2 res} / text: %A{text} / line: %A{line} / col: %A{col} / lineContent: %A{lineContent} / value: %A{value}"
 
             match res.TryGetToolTipEnhanced (mkPos line col) lineContent with
             | Result.Ok (Some (tip, signature, footer, typeDoc)) ->
@@ -360,6 +439,7 @@ type SpiralKernel () as this =
                 let ep = LinePosition(requestHoverText.LinePosition.Line, col)
                 let lps = LinePositionSpan(sp, ep)
                 context.Publish(HoverTextProduced(requestHoverText, results, lps))
+                log $"handleRequestHoverText / Publish(HoverTextProduced): %A{HoverTextProduced(requestHoverText, results, lps) |> serialize2}"
 
             | _ ->
                 let sp = LinePosition(requestHoverText.LinePosition.Line, col)
@@ -367,39 +447,54 @@ type SpiralKernel () as this =
                 let lps = LinePositionSpan(sp, ep)
                 let reply = [| FormattedValue("text/markdown", "") |]
                 context.Publish(HoverTextProduced(requestHoverText, reply, lps))
+                log $"handleRequestHoverText / Publish(HoverTextProduced) ERROR: %A{HoverTextProduced(requestHoverText, reply, lps) |> serialize2}"
                 ()
         }
 
     let handleRequestDiagnostics (requestDiagnostics: RequestDiagnostics) (context: KernelInvocationContext) =
-        task {
-            let _parseResults, checkFileResults, _checkProjectResults = script.Value.Fsi.ParseAndCheckInteraction(requestDiagnostics.Code)
-            let errors = checkFileResults.Diagnostics
+        // log $"handleRequestDiagnostics / requestDiagnostics: %A{serialize requestDiagnostics}"
 
-            if errors.Length > 0 then
-                let diagnostics = errors |> Array.map getDiagnostic |> fun x -> x.ToImmutableArray()
-                context.Publish(DiagnosticsProduced(diagnostics, requestDiagnostics))
+        task {
+            ()
+            // let _parseResults, checkFileResults, _checkProjectResults = script.Value.Fsi.ParseAndCheckInteraction(requestDiagnostics.Code)
+            // let errors = checkFileResults.Diagnostics
+
+            // if errors.Length > 0 then
+            //     let diagnostics = errors |> Array.map getDiagnostic |> fun x -> x.ToImmutableArray()
+            //     context.Publish(DiagnosticsProduced(diagnostics, requestDiagnostics))
+            //     log $"handleRequestDiagnostics / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, requestDiagnostics) |> serialize}"
         }
 
     let handleRequestValueValueInfos (requestValueInfos: RequestValueInfos) (context: KernelInvocationContext) =
         task {
-            let valueInfos =
-                script.Value.Fsi.GetBoundValues()
-                |> List.filter (fun x -> x.Name <> "it") // don't report special variable `it`
-                |> List.map (fun x -> new KernelValueInfo(x.Name, FormattedValue.CreateSingleFromObject(x.Value.ReflectionValue, requestValueInfos.MimeType), this.getValueType(x.Name)))
-                :> IReadOnlyCollection<KernelValueInfo>
-            context.Publish(new ValueInfosProduced(valueInfos, requestValueInfos))
+            ()
+            // let valueInfos =
+            //     script.Value.Fsi.GetBoundValues()
+            //     |> List.filter (fun x -> x.Name <> "it") // don't report special variable `it`
+            //     |> List.map (fun x -> new KernelValueInfo(x.Name, FormattedValue.CreateSingleFromObject(x.Value.ReflectionValue, requestValueInfos.MimeType), this.getValueType(x.Name)))
+            //     :> IReadOnlyCollection<KernelValueInfo>
+            // context.Publish(new ValueInfosProduced(valueInfos, requestValueInfos))
+            // log $"handleRequestValueValueInfos / Publish(ValueInfosProduced): %A{ValueInfosProduced(valueInfos, requestValueInfos) |> serialize}"
         }
 
     let handleRequestValue (requestValue: RequestValue) (context: KernelInvocationContext) =
+        log $"handleRequestValue / requestValue: %A{requestValue |> serialize2}"
+
         task {
-            match script.Value.Fsi.TryFindBoundValue(requestValue.Name) with
-            | Some cv ->
-                context.PublishValueProduced(requestValue, cv.Value.ReflectionValue)
-            | _ ->
-                context.Fail(requestValue, message=(sprintf "Value '%s' not found in kernel %s" requestValue.Name this.Name))
+            ()
+            // match script.Value.Fsi.TryFindBoundValue(requestValue.Name) with
+            // | Some cv ->
+            //     context.PublishValueProduced(requestValue, cv.Value.ReflectionValue)
+            //     log $"handleRequestValue / PublishValueProduced: %A{requestValue} / cv.Value.ReflectionValue: %A{cv.Value.ReflectionValue}"
+
+            // | _ ->
+            //     context.Fail(requestValue, message=(sprintf "Value '%s' not found in kernel %s" requestValue.Name this.Name))
+            //     log $"handleRequestValue / Fail: %A{requestValue}"
         }
 
     let createPackageRestoreContext (useResultsCache:bool) (registerForDisposal) =
+        log $"createPackageRestoreContext"
+
         let packageRestoreContext = new PackageRestoreContext(useResultsCache)
         do registerForDisposal(fun () -> packageRestoreContext.Dispose())
         packageRestoreContext
@@ -407,24 +502,35 @@ type SpiralKernel () as this =
     let mutable _packageRestoreContext = lazy createPackageRestoreContext true this.RegisterForDisposal
 
     member this.GetValues() =
-        script.Value.Fsi.GetBoundValues()
-        |> List.filter (fun x -> x.Name <> "it") // don't report special variable `it`
-        |> List.map (fun x -> KernelValue( new KernelValueInfo(x.Name, new FormattedValue(PlainTextFormatter.MimeType, x.Value.ToDisplayString(PlainTextFormatter.MimeType)) , x.Value.ReflectionType), x.Value.ReflectionValue, this.Name))
+        log $"GetValues"
+
+        []
+        // script.Value.Fsi.GetBoundValues()
+        // |> List.filter (fun x -> x.Name <> "it") // don't report special variable `it`
+        // |> List.map (fun x -> KernelValue( new KernelValueInfo(x.Name, new FormattedValue(PlainTextFormatter.MimeType, x.Value.ToDisplayString(PlainTextFormatter.MimeType)) , x.Value.ReflectionType), x.Value.ReflectionValue, this.Name))
 
     member this.getValueType(name:string) =
-        match script.Value.Fsi.TryFindBoundValue(name) with
-        | Some cv ->
-            cv.Value.ReflectionValue.GetType()
-        | _ ->
-            null
+        log $"getValueType / name: %A{name}"
+        typeof<obj>
+        // let result =
+        //     match script.Value.Fsi.TryFindBoundValue(name) with
+        //     | Some cv ->
+        //         cv.Value.ReflectionValue.GetType()
+        //     | _ ->
+        //         null
+        // log $"getValueType / name: %A{name} / result: %A{result}"
+        // result
 
     member this.handleTryGetValue<'a>(name: string, [<Out>] value: 'a byref) =
-        match script.Value.Fsi.TryFindBoundValue(name) with
-        | Some cv ->
-            value <- cv.Value.ReflectionValue :?> 'a
-            true
-        | _ ->
-            false
+        log $"handleTryGetValue / name: %A{name}"
+        true
+
+        // match script.Value.Fsi.TryFindBoundValue(name) with
+        // | Some cv ->
+        //     value <- cv.Value.ReflectionValue :?> 'a
+        //     true
+        // | _ ->
+        //     false
 
     member _.RestoreSources with get () = _packageRestoreContext.Value.RestoreSources
 
@@ -435,43 +541,61 @@ type SpiralKernel () as this =
     member _.PackageRestoreContext with get () = _packageRestoreContext.Value
 
     interface IKernelCommandHandler<RequestCompletions> with
-        member this.HandleAsync(command: RequestCompletions, context: KernelInvocationContext) = handleRequestCompletions command context
+        member this.HandleAsync(command: RequestCompletions, context: KernelInvocationContext) =
+            // log $"IKernelCommandHandler<RequestCompletions>.HandleAsync / command: %A{command |> serialize}"
+            handleRequestCompletions command context
 
     interface IKernelCommandHandler<RequestDiagnostics> with
-        member this.HandleAsync(command: RequestDiagnostics, context: KernelInvocationContext) = handleRequestDiagnostics command context
+        member this.HandleAsync(command: RequestDiagnostics, context: KernelInvocationContext) =
+            // log $"IKernelCommandHandler<RequestDiagnostics>.HandleAsync / command: %A{command |> serialize}"
+            handleRequestDiagnostics command context
 
     interface IKernelCommandHandler<RequestHoverText> with
-        member this.HandleAsync(command: RequestHoverText, context: KernelInvocationContext) = handleRequestHoverText command context
+        member this.HandleAsync(command: RequestHoverText, context: KernelInvocationContext) =
+            // log $"IKernelCommandHandler<RequestHoverText>.HandleAsync / command: %A{command |> serialize2}"
+            handleRequestHoverText command context
 
     interface IKernelCommandHandler<RequestValueInfos> with
-        member this.HandleAsync(command: RequestValueInfos, context: KernelInvocationContext) = handleRequestValueValueInfos command context
+        member this.HandleAsync(command: RequestValueInfos, context: KernelInvocationContext) =
+            log $"IKernelCommandHandler<RequestValueInfos>.HandleAsync / command: %A{command |> serialize2}"
+            handleRequestValueValueInfos command context
 
     interface IKernelCommandHandler<RequestValue> with
-        member this.HandleAsync(command: RequestValue, context: KernelInvocationContext) = handleRequestValue command context
+        member this.HandleAsync(command: RequestValue, context: KernelInvocationContext) =
+            // log $"IKernelCommandHandler<RequestValue>.HandleAsync / command: %A{command |> serialize2}"
+            handleRequestValue command context
 
     interface IKernelCommandHandler<SendValue> with
         member this.HandleAsync(command: SendValue, context: KernelInvocationContext) =
+            log $"IKernelCommandHandler<SendValue>.HandleAsync / command: %A{command |> serialize2}"
             let handle (name : string) (value : obj) (declaredType : Type) : Task =
                 script.Value.Fsi.AddBoundValue(name, value)
                 Task.CompletedTask
             base.SetValueAsync(command, context, handle)
 
     interface IKernelCommandHandler<SubmitCode> with
-        member this.HandleAsync(command: SubmitCode, context: KernelInvocationContext) = handleSubmitCode command context
+        member this.HandleAsync(command: SubmitCode, context: KernelInvocationContext) =
+            // log $"IKernelCommandHandler<SubmitCode>.HandleAsync / command: %A{command |> serialize}"
+            handleSubmitCode command context
 
     interface IKernelCommandHandler<ChangeWorkingDirectory> with
-        member this.HandleAsync(command: ChangeWorkingDirectory, context: KernelInvocationContext) = handleChangeWorkingDirectory command context
+        member this.HandleAsync(command: ChangeWorkingDirectory, context: KernelInvocationContext) =
+            // log $"IKernelCommandHandler<ChangeWorkingDirectory>.HandleAsync / command: %A{command |> serialize}"
+            handleChangeWorkingDirectory command context
 
     interface ISupportNuget with
         member _.TryAddRestoreSource(source: string) =
+            log $"ISupportNuget.TryAddRestoreSource / source: %A{source}"
             this.PackageRestoreContext.TryAddRestoreSource source
 
         member _.GetOrAddPackageReference(packageName: string, packageVersion: string) =
+            log $"ISupportNuget.GetOrAddPackageReference / packageName: %A{packageName}, packageVersion: %A{packageVersion}"
             this.PackageRestoreContext.GetOrAddPackageReference (packageName, packageVersion)
 
         member _.Configure(useResultsCache:bool) =
              _packageRestoreContext <- lazy createPackageRestoreContext useResultsCache this.RegisterForDisposal
         member _.RestoreAsync() =
+            log $"ISupportNuget.RestoreAsync"
             this.PackageRestoreContext.RestoreAsync()
 
         member _.RestoreSources =
@@ -484,23 +608,24 @@ type SpiralKernel () as this =
             this.PackageRestoreContext.ResolvedPackageReferences
 
         member _.RegisterResolvedPackageReferences (packageReferences: IReadOnlyList<ResolvedPackageReference>) =
-            // Generate #r and #I from packageReferences
-            let sb = StringBuilder()
-            let hashset = HashSet()
+            log $"ISupportNuget.RegisterResolvedPackageReferences / packageReferences: %A{packageReferences}"
+            // // Generate #r and #I from packageReferences
+            // let sb = StringBuilder()
+            // let hashset = HashSet()
 
-            for reference in packageReferences do
-                for assembly in reference.AssemblyPaths do
-                    if hashset.Add(assembly) then
-                        if File.Exists assembly then
-                            sb.AppendFormat("#r @\"{0}\"", assembly) |> ignore
-                            sb.Append(Environment.NewLine) |> ignore
+            // for reference in packageReferences do
+            //     for assembly in reference.AssemblyPaths do
+            //         if hashset.Add(assembly) then
+            //             if File.Exists assembly then
+            //                 sb.AppendFormat("#r @\"{0}\"", assembly) |> ignore
+            //                 sb.Append(Environment.NewLine) |> ignore
 
-                match reference.PackageRoot with
-                | null -> ()
-                | root ->
-                    if hashset.Add(root) then
-                        if File.Exists root then
-                            sb.AppendFormat("#I @\"{0}\"", root) |> ignore
-                            sb.Append(Environment.NewLine) |> ignore
-            let command = new SubmitCode(sb.ToString(), "spiral")
-            this.DeferCommand(command)
+            //     match reference.PackageRoot with
+            //     | null -> ()
+            //     | root ->
+            //         if hashset.Add(root) then
+            //             if File.Exists root then
+            //                 sb.AppendFormat("#I @\"{0}\"", root) |> ignore
+            //                 sb.Append(Environment.NewLine) |> ignore
+            // let command = new SubmitCode(sb.ToString(), "spiral")
+            // this.DeferCommand(command)

@@ -8,6 +8,9 @@ import { DynamicGrammarSemanticTokenProvider, VSCodeExtensionLike } from './dyna
 import * as constants from './constants';
 import * as vscodeNotebookManagement from './vscodeNotebookManagement';
 import { Logger } from './polyglot-notebooks';
+import * as crypto from 'crypto';
+import * as path from 'path';
+import * as os from 'os';
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#standard-token-types-and-modifiers
 const defaultTokenTypes = [
@@ -58,11 +61,23 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     private _onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     private _semanticTokensLegend: vscode.SemanticTokensLegend;
 
+    private _tmpSpiralPath = path.join(os.tmpdir(), '!dotnet-interactive-spiral');
+    private _tmpCodePath = path.join(this._tmpSpiralPath, 'code');
+    private _tmpTokensPath = path.join(this._tmpSpiralPath, 'tokens');
+
+    private _spiralTokenLegend = ['variable','symbol','string','number','operator','unary_operator','comment','keyword','parenthesis','type_variable','escaped_char','unescaped_char','number_suffix'];
+
     constructor(packageJSON: any) {
         const extensionData = vscode.extensions.all.map(extension => <VSCodeExtensionLike>extension);
         this._dynamicTokenProvider = new DynamicGrammarSemanticTokenProvider(packageJSON, extensionData, path => fs.existsSync(path), path => fs.readFileSync(path, 'utf8'));
-        const tokenTypes = [...defaultTokenTypes, ...this._dynamicTokenProvider.semanticTokenTypes];
+        const tokenTypes = [...this._spiralTokenLegend, ...defaultTokenTypes, ...this._dynamicTokenProvider.semanticTokenTypes];
         this._semanticTokensLegend = new vscode.SemanticTokensLegend(tokenTypes, defaultTokenModifiers);
+
+        if (!fs.existsSync(this._tmpSpiralPath)) {
+            fs.mkdirSync(this._tmpSpiralPath);
+            fs.mkdirSync(this._tmpCodePath);
+            fs.mkdirSync(this._tmpTokensPath);
+        }
     }
 
     get semanticTokensLegend(): vscode.SemanticTokensLegend {
@@ -110,6 +125,43 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                 if (cell) {
                     const cellMetadata = metadataUtilities.getNotebookCellMetadataFromNotebookCellElement(cell);
                     const cellKernelName = cellMetadata.kernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
+
+                    console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / text: ${text} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
+
+                    if (cellKernelName === "spiral") {
+                        const hash = crypto.createHash('sha256');
+                        hash.update(text, 'utf8');
+                        const hashHex = hash.digest('hex');
+
+                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / hashHex: ${hashHex}`);
+
+                        const codePath = path.join(this._tmpCodePath, hashHex);
+                        const tokensPath = path.join(this._tmpTokensPath, hashHex);
+
+                        const fileExists = async (path: string) =>
+                            !!(await fs.promises.stat(path).catch(_e => false));
+
+                        if (!(await fileExists(codePath))) {
+                            await fs.promises.writeFile(codePath, text, 'utf8');
+                        }
+
+                        const timeout = 4000;
+                        const start = Date.now();
+                        let tokensText = "[]";
+                        while (Date.now() - start < timeout) {
+                            if (await fileExists(tokensPath)) {
+                                tokensText = await fs.promises.readFile(tokensPath, 'utf8');
+                                break;
+                            }
+                            await new Promise(resolve => setTimeout(resolve, 60));
+                        }
+                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / elapsed: ${Date.now() - start}`);
+
+                        const tokens = new Uint32Array(JSON.parse(tokensText));
+
+                        return new vscode.SemanticTokens(tokens, "");
+                    }
+
                     const tokens = await this._dynamicTokenProvider.getTokens(notebookDocument.uri, cellKernelName, text);
                     for (const token of tokens) {
                         tokenCount++;
