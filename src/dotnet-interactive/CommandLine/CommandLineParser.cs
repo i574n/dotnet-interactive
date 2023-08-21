@@ -489,7 +489,8 @@ public static class CommandLineParser
             new[] { "f#", "F#" });
 
         compositeKernel.Add(
-            new SpiralKernel());
+            new SpiralKernel(),
+            new[] { "spiral", "Spiral" });
 
         compositeKernel.Add(
             new PowerShellKernel()
