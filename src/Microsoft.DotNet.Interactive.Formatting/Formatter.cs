@@ -701,7 +701,12 @@ public static class Formatter
         {
             return false;
         }
-        
+
+        if (type.FullName.StartsWith("Microsoft.FSharp.Collections.FSharpList`1"))
+        {
+            return false;
+        }
+
         foreach (var @interface in type.GetTypeInfo().ImplementedInterfaces)
         {
             if (@interface.IsConstructedGenericType)
