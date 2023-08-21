@@ -82,7 +82,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
                     match event with
                     | FileSystemChange.Created (path, Some code) ->
-                        let! tokens = code |> Supervisor.getCodeTokenRange 5000 None
+                        let! tokens = code |> Supervisor.getCodeTokenRange 10000 None
                         match tokens with
                         | Some tokens ->
                             do! tokens |> FSharp.Json.Json.serialize |> writeAllTextAsync (tmpTokensPath </> path)
@@ -102,7 +102,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     let tokensPath = tmpTokensPath </> (codePath |> System.IO.Path.GetFileName)
                     if File.Exists tokensPath |> not then
                         let! code = codePath |> readAllTextAsync
-                        let! tokens = code |> Supervisor.getCodeTokenRange 5000 None
+                        let! tokens = code |> Supervisor.getCodeTokenRange 10000 None
                         match tokens with
                         | Some tokens ->
                             do! tokens |> FSharp.Json.Json.serialize |> writeAllTextAsync tokensPath
@@ -260,7 +260,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
         let newAllCode = $"{allCode}\n\n{cellCode}"
 
-        let timeout = 5000
+        let timeout = 10000
         let codeAsync =
             newAllCode
             |> Supervisor.buildCode timeout cancellationToken
