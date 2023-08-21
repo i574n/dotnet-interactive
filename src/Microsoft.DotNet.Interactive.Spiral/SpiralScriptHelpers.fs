@@ -130,7 +130,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     member _.Fsi = fsi
 
-    member _.mapErrors (severity, errors) =
+    member _.mapErrors (severity, errors, lastTopLevelIndex) =
         let allCodeLineLength =
             allCode |> String.split [| '\n' |] |> Array.length
 
@@ -157,7 +157,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
             | Supervisor.TypeErrors data ->
                 data.errors
                 |> List.filter (fun ((rangeStart, _), _) ->
-                    trace Debug (fun () -> $"SpiralScriptHelpers.mapErrors / rangeStart.line: {rangeStart.line} / allCodeLineLength: {allCodeLineLength} / filtered: {rangeStart.line > allCodeLineLength}") getLocals
+                    trace Debug (fun () -> $"SpiralScriptHelpers.mapErrors / rangeStart.line: {rangeStart.line} / lastTopLevelIndex: {lastTopLevelIndex} / allCodeLineLength: {allCodeLineLength} / filtered: {rangeStart.line > allCodeLineLength}") getLocals
                     rangeStart.line > allCodeLineLength
                 )
                 |> List.map (fun ((rangeStart, rangeEnd), message) ->
@@ -167,8 +167,26 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                         0,
                         Text.Range.mkRange
                             (data.uri |> System.IO.Path.GetFileName)
-                            (Text.Position.mkPos (rangeStart.line - allCodeLineLength) rangeStart.character)
-                            (Text.Position.mkPos (rangeEnd.line - allCodeLineLength) rangeEnd.character)
+                            (Text.Position.mkPos
+                                (match lastTopLevelIndex with
+                                | Some i when rangeStart.line >= i + allCodeLineLength + 3 ->
+                                    rangeStart.line - allCodeLineLength - 2
+                                | _ -> rangeStart.line - allCodeLineLength)
+                                (match lastTopLevelIndex with
+                                | Some i when rangeStart.line >= i + allCodeLineLength + 3 ->
+                                    rangeStart.character - 4
+                                | _ -> rangeStart.character)
+                            )
+                            (Text.Position.mkPos
+                                (match lastTopLevelIndex with
+                                | Some i when rangeStart.line >= i + allCodeLineLength + 3 ->
+                                    rangeEnd.line - allCodeLineLength - 2
+                                | _ -> rangeEnd.line - allCodeLineLength)
+                                (match lastTopLevelIndex with
+                                | Some i when rangeStart.line >= i + allCodeLineLength + 3 ->
+                                    rangeEnd.character - 4
+                                | _ -> rangeEnd.character)
+                            )
                     )
                 )
         )
@@ -201,11 +219,44 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 || line |> String.startsWith "let main "
             )
 
-        let cellCode =
+        let cellCode, lastTopLevelIndex =
             if hasMain
-            then cellCode
-            else cellCode + "\n\ninl main () = ()\n"
-
+            then cellCode, None
+            else
+                let lastTopLevelIndex, _ =
+                    (lines |> Array.indexed, (None, false))
+                    ||> Array.foldBack (fun (i, line) (lastTopLevelIndex, finished) ->
+                        trace Debug (fun () -> $"i: {i} / line: '{line}' / lastTopLevelIndex: {lastTopLevelIndex} / finished: {finished}") getLocals
+                        match line with
+                        | _ when finished -> lastTopLevelIndex, true
+                        | "" when lastTopLevelIndex |> Option.isSome -> Some i, false
+                        | "" -> lastTopLevelIndex, false
+                        | line when line |> String.startsWith " " -> lastTopLevelIndex, false
+                        | line when
+                            line |> String.startsWith "open "
+                            || line |> String.startsWith "prototype "
+                            || line |> String.startsWith "instance "
+                            || line |> String.startsWith "type "
+                            || line |> String.startsWith "union "
+                            || line |> String.startsWith "inl "
+                            || line |> String.startsWith "let "
+                            || line |> String.startsWith "nominal " -> lastTopLevelIndex, true
+                        | _ -> Some i, false
+                    )
+                let code =
+                    match lastTopLevelIndex with
+                    | Some lastTopLevelIndex ->
+                        lines
+                        |> Array.mapi (fun i line ->
+                            match i with
+                            | i when i < lastTopLevelIndex -> line
+                            | i when i = lastTopLevelIndex -> $"\ninl main () =\n    {line}"
+                            | _ when line |> String.trim = "" -> ""
+                            | _ -> $"    {line}"
+                        )
+                        |> String.concat "\n"
+                    | None -> $"{cellCode}\n\ninl main () = ()\n"
+                code, lastTopLevelIndex
 
         let newAllCode = $"{allCode}\n\n{cellCode}"
 
@@ -219,7 +270,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
             Async.RunSynchronously (codeAsync, -1, cancellationToken)
         match code with
         | Some (Some code, spiralErrors) ->
-            let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors)
+            let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
             trace Info (fun () -> $"SpiralScriptHelpers.Eval / code:\n{code}") getLocals
 
             let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
@@ -236,7 +287,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
             | Choice2Of2 ex -> Result.Error(ex), errors
         | Some (None, errors) when errors |> List.isEmpty |> not ->
             errors.[0] |> fst |> Exception |> Result.Error,
-            self.mapErrors (FSharpDiagnosticSeverity.Error, errors)
+            self.mapErrors (FSharpDiagnosticSeverity.Error, errors, lastTopLevelIndex)
         | _ ->
             Result.Error (Exception "Spiral error or timeout"),
             [|
