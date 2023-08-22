@@ -238,9 +238,19 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                             || line |> String.startsWith "instance "
                             || line |> String.startsWith "type "
                             || line |> String.startsWith "union "
-                            || line |> String.startsWith "inl "
-                            || line |> String.startsWith "let "
                             || line |> String.startsWith "nominal " -> lastTopLevelIndex, true
+                        | line when
+                            line |> String.startsWith "inl "
+                            || line |> String.startsWith "let " ->
+                            let m =
+                                System.Text.RegularExpressions.Regex.Match (
+                                    line,
+                                    @"^(inl|let) +([\w\d]+) +(:|=)"
+                                )
+                            trace Debug (fun () -> $"m: '{m}' / m.Groups.Count: {m.Groups.Count}") getLocals
+                            if m.Groups.Count = 4
+                            then Some i, false
+                            else lastTopLevelIndex, true
                         | _ -> Some i, false
                     )
                 let code =
