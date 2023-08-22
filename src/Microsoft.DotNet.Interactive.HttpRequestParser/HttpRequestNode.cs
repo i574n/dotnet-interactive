@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -14,61 +15,81 @@ namespace Microsoft.DotNet.Interactive.HttpRequest;
 
 internal class HttpRequestNode : HttpSyntaxNode
 {
-    internal HttpRequestNode(
-        SourceText sourceText,
-        HttpSyntaxTree? syntaxTree,
-        HttpMethodNode? methodNode,
-        HttpUrlNode urlNode,
-        HttpVersionNode? versionNode = null,
-        HttpHeadersNode? headersNode = null,
-        HttpBodySeparatorNode? bodySeparatorNode = null,
-        HttpBodyNode? bodyNode = null) : base(sourceText, syntaxTree)
+    internal HttpRequestNode(SourceText sourceText, HttpSyntaxTree? syntaxTree) : base(sourceText, syntaxTree)
     {
-        if (methodNode is not null)
-        {
-            MethodNode = methodNode;
-            Add(MethodNode);
-        }
+    }
+    
+    public HttpMethodNode? MethodNode { get; private set; }
 
-        UrlNode = urlNode;
-        Add(UrlNode);
+    public HttpUrlNode? UrlNode { get; private set; }
 
-        if (versionNode is not null)
-        {
-            VersionNode = versionNode;
-            Add(VersionNode);
-        }
+    public HttpVersionNode? VersionNode { get; private set; }
 
-        if (headersNode is not null)
-        {
-            HeadersNode = headersNode;
-            Add(HeadersNode);
-        }
+    public HttpHeadersNode? HeadersNode { get; private set; }
 
-        if (bodySeparatorNode is not null)
-        {
-            BodySeparatorNode = bodySeparatorNode;
-            Add(bodySeparatorNode);
-        }
+    public HttpBodySeparatorNode? BodySeparatorNode { get; private set; }
 
-        if (bodyNode is not null)
+    public HttpBodyNode? BodyNode { get; private set; }
+
+    public void Add(HttpMethodNode node)
+    {
+        if (MethodNode is not null)
         {
-            BodyNode = bodyNode;
-            Add(BodyNode);
+            throw new InvalidOperationException($"{nameof(MethodNode)} was already added.");
         }
+        MethodNode = node;
+        AddInternal(node);
     }
 
-    public HttpMethodNode? MethodNode { get; }
+    public void Add(HttpUrlNode node)
+    {
+        if (UrlNode is not null)
+        {
+            throw new InvalidOperationException($"{nameof(UrlNode)} was already added.");
+        }
+        UrlNode = node;
+        AddInternal(node);
+    }
 
-    public HttpUrlNode UrlNode { get; }
+    public void Add(HttpVersionNode node)
+    {
+        if (VersionNode is not null)
+        {
+            throw new InvalidOperationException($"{nameof(VersionNode)} was already added.");
+        }
+        VersionNode = node;
+        AddInternal(node);
+    }
 
-    public HttpVersionNode? VersionNode { get; set; }
+    public void Add(HttpHeadersNode node)
+    {
+        if (HeadersNode is not null)
+        {
+            throw new InvalidOperationException($"{nameof(HeadersNode)} was already added.");
+        }
+        HeadersNode = node;
+        AddInternal(node);
+    }
 
-    public HttpHeadersNode? HeadersNode { get; }
+    public void Add(HttpBodySeparatorNode node)
+    {
+        if (BodySeparatorNode is not null)
+        {
+            throw new InvalidOperationException($"{nameof(BodySeparatorNode)} was already added.");
+        }
+        BodySeparatorNode = node;
+        AddInternal(node);
+    }
 
-    public HttpBodySeparatorNode? BodySeparatorNode { get; }
-
-    public HttpBodyNode? BodyNode { get; }
+    public void Add(HttpBodyNode node)
+    {
+        if (BodyNode is not null)
+        {
+            throw new InvalidOperationException($"{nameof(BodyNode)} was already added.");
+        }
+        BodyNode = node;
+        base.AddInternal(node);
+    }
 
     public HttpBindingResult<HttpRequestMessage> TryGetHttpRequestMessage(HttpBindingDelegate bind)
     {
@@ -80,14 +101,20 @@ internal class HttpRequestNode : HttpSyntaxNode
             request.Method = new HttpMethod(MethodNode.Text);
         }
 
-        var uriBindingResult = UrlNode.TryGetUri(bind);
-        if (uriBindingResult.IsSuccessful)
+        if (UrlNode?.TryGetUri(bind) is { } uriBindingResult)
         {
-            request.RequestUri = uriBindingResult.Value;
+            if (uriBindingResult.IsSuccessful)
+            {
+                request.RequestUri = uriBindingResult.Value;
+            }
+            else
+            {
+                diagnostics.AddRange(uriBindingResult.Diagnostics);
+            }
         }
         else
         {
-            diagnostics.AddRange(uriBindingResult.Diagnostics);
+            // FIX: (TryGetHttpRequestMessage) add diagnostic
         }
 
         var bodyResult = BodyNode?.TryGetBody(bind);
@@ -109,9 +136,22 @@ internal class HttpRequestNode : HttpSyntaxNode
         {
             foreach (var headerNode in headerNodes)
             {
+                if (headerNode.NameNode is null)
+                {
+                    // FIX: (TryGetHttpRequestMessage) add diagnostic
+                    continue;
+                }
+
+                if (headerNode.ValueNode is null)
+                {
+                    // FIX: (TryGetHttpRequestMessage) add diagnostic
+                    continue;
+                }
+
                 var headerName = headerNode.NameNode.Text.ToLowerInvariant();
                 var headerValue = headerNode.ValueNode.Text;
 
+                // FIX: (TryGetHttpRequestMessage) bind possible expressions in the value node
                 // FIX: (TryGetHttpRequestMessage) better testing
 
                 switch (headerName)
