@@ -196,12 +196,14 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     member _.Eval(code: string, ?cancellationToken: CancellationToken) =
         log $"Eval / code: %A{code}"
 
-        if code = "//// trace" then
-            if traceLevel = Info
-            then traceLevel <- Verbose
-            else traceLevel <- Info
-
-        let cellCode = code |> String.replace "\r\n" "\n"
+        let cellCode =
+            if code <> "//// trace"
+            then code |> String.replace "\r\n" "\n"
+            else
+                if traceLevel = Info
+                then traceLevel <- Verbose
+                else traceLevel <- Info
+                "inl main () = ()"
 
         let lines = cellCode |> String.split [| '\n' |]
 
@@ -281,7 +283,10 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         match code with
         | Some (Some code, spiralErrors) ->
             let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
-            trace Info (fun () -> $"SpiralScriptHelpers.Eval / code:\n{code}") getLocals
+            trace
+                Info
+                (fun () -> if traceLevel = Info then code else $"SpiralScriptHelpers.Eval / code:\n{code}")
+                getLocals
 
             let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
             let errors =
