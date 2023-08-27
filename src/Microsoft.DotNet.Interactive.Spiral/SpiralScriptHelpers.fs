@@ -196,7 +196,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     member _.Eval(code: string, ?cancellationToken: CancellationToken) =
         log $"Eval / code: %A{code}"
 
-        let cellCode =
+        let rawCellCode =
             if code <> "//// trace"
             then code |> String.replace "\r\n" "\n"
             else
@@ -205,7 +205,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 else traceLevel <- Info
                 "inl main () = ()"
 
-        let lines = cellCode |> String.split [| '\n' |]
+        let lines = rawCellCode |> String.split [| '\n' |]
 
         let lastBlock =
             lines
@@ -223,7 +223,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
         let cellCode, lastTopLevelIndex =
             if hasMain
-            then cellCode, None
+            then rawCellCode, None
             else
                 let lastTopLevelIndex, _ =
                     (lines |> Array.indexed, (None, false))
@@ -267,48 +267,195 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                             | _ -> $"    {line}"
                         )
                         |> String.concat "\n"
-                    | None -> $"{cellCode}\n\ninl main () = ()\n"
+                    | None -> $"{rawCellCode}\n\ninl main () = ()\n"
                 code, lastTopLevelIndex
 
         let newAllCode = $"{allCode}\n\n{cellCode}"
 
-        let timeout = 10000
-        let codeAsync =
-            newAllCode
-            |> Supervisor.buildCode timeout cancellationToken
-            |> Async.runWithTimeoutAsync timeout
-        let cancellationToken = defaultArg cancellationToken CancellationToken.None
-        let code =
-            Async.RunSynchronously (codeAsync, -1, cancellationToken)
-        match code with
-        | Some (Some code, spiralErrors) ->
-            let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
-            if traceLevel = Info
-            then System.Console.WriteLine code
-            else trace Info (fun () -> $"SpiralScriptHelpers.Eval / code:\n{code}") getLocals
+        let timeout = 60000
+        async {
+            let! mainPath, disposable =
+                newAllCode
+                |> Supervisor.persistCode timeout cancellationToken
+            use _ = disposable
+            let! code =
+                mainPath
+                |> Supervisor.buildFile timeout cancellationToken
+                |> Async.runWithTimeoutAsync timeout
+            match code with
+            | Some (Some code, spiralErrors) ->
+                let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
+                let inline _trace (fn : unit -> string) =
+                    if traceLevel = Info
+                    then fn () |> System.Console.WriteLine
+                    else trace Info (fun () -> $"SpiralScriptHelpers.Eval / {fn ()}") getLocals
 
-            let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
-            let errors =
-                errors
-                |> Array.map (fun error ->
-                    FSharpDiagnostic.Create (error.Severity, error.Message, error.ErrorNumber, Text.range.Zero)
-                )
-                |> Array.append spiralErrors
-            match ch with
-            | Choice1Of2 v ->
-                allCode <- newAllCode
-                Ok(v), errors
-            | Choice2Of2 ex -> Result.Error(ex), errors
-        | Some (None, errors) when errors |> List.isEmpty |> not ->
-            errors.[0] |> fst |> Exception |> Result.Error,
-            self.mapErrors (FSharpDiagnosticSeverity.Error, errors, lastTopLevelIndex)
-        | _ ->
-            Result.Error (Exception "Spiral error or timeout"),
+                let isRust = rawCellCode |> String.startsWith "// // rust"
+                _trace (fun () -> if isRust then $".fsx:\n{code}" else code)
+
+                let! rustResult =
+                    if not isRust
+                    then None |> Async.init
+                    else
+                        async {
+                            let repositoryRoot = FileSystem.getSourceDirectory () |> FileSystem.findParent ".paket" false
+                            let projectDir = repositoryRoot </> "target/!fs-rs"
+                            let hash = $"repl_{code |> Crypto.hashText}"
+                            let! fsprojPath = Builder.persistCodeProject [] [] projectDir hash code
+                            let outPath = projectDir </> "target/rs"
+                            let! exitCode, result =
+                                Runtime.executeWithOptionsAsync
+                                    {
+                                        Command = $@"dotnet fable {fsprojPath} --optimize --lang rs --extension .rs --outDir {outPath} --noCache --noRestore"
+                                        CancellationToken = cancellationToken
+                                        WorkingDirectory = None
+                                        OnLine = None
+                                    }
+
+                            if exitCode <> 0
+                            then return Some (Result.Error result)
+                            else
+                                let rsPath = outPath </> $"{hash}.rs"
+                                let! rsCode = rsPath |> FileSystem.readAllTextAsync
+                                _trace (fun () -> $"\n.rs:\n{rsCode}")
+
+                                let rsCode = rsCode |> String.replace "),);" "));"
+                                do!
+                                    $"{rsCode}\n\npub fn main() -> Result<(), String> {{ Ok(()) }}\n"
+                                    |> FileSystem.writeAllTextAsync rsPath
+
+
+                                let cargoTomlPath = outPath </> $"Cargo.toml"
+                                let cargoTomlContent = $"""[package]
+name = "{hash}"
+version = "0.0.1"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+fable_library_rust = {{ path = "fable_modules/fable-library-rust", optional = true, default-features = false }}
+
+[features]
+default = ["fable_library_rust/default", "fable_library_rust/static_do_bindings"]
+
+[[bin]]
+name = "{hash}"
+path = "{hash}.rs"
+"""
+                                do! cargoTomlContent |> FileSystem.writeAllTextExists cargoTomlPath
+
+                                let! exitCode, result =
+                                    Runtime.executeWithOptionsAsync
+                                        {
+                                            Command = $@"cargo run --release --manifest-path {cargoTomlPath}"
+                                            CancellationToken = cancellationToken
+                                            WorkingDirectory = None
+                                            OnLine = None
+                                        }
+
+                                if exitCode = 0 then
+                                    let result =
+                                        result
+                                        |> String.split [| '\n' |]
+                                        |> Array.skipWhile (fun line ->
+                                            line |> String.contains @"Finished release [optimized] target" |> not
+                                        )
+                                        |> Array.skip 2
+                                        |> String.concat "\n"
+                                    return Some (Ok result)
+                                else
+                                    return Some (Result.Error result)
+                        }
+
+                if isRust then _trace (fun () -> $"\n.fsx output:")
+
+                let cancellationToken = defaultArg cancellationToken CancellationToken.None
+
+                let fsxResult =
+                    try
+                        let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
+                        let errors =
+                            errors
+                            |> Array.map (fun error ->
+                                FSharpDiagnostic.Create (error.Severity, error.Message, error.ErrorNumber, Text.range.Zero)
+                            )
+                        Some (ch, errors)
+                    with ex ->
+                        if ex.Message |> String.contains "Could not load type 'FSI_" |> not
+                        then raise ex
+                        else
+                            trace Error (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
+                            None
+
+                match fsxResult, rustResult with
+                | Some (ch, errors), None ->
+                    let errors = errors |> Array.append spiralErrors
+                    match ch with
+                    | Choice1Of2 v ->
+                        allCode <- newAllCode
+                        return Ok(v), errors
+                    | Choice2Of2 ex -> return Result.Error(ex), errors
+                | _, Some result ->
+                    let fsxOutput, errors =
+                        match fsxResult with
+                        | Some (Choice1Of2 (Some v), errors) -> v.ReflectionValue, errors
+                        | Some (Choice2Of2 ex, errors) -> ex.Message, errors
+                        | _ -> "()", [||]
+
+                    let result, errors3 =
+                        match result with
+                        | Ok result -> result, [||]
+                        | Result.Error error ->
+                            "",
+                            [|
+                                FSharpDiagnostic.Create (
+                                    FSharpDiagnosticSeverity.Error, error, 0, Text.range.Zero
+                                )
+                            |]
+
+                    let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\"\n.rs output:\n{result}\"\"\"", cancellationToken)
+                    let errors =
+                        errors
+                        |> Array.map (fun error ->
+                            FSharpDiagnostic.Create (FSharpDiagnosticSeverity.Warning, error.Message, error.ErrorNumber, Text.range.Zero)
+                        )
+                        |> Array.append spiralErrors
+                        |> Array.append errors2
+                        |> Array.append errors3
+                    match ch with
+                    | Choice1Of2 v ->
+                        allCode <- newAllCode
+                        return Ok(v), errors
+                    | Choice2Of2 ex ->
+                        return Result.Error(ex), errors
+                | _ ->
+                    return Result.Error (Exception "Spiral error or timeout (3)"),
+                    [|
+                        FSharpDiagnostic.Create (
+                            FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (3)", 0, Text.range.Zero
+                        )
+                    |]
+            | Some (None, errors) when errors |> List.isEmpty |> not ->
+                return errors.[0] |> fst |> Exception |> Result.Error,
+                self.mapErrors (FSharpDiagnosticSeverity.Error, errors, lastTopLevelIndex)
+            | _ ->
+                return Result.Error (Exception "Spiral error or timeout"),
+                [|
+                    FSharpDiagnostic.Create (
+                        FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero
+                    )
+                |]
+        }
+        |> Async.runWithTimeoutStrict timeout
+        |> Option.defaultValue (
+            Result.Error (Exception "Spiral error or timeout (2)"),
             [|
                 FSharpDiagnostic.Create (
-                    FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero
+                    FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (2)", 0, Text.range.Zero
                 )
             |]
+        )
 
 
     /// Get the available completion items from the code at the specified location.

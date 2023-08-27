@@ -20,12 +20,14 @@
   <ItemGroup>
     <Compile Include="../../../../nbs/Common.fs" />
     <Compile Include="../../../../nbs/CommonFSharp.fs" />
+    <Compile Include="../../../../nbs/Crypto.fs" />
     <Compile Include="../../../../nbs/Async.fs" />
     <Compile Include="../../../../nbs/AsyncSeq.fs" />
     <Compile Include="../../../../nbs/Networking.fs" />
     <Compile Include="../../../../nbs/Runtime.fs" />
     <Compile Include="../../../../nbs/FileSystem.fs" />
     <Compile Include="../../../../apps/spiral/Supervisor.fs" />
+    <Compile Include="../../../../apps/builder/Builder.fs" />
 
     <Compile Include="FsAutoComplete\Utils.fs" />
     <Compile Include="FsAutoComplete\TypedAstUtils.fs" />
