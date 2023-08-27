@@ -283,10 +283,9 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         match code with
         | Some (Some code, spiralErrors) ->
             let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
-            trace
-                Info
-                (fun () -> if traceLevel = Info then code else $"SpiralScriptHelpers.Eval / code:\n{code}")
-                getLocals
+            if traceLevel = Info
+            then System.Console.WriteLine code
+            else trace Info (fun () -> $"SpiralScriptHelpers.Eval / code:\n{code}") getLocals
 
             let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
             let errors =
