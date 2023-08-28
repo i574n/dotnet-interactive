@@ -281,7 +281,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
             let newAllCode = $"{allCode}\n\n{cellCode}"
 
-            let timeout = 60000
+            let timeout = 60000 * 3
             async {
                 let! mainPath, disposable =
                     newAllCode
