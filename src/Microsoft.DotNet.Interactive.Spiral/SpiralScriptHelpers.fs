@@ -271,8 +271,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                             |> Array.mapi (fun i line ->
                                 match i with
                                 | i when i < lastTopLevelIndex -> line
-                                | i when i = lastTopLevelIndex ->
-                                    $"""{"\n"}{if isRust then "let" else "inl"} main () ={"\n"}    {line}"""
+                                | i when i = lastTopLevelIndex -> $"\nlet main () =\n    {line}"
                                 | _ when line |> String.trim = "" -> ""
                                 | _ -> $"    {line}"
                             )
