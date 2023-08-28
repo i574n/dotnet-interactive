@@ -205,128 +205,137 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 else traceLevel <- Info
                 "inl main () = ()"
 
+        let isRust = rawCellCode |> String.startsWith "// // rust"
+
         let lines = rawCellCode |> String.split [| '\n' |]
 
-        let lastBlock =
-            lines
-            |> Array.tryFindBack (fun line ->
-                line |> String.length > 0
-                && line.[0] <> ' '
-            )
+        if lines |> Array.exists (fun line -> line |> String.startsWith "#r " && line |> String.endsWith "\"") then
+            let cancellationToken = defaultArg cancellationToken CancellationToken.None
+            let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
+            match ch with
+            | Choice1Of2 v -> Ok(v), errors
+            | Choice2Of2 ex -> Result.Error(ex), errors
+        else
+            let lastBlock =
+                lines
+                |> Array.tryFindBack (fun line ->
+                    line |> String.length > 0
+                    && line.[0] <> ' '
+                )
 
-        let hasMain =
-            lastBlock
-            |> Option.exists (fun line ->
-                line |> String.startsWith "inl main "
-                || line |> String.startsWith "let main "
-            )
+            let hasMain =
+                lastBlock
+                |> Option.exists (fun line ->
+                    line |> String.startsWith "inl main "
+                    || line |> String.startsWith "let main "
+                )
 
-        let cellCode, lastTopLevelIndex =
-            if hasMain
-            then rawCellCode, None
-            else
-                let lastTopLevelIndex, _ =
-                    (lines |> Array.indexed, (None, false))
-                    ||> Array.foldBack (fun (i, line) (lastTopLevelIndex, finished) ->
-                        trace Debug (fun () -> $"i: {i} / line: '{line}' / lastTopLevelIndex: {lastTopLevelIndex} / finished: {finished}") getLocals
-                        match line with
-                        | _ when finished -> lastTopLevelIndex, true
-                        | "" when lastTopLevelIndex |> Option.isSome -> Some i, false
-                        | "" -> lastTopLevelIndex, false
-                        | line when line |> String.startsWith " " -> lastTopLevelIndex, false
-                        | line when
-                            line |> String.startsWith "open "
-                            || line |> String.startsWith "prototype "
-                            || line |> String.startsWith "instance "
-                            || line |> String.startsWith "type "
-                            || line |> String.startsWith "union "
-                            || line |> String.startsWith "nominal " -> lastTopLevelIndex, true
-                        | line when
-                            line |> String.startsWith "inl "
-                            || line |> String.startsWith "let " ->
-                            let m =
-                                System.Text.RegularExpressions.Regex.Match (
-                                    line,
-                                    @"^(inl|let) +([\w\d]+) +(:|=)"
-                                )
-                            trace Debug (fun () -> $"m: '{m}' / m.Groups.Count: {m.Groups.Count}") getLocals
-                            if m.Groups.Count = 4
-                            then Some i, false
-                            else lastTopLevelIndex, true
-                        | _ -> Some i, false
-                    )
-                let code =
-                    match lastTopLevelIndex with
-                    | Some lastTopLevelIndex ->
-                        lines
-                        |> Array.mapi (fun i line ->
-                            match i with
-                            | i when i < lastTopLevelIndex -> line
-                            | i when i = lastTopLevelIndex -> $"\ninl main () =\n    {line}"
-                            | _ when line |> String.trim = "" -> ""
-                            | _ -> $"    {line}"
+            let cellCode, lastTopLevelIndex =
+                if hasMain
+                then rawCellCode, None
+                else
+                    let lastTopLevelIndex, _ =
+                        (lines |> Array.indexed, (None, false))
+                        ||> Array.foldBack (fun (i, line) (lastTopLevelIndex, finished) ->
+                            trace Debug (fun () -> $"i: {i} / line: '{line}' / lastTopLevelIndex: {lastTopLevelIndex} / finished: {finished}") getLocals
+                            match line with
+                            | _ when finished -> lastTopLevelIndex, true
+                            | "" when lastTopLevelIndex |> Option.isSome -> Some i, false
+                            | "" -> lastTopLevelIndex, false
+                            | line when line |> String.startsWith " " -> lastTopLevelIndex, false
+                            | line when
+                                line |> String.startsWith "open "
+                                || line |> String.startsWith "prototype "
+                                || line |> String.startsWith "instance "
+                                || line |> String.startsWith "type "
+                                || line |> String.startsWith "union "
+                                || line |> String.startsWith "nominal " -> lastTopLevelIndex, true
+                            | line when
+                                line |> String.startsWith "inl "
+                                || line |> String.startsWith "let " ->
+                                let m =
+                                    System.Text.RegularExpressions.Regex.Match (
+                                        line,
+                                        @"^(inl|let) +([\w\d]+) +(:|=)"
+                                    )
+                                trace Debug (fun () -> $"m: '{m}' / m.Groups.Count: {m.Groups.Count}") getLocals
+                                if m.Groups.Count = 4
+                                then Some i, false
+                                else lastTopLevelIndex, true
+                            | _ -> Some i, false
                         )
-                        |> String.concat "\n"
-                    | None -> $"{rawCellCode}\n\ninl main () = ()\n"
-                code, lastTopLevelIndex
+                    let code =
+                        match lastTopLevelIndex with
+                        | Some lastTopLevelIndex ->
+                            lines
+                            |> Array.mapi (fun i line ->
+                                match i with
+                                | i when i < lastTopLevelIndex -> line
+                                | i when i = lastTopLevelIndex ->
+                                    $"""{"\n"}{if isRust then "let" else "inl"} main () ={"\n"}    {line}"""
+                                | _ when line |> String.trim = "" -> ""
+                                | _ -> $"    {line}"
+                            )
+                            |> String.concat "\n"
+                        | None -> $"{rawCellCode}\n\ninl main () = ()\n"
+                    code, lastTopLevelIndex
 
-        let newAllCode = $"{allCode}\n\n{cellCode}"
+            let newAllCode = $"{allCode}\n\n{cellCode}"
 
-        let timeout = 60000
-        async {
-            let! mainPath, disposable =
-                newAllCode
-                |> Supervisor.persistCode timeout cancellationToken
-            use _ = disposable
-            let! code =
-                mainPath
-                |> Supervisor.buildFile timeout cancellationToken
-                |> Async.runWithTimeoutAsync timeout
-            match code with
-            | Some (Some code, spiralErrors) ->
-                let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
-                let inline _trace (fn : unit -> string) =
-                    if traceLevel = Info
-                    then fn () |> System.Console.WriteLine
-                    else trace Info (fun () -> $"SpiralScriptHelpers.Eval / {fn ()}") getLocals
+            let timeout = 60000
+            async {
+                let! mainPath, disposable =
+                    newAllCode
+                    |> Supervisor.persistCode timeout cancellationToken
+                use _ = disposable
+                let! code =
+                    mainPath
+                    |> Supervisor.buildFile timeout cancellationToken
+                    |> Async.runWithTimeoutAsync timeout
+                match code with
+                | Some (Some code, spiralErrors) ->
+                    let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
+                    let inline _trace (fn : unit -> string) =
+                        if traceLevel = Info
+                        then fn () |> System.Console.WriteLine
+                        else trace Info (fun () -> $"SpiralScriptHelpers.Eval / {fn ()}") getLocals
 
-                let isRust = rawCellCode |> String.startsWith "// // rust"
-                _trace (fun () -> if isRust then $".fsx:\n{code}" else code)
+                    _trace (fun () -> if isRust then $".fsx:\n{code}" else code)
 
-                let! rustResult =
-                    if not isRust
-                    then None |> Async.init
-                    else
-                        async {
-                            let repositoryRoot = FileSystem.getSourceDirectory () |> FileSystem.findParent ".paket" false
-                            let projectDir = repositoryRoot </> "target/!fs-rs"
-                            let hash = $"repl_{code |> Crypto.hashText}"
-                            let! fsprojPath = Builder.persistCodeProject [] [] projectDir hash code
-                            let outPath = projectDir </> "target/rs"
-                            let! exitCode, result =
-                                Runtime.executeWithOptionsAsync
-                                    {
-                                        Command = $@"dotnet fable {fsprojPath} --optimize --lang rs --extension .rs --outDir {outPath} --noCache --noRestore"
-                                        CancellationToken = cancellationToken
-                                        WorkingDirectory = None
-                                        OnLine = None
-                                    }
+                    let! rustResult =
+                        if not isRust || lastTopLevelIndex = None
+                        then None |> Async.init
+                        else
+                            async {
+                                let repositoryRoot = FileSystem.getSourceDirectory () |> FileSystem.findParent ".paket" false
+                                let projectDir = repositoryRoot </> "target/!fs-rs"
+                                let hash = $"repl_{code |> Crypto.hashText}"
+                                let! fsprojPath = Builder.persistCodeProject ["Fable.Core"] [] projectDir hash code
+                                let outPath = projectDir </> "target/rs"
+                                let! exitCode, result =
+                                    Runtime.executeWithOptionsAsync
+                                        {
+                                            Command = $@"dotnet fable {fsprojPath} --optimize --lang rs --extension .rs --outDir {outPath} --noCache"
+                                            CancellationToken = cancellationToken
+                                            WorkingDirectory = None
+                                            OnLine = None
+                                        }
 
-                            if exitCode <> 0
-                            then return Some (Result.Error result)
-                            else
-                                let rsPath = outPath </> $"{hash}.rs"
-                                let! rsCode = rsPath |> FileSystem.readAllTextAsync
-                                _trace (fun () -> $"\n.rs:\n{rsCode}")
+                                if exitCode <> 0
+                                then return Some (Result.Error result)
+                                else
+                                    let rsPath = outPath </> $"{hash}.rs"
+                                    let! rsCode = rsPath |> FileSystem.readAllTextAsync
+                                    _trace (fun () -> $"\n.rs:\n{rsCode}")
 
-                                let rsCode = rsCode |> String.replace "),);" "));"
-                                do!
-                                    $"{rsCode}\n\npub fn main() -> Result<(), String> {{ Ok(()) }}\n"
-                                    |> FileSystem.writeAllTextAsync rsPath
+                                    let rsCode = rsCode |> String.replace "),);" "));"
+                                    do!
+                                        $"{rsCode}\n\npub fn main() -> Result<(), String> {{ Ok(()) }}\n"
+                                        |> FileSystem.writeAllTextAsync rsPath
 
 
-                                let cargoTomlPath = outPath </> $"Cargo.toml"
-                                let cargoTomlContent = $"""[package]
+                                    let cargoTomlPath = outPath </> $"Cargo.toml"
+                                    let cargoTomlContent = $"""[package]
 name = "{hash}"
 version = "0.0.1"
 edition = "2021"
@@ -343,119 +352,111 @@ default = ["fable_library_rust/default", "fable_library_rust/static_do_bindings"
 name = "{hash}"
 path = "{hash}.rs"
 """
-                                do! cargoTomlContent |> FileSystem.writeAllTextExists cargoTomlPath
+                                    do! cargoTomlContent |> FileSystem.writeAllTextExists cargoTomlPath
 
-                                let! exitCode, result =
-                                    Runtime.executeWithOptionsAsync
-                                        {
-                                            Command = $@"cargo run --release --manifest-path {cargoTomlPath}"
-                                            CancellationToken = cancellationToken
-                                            WorkingDirectory = None
-                                            OnLine = None
-                                        }
+                                    let! exitCode, result =
+                                        Runtime.executeWithOptionsAsync
+                                            {
+                                                Command = $@"cargo run --release --manifest-path {cargoTomlPath}"
+                                                CancellationToken = cancellationToken
+                                                WorkingDirectory = None
+                                                OnLine = None
+                                            }
 
-                                if exitCode = 0 then
-                                    let result =
-                                        result
-                                        |> String.split [| '\n' |]
-                                        |> Array.skipWhile (fun line ->
-                                            line |> String.contains @"Finished release [optimized] target" |> not
-                                        )
-                                        |> Array.skip 2
-                                        |> String.concat "\n"
-                                    return Some (Ok result)
+                                    if exitCode = 0 then
+                                        let result =
+                                            result
+                                            |> String.split [| '\n' |]
+                                            |> Array.skipWhile (fun line ->
+                                                line |> String.contains @"Finished release [optimized] target" |> not
+                                            )
+                                            |> Array.skip 2
+                                            |> String.concat "\n"
+                                        return Some (Ok result)
+                                    else
+                                        return Some (Result.Error result)
+                            }
+
+                    let cancellationToken = defaultArg cancellationToken CancellationToken.None
+
+                    let fsxResult =
+                        if isRust
+                        then None
+                        else
+                            try
+                                let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
+                                let errors =
+                                    errors
+                                    |> Array.map (fun error ->
+                                        FSharpDiagnostic.Create (error.Severity, error.Message, error.ErrorNumber, Text.range.Zero)
+                                    )
+                                Some (ch, errors)
+                            with ex ->
+                                if ex.Message |> String.contains "Could not load type 'FSI_" |> not
+                                then raise ex
                                 else
-                                    return Some (Result.Error result)
-                        }
+                                    trace Error (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
+                                    None
 
-                if isRust then _trace (fun () -> $"\n.fsx output:")
+                    match fsxResult, rustResult with
+                    | Some (ch, errors), None ->
+                        let errors = errors |> Array.append spiralErrors
+                        match ch with
+                        | Choice1Of2 v ->
+                            allCode <- newAllCode
+                            return Ok(v), errors
+                        | Choice2Of2 ex -> return Result.Error(ex), errors
+                    | _, Some result ->
+                        let result, errors =
+                            match result with
+                            | Ok result -> result, [||]
+                            | Result.Error error ->
+                                "",
+                                [|
+                                    FSharpDiagnostic.Create (
+                                        FSharpDiagnosticSeverity.Error, error, 0, Text.range.Zero
+                                    )
+                                |]
 
-                let cancellationToken = defaultArg cancellationToken CancellationToken.None
-
-                let fsxResult =
-                    try
-                        let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
+                        let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\".rs output:\n{result}\"\"\"", cancellationToken)
                         let errors =
                             errors
-                            |> Array.map (fun error ->
-                                FSharpDiagnostic.Create (error.Severity, error.Message, error.ErrorNumber, Text.range.Zero)
-                            )
-                        Some (ch, errors)
-                    with ex ->
-                        if ex.Message |> String.contains "Could not load type 'FSI_" |> not
-                        then raise ex
-                        else
-                            trace Error (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
-                            None
-
-                match fsxResult, rustResult with
-                | Some (ch, errors), None ->
-                    let errors = errors |> Array.append spiralErrors
-                    match ch with
-                    | Choice1Of2 v ->
-                        allCode <- newAllCode
-                        return Ok(v), errors
-                    | Choice2Of2 ex -> return Result.Error(ex), errors
-                | _, Some result ->
-                    let fsxOutput, errors =
-                        match fsxResult with
-                        | Some (Choice1Of2 (Some v), errors) -> v.ReflectionValue, errors
-                        | Some (Choice2Of2 ex, errors) -> ex.Message, errors
-                        | _ -> "()", [||]
-
-                    let result, errors3 =
-                        match result with
-                        | Ok result -> result, [||]
-                        | Result.Error error ->
-                            "",
-                            [|
-                                FSharpDiagnostic.Create (
-                                    FSharpDiagnosticSeverity.Error, error, 0, Text.range.Zero
-                                )
-                            |]
-
-                    let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\"\n.rs output:\n{result}\"\"\"", cancellationToken)
-                    let errors =
-                        errors
-                        |> Array.map (fun error ->
-                            FSharpDiagnostic.Create (FSharpDiagnosticSeverity.Warning, error.Message, error.ErrorNumber, Text.range.Zero)
-                        )
-                        |> Array.append spiralErrors
-                        |> Array.append errors2
-                        |> Array.append errors3
-                    match ch with
-                    | Choice1Of2 v ->
-                        allCode <- newAllCode
-                        return Ok(v), errors
-                    | Choice2Of2 ex ->
-                        return Result.Error(ex), errors
+                            |> Array.append spiralErrors
+                            |> Array.append errors2
+                        match ch with
+                        | Choice1Of2 v ->
+                            allCode <- newAllCode
+                            return Ok(v), errors
+                        | Choice2Of2 ex ->
+                            return Result.Error(ex), errors
+                    | _ ->
+                        let ch, errors = fsi.EvalInteractionNonThrowing("()", cancellationToken)
+                        match ch with
+                        | Choice1Of2 v ->
+                            allCode <- newAllCode
+                            return Ok(v), errors
+                        | Choice2Of2 ex ->
+                            return Result.Error(ex), errors
+                | Some (None, errors) when errors |> List.isEmpty |> not ->
+                    return errors.[0] |> fst |> Exception |> Result.Error,
+                    self.mapErrors (FSharpDiagnosticSeverity.Error, errors, lastTopLevelIndex)
                 | _ ->
-                    return Result.Error (Exception "Spiral error or timeout (3)"),
+                    return Result.Error (Exception "Spiral error or timeout"),
                     [|
                         FSharpDiagnostic.Create (
-                            FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (3)", 0, Text.range.Zero
+                            FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero
                         )
                     |]
-            | Some (None, errors) when errors |> List.isEmpty |> not ->
-                return errors.[0] |> fst |> Exception |> Result.Error,
-                self.mapErrors (FSharpDiagnosticSeverity.Error, errors, lastTopLevelIndex)
-            | _ ->
-                return Result.Error (Exception "Spiral error or timeout"),
+            }
+            |> Async.runWithTimeoutStrict timeout
+            |> Option.defaultValue (
+                Result.Error (Exception "Spiral error or timeout (2)"),
                 [|
                     FSharpDiagnostic.Create (
-                        FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero
+                        FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (2)", 0, Text.range.Zero
                     )
                 |]
-        }
-        |> Async.runWithTimeoutStrict timeout
-        |> Option.defaultValue (
-            Result.Error (Exception "Spiral error or timeout (2)"),
-            [|
-                FSharpDiagnostic.Create (
-                    FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (2)", 0, Text.range.Zero
-                )
-            |]
-        )
+            )
 
 
     /// Get the available completion items from the code at the specified location.
