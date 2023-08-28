@@ -608,24 +608,24 @@ type SpiralKernel () as this =
             this.PackageRestoreContext.ResolvedPackageReferences
 
         member _.RegisterResolvedPackageReferences (packageReferences: IReadOnlyList<ResolvedPackageReference>) =
-            log $"ISupportNuget.RegisterResolvedPackageReferences / packageReferences: %A{packageReferences}"
-            // // Generate #r and #I from packageReferences
-            // let sb = StringBuilder()
-            // let hashset = HashSet()
+            log $"ISupportNuget.RegisterResolvedPackageReferences / packageReferences: %A{packageReferences |> serialize}"
+            // Generate #r and #I from packageReferences
+            let sb = StringBuilder()
+            let hashset = HashSet()
 
-            // for reference in packageReferences do
-            //     for assembly in reference.AssemblyPaths do
-            //         if hashset.Add(assembly) then
-            //             if File.Exists assembly then
-            //                 sb.AppendFormat("#r @\"{0}\"", assembly) |> ignore
-            //                 sb.Append(Environment.NewLine) |> ignore
+            for reference in packageReferences do
+                for assembly in reference.AssemblyPaths do
+                    if hashset.Add(assembly) then
+                        if File.Exists assembly then
+                            sb.AppendFormat("#r @\"{0}\"", assembly) |> ignore
+                            sb.Append(Environment.NewLine) |> ignore
 
-            //     match reference.PackageRoot with
-            //     | null -> ()
-            //     | root ->
-            //         if hashset.Add(root) then
-            //             if File.Exists root then
-            //                 sb.AppendFormat("#I @\"{0}\"", root) |> ignore
-            //                 sb.Append(Environment.NewLine) |> ignore
-            // let command = new SubmitCode(sb.ToString(), "spiral")
-            // this.DeferCommand(command)
+                match reference.PackageRoot with
+                | null -> ()
+                | root ->
+                    if hashset.Add(root) then
+                        if File.Exists root then
+                            sb.AppendFormat("#I @\"{0}\"", root) |> ignore
+                            sb.Append(Environment.NewLine) |> ignore
+            let command = new SubmitCode(sb.ToString(), "spiral")
+            this.DeferCommand(command)
