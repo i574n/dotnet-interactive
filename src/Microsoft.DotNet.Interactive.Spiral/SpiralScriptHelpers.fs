@@ -325,9 +325,10 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 else
                                     let rsPath = outPath </> $"{hash}.rs"
                                     let! rsCode = rsPath |> FileSystem.readAllTextAsync
+                                    let rsCode = rsCode |> String.replace "),);" "));"
+
                                     _trace (fun () -> $"\n.rs:\n{rsCode}")
 
-                                    let rsCode = rsCode |> String.replace "),);" "));"
                                     do!
                                         $"{rsCode}\n\npub fn main() -> Result<(), String> {{ Ok(()) }}\n"
                                         |> FileSystem.writeAllTextAsync rsPath
@@ -417,7 +418,7 @@ path = "{hash}.rs"
                                     )
                                 |]
 
-                        let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\".rs output:\n{result}\"\"\"", cancellationToken)
+                        let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\".rs output:\n{result}\n\"\"\"", cancellationToken)
                         let errors =
                             errors
                             |> Array.append spiralErrors
