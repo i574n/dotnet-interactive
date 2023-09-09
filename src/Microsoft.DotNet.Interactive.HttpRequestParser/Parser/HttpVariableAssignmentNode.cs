@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.DotNet.Interactive.HttpRequest;
 
-internal class HttpHeaderNameNode : HttpSyntaxNode
+internal class HttpVariableAssignmentNode : HttpSyntaxNode
 {
-    internal HttpHeaderNameNode(SourceText sourceText, HttpSyntaxTree? syntaxTree) : base(sourceText, syntaxTree)
+    internal HttpVariableAssignmentNode(SourceText sourceText, HttpSyntaxTree? syntaxTree) : base(sourceText, syntaxTree)
     {
     }
 }

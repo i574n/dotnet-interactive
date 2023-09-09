@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.DotNet.Interactive.HttpRequest;
@@ -57,6 +58,21 @@ internal abstract class HttpSyntaxNode : HttpSyntaxNodeOrToken
         };
     }
 
+    protected bool TextContainsWhitespace()
+    {
+        // ignore whitespace if it's the first or last token 
+        for (var i = 1; i < _childNodesAndTokens.Count - 1; i++)
+        {
+            var nodeOrToken = _childNodesAndTokens[i];
+            if (nodeOrToken is HttpSyntaxToken { Kind: HttpTokenKind.Whitespace })
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void GrowSpan(HttpSyntaxNodeOrToken child)
     {
         if (_fullSpan == default)
@@ -66,9 +82,18 @@ internal abstract class HttpSyntaxNode : HttpSyntaxNodeOrToken
         }
         else
         {
+            // if the child span is empty and uninitialized, then set it to the end of the current node's span.
+            if (child.FullSpan is { Start: 0, End: 0 })
+            {
+                if (child is HttpSyntaxNode childNode)
+                {
+                    childNode._fullSpan = new TextSpan(FullSpan.End, 0);
+                }
+            }
+
             var fullSpanStart = Math.Min(_fullSpan.Start, child.FullSpan.Start);
             var fullSpanEnd = Math.Max(_fullSpan.End, child.FullSpan.End);
-            _fullSpan = new TextSpan(fullSpanStart, fullSpanEnd - _fullSpan.Start);
+            _fullSpan = new TextSpan(fullSpanStart, fullSpanEnd - fullSpanStart);
 
             var firstSignificantNodeOrToken = ChildNodesAndTokens
                 .FirstOrDefault(n => n.IsSignificant);
@@ -92,9 +117,9 @@ internal abstract class HttpSyntaxNode : HttpSyntaxNodeOrToken
 
     internal void Add(HttpSyntaxToken token) => AddInternal(token);
 
-    internal void Add(HttpCommentNode node) => AddInternal(node);
+    internal void Add(HttpCommentNode node, bool addBefore) => AddInternal(node, addBefore);
 
-    protected void AddInternal(HttpSyntaxNodeOrToken child)
+    protected void AddInternal(HttpSyntaxNodeOrToken child, bool addBefore = false)
     {
         if (child is null)
         {
@@ -113,7 +138,14 @@ internal abstract class HttpSyntaxNode : HttpSyntaxNodeOrToken
             _isSignificant = true;
         }
 
-        _childNodesAndTokens.Add(child);
+        if (addBefore)
+        {
+            _childNodesAndTokens.Insert(0, child);
+        } else
+        {
+            _childNodesAndTokens.Add(child);
+        }
+        
 
         GrowSpan(child);
     }
@@ -135,13 +167,11 @@ internal abstract class HttpSyntaxNode : HttpSyntaxNodeOrToken
             }
         }
 
-        if (_diagnostics is not null)
+        foreach (var diagnostic in base.GetDiagnostics())
         {
-            foreach (var diagnostic in _diagnostics)
-            {
-                yield return diagnostic;
-            }
+            yield return diagnostic;
         }
+
     }
 
     public IEnumerable<HttpSyntaxNodeOrToken> DescendantNodesAndTokensAndSelf()
@@ -182,6 +212,46 @@ internal abstract class HttpSyntaxNode : HttpSyntaxNodeOrToken
             }
 
             yield return current;
+        }
+    }
+
+    protected HttpBindingResult<string> BindByInterpolation(HttpBindingDelegate bind)
+    {
+        var text = new StringBuilder();
+        var diagnostics = new List<Diagnostic>();
+        var success = true;
+
+        foreach (var node in ChildNodesAndTokens)
+        {
+            if (node is HttpEmbeddedExpressionNode { ExpressionNode: not null } n)
+            {
+                var innerResult = bind(n.ExpressionNode);
+
+                if (innerResult.IsSuccessful)
+                {
+                    var nodeText = innerResult.Value?.ToString();
+                    text.Append(nodeText);
+                }
+                else
+                {
+                    success = false;
+                }
+
+                diagnostics.AddRange(innerResult.Diagnostics);
+            }
+            else
+            {
+                text.Append(node.Text);
+            }
+        }
+
+        if (success)
+        {
+            return HttpBindingResult<string>.Success(text.ToString().Trim());
+        }
+        else
+        {
+            return HttpBindingResult<string>.Failure(diagnostics.ToArray());
         }
     }
 }

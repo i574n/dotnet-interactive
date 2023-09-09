@@ -1,11 +1,14 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #nullable enable
 
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.CodeAnalysis;
+using System;
 
 namespace Microsoft.DotNet.Interactive.HttpRequest;
 
@@ -37,12 +40,35 @@ internal class HttpRequestParser
         {
             _tokens = new HttpLexer(_sourceText, _syntaxTree).Lex();
 
+            var commentsToPrepend = new List<HttpCommentNode>();
+
             while (MoreTokens())
             {
-                // TODO ParseVariableDeclarations();
+                if (ParseComment() is { } commentNode)
+                {
+                    commentsToPrepend.Add(commentNode);
+                }
+
+                if (ParseVariableDeclarations() is { } variableNodes)
+                {
+                    foreach (var variableNode in variableNodes)
+                    {
+                        foreach (var comment in commentsToPrepend)
+                        {
+                            variableNode.Add(comment, addBefore: true);
+                        }
+                        commentsToPrepend.Clear();
+                        _syntaxTree.RootNode.Add(variableNode);
+                    }
+                }
 
                 if (ParseRequest() is { } requestNode)
                 {
+                    foreach (var comment in commentsToPrepend)
+                    {
+                        requestNode.Add(comment, addBefore: true);
+                    }
+                    commentsToPrepend.Clear();
                     _syntaxTree.RootNode.Add(requestNode);
                 }
 
@@ -50,9 +76,113 @@ internal class HttpRequestParser
                 {
                     _syntaxTree.RootNode.Add(separatorNode);
                 }
+
             }
 
             return _syntaxTree;
+        }
+
+        private IEnumerable<HttpVariableDeclarationAndAssignmentNode>? ParseVariableDeclarations()
+        {
+
+            while (MoreTokens())
+            {
+                if (GetNextSignificantToken() is { Kind: HttpTokenKind.Punctuation } and { Text: "@" })
+                {
+                    var variableNode = new HttpVariableDeclarationAndAssignmentNode(_sourceText, _syntaxTree);
+
+                    variableNode.Add(ParseVariableDeclaration());
+                    variableNode.Add(ParserVariableAssignment());
+                    if (ParseVariableValue() is { } valueNode)
+                    {
+                        variableNode.Add(valueNode);
+                        yield return variableNode;
+                    }
+                    
+                } else
+                {
+                    break;
+                }
+            }
+            
+        }
+
+        private HttpVariableValueNode? ParseVariableValue()
+        {
+            HttpVariableValueNode? node = null;
+
+            while (MoreTokens() &&
+                   CurrentToken.Kind is not HttpTokenKind.NewLine)
+            {
+                if (node is null)
+                {
+                    if (CurrentToken is { Kind: HttpTokenKind.Word })
+                    {
+                        node = new HttpVariableValueNode(_sourceText, _syntaxTree);
+
+                        ParseLeadingTrivia(node);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if (IsAtStartOfEmbeddedExpression())
+                {
+                    node.Add(ParseEmbeddedExpression());
+                }
+                else
+                {
+                    ConsumeCurrentTokenInto(node);
+                }
+            }
+
+            return node is not null
+                       ? ParseTrailingTrivia(node, stopAfterNewLine: true)
+                       : null;
+        }
+
+        private HttpVariableAssignmentNode ParserVariableAssignment()
+        {
+            var node = new HttpVariableAssignmentNode(_sourceText, _syntaxTree);
+
+            ParseLeadingTrivia(node);
+
+            if (MoreTokens() && CurrentToken is { Kind: HttpTokenKind.Word } and { Text: "=" })
+            {
+                ConsumeCurrentTokenInto(node);
+            }
+
+            return ParseTrailingTrivia(node);
+        }
+
+        private HttpVariableDeclarationNode ParseVariableDeclaration()
+        {
+            var node = new HttpVariableDeclarationNode(_sourceText, _syntaxTree);
+
+            if (MoreTokens())
+            {
+                ParseLeadingTrivia(node);
+
+                while (MoreTokens())
+                {
+                    if (CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: "@" })
+                    {
+                        ConsumeCurrentTokenInto(node);
+                    }
+                    else if (CurrentToken is { Kind: HttpTokenKind.Word })
+                    {
+                        ConsumeCurrentTokenInto(node);
+                    } else
+                    {
+                        break;
+                    }
+                }
+                
+            }
+
+            return ParseTrailingTrivia(node);
         }
 
         private HttpSyntaxToken CurrentToken => _tokens![_currentTokenIndex];
@@ -104,7 +234,7 @@ internal class HttpRequestParser
                 {
                     if (ParseComment() is { } commentNode)
                     {
-                        node.Add(commentNode);
+                        node.Add(commentNode, addBefore: true);
                     }
                 }
                 else if (CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: "/" } &&
@@ -112,7 +242,7 @@ internal class HttpRequestParser
                 {
                     if (ParseComment() is { } commentNode)
                     {
-                        node.Add(commentNode);
+                        node.Add(commentNode, addBefore: true);
                     }
                 }
                 else
@@ -124,14 +254,22 @@ internal class HttpRequestParser
             return node;
         }
 
-        private T ParseTrailingTrivia<T>(T node, bool stopAfterNewLine = false) where T : HttpSyntaxNode
+        private T ParseTrailingTrivia<T>(T node, bool stopAfterNewLine = false, bool stopBeforeNewline = false) where T : HttpSyntaxNode
         {
             while (MoreTokens())
             {
-                if (stopAfterNewLine && CurrentToken.Kind is HttpTokenKind.NewLine)
+                if (CurrentToken.Kind is HttpTokenKind.NewLine)
                 {
-                    ConsumeCurrentTokenInto(node);
-                    break;
+                    if (stopBeforeNewline)
+                    {
+                        break;
+                    }
+
+                    if (stopAfterNewLine)
+                    {
+                        ConsumeCurrentTokenInto(node);
+                        break;
+                    }
                 }
 
                 if (CurrentToken.Kind is not (HttpTokenKind.Whitespace or HttpTokenKind.NewLine))
@@ -145,8 +283,13 @@ internal class HttpRequestParser
             return node;
         }
 
-        private HttpRequestNode ParseRequest()
+        private HttpRequestNode? ParseRequest()
         {
+
+            if (IsComment())
+            {
+                return null;
+            }
             var requestNode = new HttpRequestNode(
                 _sourceText,
                 _syntaxTree);
@@ -160,12 +303,28 @@ internal class HttpRequestParser
             }
 
             var urlNode = ParseUrl();
-            requestNode.Add(urlNode);
+            if (urlNode is not null)
+            {
+                requestNode.Add(urlNode);
+            }
+            else
+            {
+                var linePositionSpan = GetLinePositionSpanFromStartAndEndIndices(
+                    requestNode.SourceText, 
+                    requestNode.Span.End, 
+                    requestNode.Span.End);
+                var diagnostic = new Diagnostic(linePositionSpan, DiagnosticSeverity.Error, "", "Missing URL");
+                requestNode.AddDiagnostic(diagnostic);
+            }
 
             var versionNode = ParseVersion();
             if (versionNode is not null)
             {
                 requestNode.Add(versionNode);
+            }
+            else 
+            {
+                ParseTrailingTrivia(requestNode, stopAfterNewLine: true);
             }
 
             var headersNode = ParseHeaders();
@@ -186,6 +345,8 @@ internal class HttpRequestParser
                 requestNode.Add(bodyNode);
             }
 
+            ParseTrailingTrivia(requestNode);
+
             return requestNode;
         }
 
@@ -195,7 +356,7 @@ internal class HttpRequestParser
             {
                 var node = new HttpRequestSeparatorNode(_sourceText, _syntaxTree);
                 ParseLeadingTrivia(node);
-                
+
                 ConsumeCurrentTokenInto(node);
                 ConsumeCurrentTokenInto(node);
                 ConsumeCurrentTokenInto(node);
@@ -217,42 +378,52 @@ internal class HttpRequestParser
 
             if (MoreTokens())
             {
-                if (CurrentToken.Text.ToLower() is "http" or "https")
-                {
-                    return null;
-                }
-        
-                if (CurrentToken.Kind is HttpTokenKind.Word)
+                if (CurrentToken.Kind is HttpTokenKind.Word &&
+                    NextToken?.Kind is HttpTokenKind.Whitespace)
                 {
                     node = new HttpMethodNode(_sourceText, _syntaxTree);
-        
+
                     ParseLeadingTrivia(node);
-        
+
                     if (CurrentToken.Text.ToLower() is not ("get" or "post" or "patch" or "put" or "delete" or "head" or "options" or "trace"))
                     {
                         var message = $"Unrecognized HTTP verb {CurrentToken.Text}";
-        
+
                         var diagnostic = CurrentToken.CreateDiagnostic(message);
-        
+
                         node.AddDiagnostic(diagnostic);
                     }
-        
+
                     ConsumeCurrentTokenInto(node);
-                    ParseTrailingTrivia(node);
+
+                    ParseTrailingTrivia(node, stopBeforeNewline: true);
                 }
             }
-        
+
             return node;
         }
 
-        private HttpUrlNode ParseUrl()
+        private HttpUrlNode? ParseUrl()
         {
-            var node = new HttpUrlNode(_sourceText, _syntaxTree);
+            HttpUrlNode? node = null;
 
-            ParseLeadingTrivia(node);
-
-            while (MoreTokens() && CurrentToken.Kind is HttpTokenKind.Word or HttpTokenKind.Punctuation)
+            while (MoreTokens() &&
+                   CurrentToken.Kind is HttpTokenKind.Word or HttpTokenKind.Punctuation)
             {
+                if (node is null)
+                {
+                    if (CurrentToken is { Kind: HttpTokenKind.Word })
+                    {
+                        node = new HttpUrlNode(_sourceText, _syntaxTree);
+
+                        ParseLeadingTrivia(node);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
                 if (IsAtStartOfEmbeddedExpression())
                 {
                     node.Add(ParseEmbeddedExpression());
@@ -263,7 +434,39 @@ internal class HttpRequestParser
                 }
             }
 
-            return ParseTrailingTrivia(node, stopAfterNewLine: true);
+            return node is not null
+                       ? ParseTrailingTrivia(node, stopBeforeNewline: true)
+                       : null;
+        }
+
+        private HttpSyntaxToken? GetNextSignificantToken()
+        {
+            var token = CurrentToken;
+            int i = 0;
+
+            while (MoreTokens())
+            {
+                if (token.IsSignificant)
+                {
+                    return token;
+                }
+
+                if (_currentTokenIndex + i < _tokens!.Count)
+                {
+                    i++;
+                    if(_currentTokenIndex + i >= _tokens.Count)
+                    {
+                        return null;
+                    }
+                    token = _tokens![_currentTokenIndex + i];
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return null;
         }
 
         private bool IsAtStartOfEmbeddedExpression()
@@ -274,11 +477,13 @@ internal class HttpRequestParser
 
         private HttpEmbeddedExpressionNode ParseEmbeddedExpression()
         {
-            var startNode = ParseExpressionStart();
-            var expressionNode = ParseExpression();
-            var endNode = ParseExpressionEnd();
+            var node = new HttpEmbeddedExpressionNode(_sourceText, _syntaxTree);
 
-            return new HttpEmbeddedExpressionNode(_sourceText, _syntaxTree, startNode, expressionNode, endNode);
+            node.Add(ParseExpressionStart());
+            node.Add(ParseExpression());
+            node.Add(ParseExpressionEnd());
+
+            return node;
         }
 
         private HttpExpressionStartNode ParseExpressionStart()
@@ -296,8 +501,8 @@ internal class HttpRequestParser
             var node = new HttpExpressionNode(_sourceText, _syntaxTree);
             ParseLeadingTrivia(node);
 
-            while (MoreTokens() && !(CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: "}" } &&
-                   NextToken is { Kind: HttpTokenKind.Punctuation } and { Text: "}" }))
+            while (MoreTokens() && 
+                   !(CurrentToken is { Text: "}" } && NextToken is { Text: "}" }))
             {
                 ConsumeCurrentTokenInto(node);
             }
@@ -318,8 +523,7 @@ internal class HttpRequestParser
         private HttpVersionNode? ParseVersion()
         {
             if (MoreTokens() &&
-                CurrentToken.Kind is HttpTokenKind.Word &&
-                CurrentToken.Text.ToLowerInvariant() is "http" or "https")
+                CurrentToken.Kind is HttpTokenKind.Word)
             {
                 var node = new HttpVersionNode(_sourceText, _syntaxTree);
 
@@ -343,8 +547,7 @@ internal class HttpRequestParser
             HttpHeadersNode? headersNode = null;
 
             while (MoreTokens() &&
-                   CurrentToken.Kind is (HttpTokenKind.Word) &&
-                   !IsRequestSeparator())
+                   (CurrentToken is { Kind: HttpTokenKind.Word } || CurrentToken is { Text: ":" }))
             {
                 headersNode ??= new HttpHeadersNode(_sourceText, _syntaxTree);
 
@@ -369,7 +572,8 @@ internal class HttpRequestParser
         {
             var node = new HttpHeaderNameNode(_sourceText, _syntaxTree);
 
-            if (MoreTokens())
+            if (MoreTokens() && 
+                CurrentToken is not { Kind: HttpTokenKind.NewLine } and not { Kind: HttpTokenKind.Punctuation, Text: ":" })
             {
                 ParseLeadingTrivia(node);
 
@@ -379,11 +583,6 @@ internal class HttpRequestParser
 
                     while (MoreTokens())
                     {
-                        if (CurrentToken.Kind is HttpTokenKind.Whitespace or HttpTokenKind.NewLine)
-                        {
-                            break;
-                        }
-
                         if (CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: ":" })
                         {
                             break;
@@ -443,19 +642,7 @@ internal class HttpRequestParser
             var node = new HttpBodySeparatorNode(_sourceText, _syntaxTree);
 
             ParseLeadingTrivia(node);
-
-            if (MoreTokens() && CurrentToken.Kind is HttpTokenKind.Whitespace or HttpTokenKind.NewLine &&
-                !IsRequestSeparator())
-            {
-                ConsumeCurrentTokenInto(node);
-
-                while (MoreTokens() && CurrentToken.Kind is (HttpTokenKind.Whitespace or HttpTokenKind.NewLine) &&
-                    !IsRequestSeparator())
-                {
-                    ConsumeCurrentTokenInto(node);
-                }
-            }
-
+            
             return ParseTrailingTrivia(node);
         }
 
@@ -554,6 +741,27 @@ internal class HttpRequestParser
             return null;
         }
 
+        private bool IsComment()
+        {
+            if (MoreTokens())
+            {
+                if (CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: "#" })
+                {
+                    return true;
+                }
+                else if (CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: "/" } &&
+                    NextToken is { Kind: HttpTokenKind.Punctuation } and { Text: "/" })
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
         private bool IsRequestSeparator()
         {
             return CurrentToken is { Kind: HttpTokenKind.Punctuation } and { Text: "#" } &&
@@ -561,6 +769,33 @@ internal class HttpRequestParser
                     NextNextToken is { Kind: HttpTokenKind.Punctuation } and { Text: "#" });
         }
 
+        private static LinePosition GetLinePositionFromCursorOffset(SourceText code, int cursorOffset)
+        {
+            int line = 0;
+            int character = 0;
+            for (int i = 0; i < cursorOffset && i < code.Length; i++)
+            {
+                switch (code[i])
+                {
+                    case '\n':
+                        line++;
+                        character = 0;
+                        break;
+                    default:
+                        character++;
+                        break;
+                }
+            }
+
+            return new LinePosition(line, character);
+        }
+
+        private static LinePositionSpan GetLinePositionSpanFromStartAndEndIndices(SourceText code, int startIndex, int endIndex)
+        {
+            var start = GetLinePositionFromCursorOffset(code, startIndex);
+            var end = GetLinePositionFromCursorOffset(code, endIndex);
+            return new LinePositionSpan(start, end);
+        }
     }
 
     private class HttpLexer
@@ -599,15 +834,14 @@ internal class HttpRequestParser
 
                 if (previousTokenKind is { } previousTokenKindValue)
                 {
-
                     if (!IsCurrentTokenANewLinePrecededByACarriageReturn(previousTokenKindValue, previousCharacter,
-                        currentTokenKind, currentCharacter) && (previousTokenKind != currentTokenKind || currentTokenKind
-                        is HttpTokenKind.NewLine || currentTokenKind is HttpTokenKind.Punctuation))
+                                                                         currentTokenKind, currentCharacter) && (previousTokenKind != currentTokenKind || currentTokenKind
+                                                                                                                     is HttpTokenKind.NewLine ||
+                                                                                                                 currentTokenKind is HttpTokenKind.Punctuation))
                     {
                         FlushToken(previousTokenKindValue);
                     }
                 }
-
 
                 previousTokenKind = currentTokenKind;
 
@@ -646,10 +880,51 @@ internal class HttpRequestParser
             return _textWindow.End < _sourceText.Length;
         }
 
-        private bool IsCurrentTokenANewLinePrecededByACarriageReturn(HttpTokenKind previousTokenKindValue, char previousCharacter, HttpTokenKind currentTokenKind, char currentCharacter)
+        private bool IsCurrentTokenANewLinePrecededByACarriageReturn(
+            HttpTokenKind previousTokenKindValue,
+            char previousCharacter,
+            HttpTokenKind currentTokenKind,
+            char currentCharacter)
         {
             return (currentTokenKind is HttpTokenKind.NewLine && previousTokenKindValue is HttpTokenKind.NewLine
-                && previousCharacter is '\r' && currentCharacter is '\n');
+                                                              && previousCharacter is '\r' && currentCharacter is '\n');
         }
     }
+
+    private class TextWindow
+    {
+        public TextWindow(int start, int limit)
+        {
+            Start = start;
+            Limit = limit;
+            End = start;
+        }
+
+        public int Start { get; }
+
+        public int End { get; private set; }
+
+        public int Limit { get; }
+
+        public int Length => End - Start;
+
+        public bool IsEmpty => Start == End;
+
+        public void Advance()
+        {
+            End++;
+
+#if DEBUG
+            if (End > Limit)
+            {
+                throw new InvalidOperationException();
+            }
+#endif
+        }
+
+        public TextSpan Span => new(Start, Length);
+
+        public override string ToString() => $"[{Start}..{End}]";
+    }
+
 }

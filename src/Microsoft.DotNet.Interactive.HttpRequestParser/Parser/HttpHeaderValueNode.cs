@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.DotNet.Interactive.HttpRequest;
@@ -14,4 +15,22 @@ internal class HttpHeaderValueNode : HttpSyntaxNode
     }
 
     public void Add(HttpEmbeddedExpressionNode node) => AddInternal(node);
+
+    public HttpBindingResult<string> TryGetValue(HttpBindingDelegate bind)
+    {
+        return BindByInterpolation(bind);
+    }
+
+    public override IEnumerable<Diagnostic> GetDiagnostics()
+    {
+        foreach (var diagnostic in base.GetDiagnostics())
+        {
+            yield return diagnostic;
+        }
+
+        if (Span.Length == 0)
+        {
+            yield return CreateDiagnostic("Missing header value");
+        }
+    }
 }

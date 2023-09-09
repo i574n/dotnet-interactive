@@ -38,7 +38,16 @@ internal abstract class HttpSyntaxNodeOrToken
 
     public override string ToString() => $"{GetType().Name}: {Text}";
 
-    public abstract IEnumerable<Diagnostic> GetDiagnostics();
+    public virtual IEnumerable<Diagnostic> GetDiagnostics()
+    {
+        if (_diagnostics is not null)
+        {
+            foreach (var diagnostic in _diagnostics)
+            {
+                yield return diagnostic;
+            }
+        }
+    }
 
     public void AddDiagnostic(Diagnostic d)
     {
@@ -46,16 +55,16 @@ internal abstract class HttpSyntaxNodeOrToken
         _diagnostics.Add(d);
     }
 
-    public Diagnostic CreateDiagnostic(string message)
+    public Diagnostic CreateDiagnostic(string message, DiagnosticSeverity severity = DiagnosticSeverity.Error)
     {
         var lines = SourceText.Lines;
 
         var tokenSpan = lines.GetLinePositionSpan(Span);
 
         var diagnostic = new Diagnostic(
-            LinePositionSpan.FromCodeAnalysisLinePositionSpan(tokenSpan), 
-            DiagnosticSeverity.Error, 
-            Text, 
+            LinePositionSpan.FromCodeAnalysisLinePositionSpan(tokenSpan),
+            severity,
+            "",
             message);
 
         return diagnostic;

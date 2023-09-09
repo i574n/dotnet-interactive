@@ -4,6 +4,7 @@
 using System.Linq;
 using FluentAssertions;
 using Microsoft.DotNet.Interactive.HttpRequest.Tests.Utility;
+using Microsoft.DotNet.Interactive.Tests.Utility;
 using Xunit;
 
 namespace Microsoft.DotNet.Interactive.HttpRequest.Tests;
@@ -68,10 +69,9 @@ public partial class ParserTests
         Content-Type: application
         """);
 
-            var requestNode = result.SyntaxTree.RootNode
-                                    .ChildNodes.Should().ContainSingle<HttpRequestNode>().Which;
-
-            requestNode.HeadersNode.HeaderNodes.Single().SeparatorNode.Text.Should().Be(":");
+            result.SyntaxTree.RootNode.DescendantNodesAndTokens()
+                  .Should().ContainSingle<HttpHeaderSeparatorNode>()
+                  .Which.Text.Should().Be(":");
         }
 
         [Fact]
@@ -87,9 +87,8 @@ public partial class ParserTests
                 Cookie: expor=;HSD=Ak_1ZasdqwASDASD;SSID=SASASSDFsdfsdf213123;APISID=WRQWRQWRQWRcc123123;
                 """);
 
-            var headersNode = result.SyntaxTree.RootNode
-                                    .ChildNodes.Should().ContainSingle<HttpRequestNode>().Which
-                                    .ChildNodes.Should().ContainSingle<HttpHeadersNode>().Which;
+            var headersNode = result.SyntaxTree.RootNode.DescendantNodesAndTokens()
+                                    .Should().ContainSingle<HttpHeadersNode>().Which;
 
             var headerNodes = headersNode.HeaderNodes.ToArray();
             headerNodes.Should().HaveCount(5);
@@ -108,6 +107,121 @@ public partial class ParserTests
 
             headerNodes[4].NameNode.Text.Should().Be("Cookie");
             headerNodes[4].ValueNode.Text.Should().Be("expor=;HSD=Ak_1ZasdqwASDASD;SSID=SASASSDFsdfsdf213123;APISID=WRQWRQWRQWRcc123123;");
+        }
+
+        [Fact]
+        public void Common_headers_are_bound_correctly()
+        {
+            var result = Parse(
+                """
+                GET https://example.com 
+                Accept: {{accept}}
+                Accept-Encoding : {{acceptEncoding}}
+                Accept-Language : {{acceptLanguage}}
+                Content-Length:  {{contentLength}}
+                Cookie: {{cookie}}
+                user-agent: {{userAgent}}
+                """);
+
+            var accept = "*/*";
+            var acceptEncoding = "gzip, deflate, br";
+            var acceptLanguage = "en-US,en;q=0.9";
+            var contentLength = 7060;
+            var cookie = "expor=;HSD=Ak_1ZasdqwASDASD;SSID=SASASSDFsdfsdf213123;APISID=WRQWRQWRQWRcc123123;";
+            var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.203";
+
+            HttpBindingDelegate bind = node =>
+            {
+                return HttpBindingResult<object>.Success(node.Text switch
+                {
+                    "accept" => accept,
+                    "acceptEncoding" => acceptEncoding,
+                    "acceptLanguage" => acceptLanguage,
+                    "contentLength" => contentLength,
+                    "cookie" => cookie,
+                    "userAgent" => userAgent
+                });
+            };
+
+            var bindingResult = result.SyntaxTree.RootNode.ChildNodes.OfType<HttpRequestNode>().Single().TryGetHttpRequestMessage(bind);
+
+            bindingResult.Diagnostics.Should().BeEmpty();
+
+            var request = bindingResult.Value;
+
+            request.Headers.Accept.Should().ContainSingle().Which.MediaType.Should().Be(accept);
+
+            request.Headers.AcceptEncoding.Select(e => e.Value).Should().BeEquivalentTo("gzip", "deflate", "br");
+
+            request.Headers.AcceptLanguage.Select(l => l.Value).Should().BeEquivalentTo("en-US", "en");
+
+            request.Headers.AcceptLanguage
+                   .Where(q => q.Quality.HasValue)
+                   .Select(l => l.Quality.Value)
+                   .Should().BeEquivalentSequenceTo(0.9);
+
+            request.Content.Headers.ContentLength.Should().Be(7060);
+
+        }
+
+        [Fact]
+        public void Diagnostics_are_reported_for_missing_header_expression_values()
+        {
+            var result = Parse(
+                """
+                GET https://example.com 
+                Accept: {{accept}}
+                """);
+
+            var bindingResult = result.SyntaxTree.RootNode.ChildNodes.OfType<HttpRequestNode>().Single()
+                                      .TryGetHttpRequestMessage(node => HttpBindingResult<object>.Failure(node.CreateDiagnostic("oops!")));
+
+            bindingResult.Diagnostics.Should().ContainSingle()
+                         .Which.Message.Should().Be("oops!");
+        }
+
+        [Fact]
+        public void Missing_header_name_produces_a_diagnostic()
+        {
+            var result = Parse(
+                """
+                GET https://example.com     
+                : {{accept}}
+                """);
+
+            var headerNode = result.SyntaxTree.RootNode.DescendantNodesAndTokens().Should().ContainSingle<HttpHeaderNode>().Which;
+
+            headerNode.GetDiagnostics().Should().ContainSingle().Which.Message.Should().Be("Missing header name");
+        }
+
+        [Fact]
+        public void Whitespace_in_a_header_name_produces_a_diagnostic()
+        {
+            var result = Parse(
+                """
+                GET https://example.com 
+                Content Type: text/html
+                """);
+
+            var headerNode = result.SyntaxTree.RootNode.DescendantNodesAndTokens().Should().ContainSingle<HttpHeaderNode>().Which;
+
+            headerNode.GetDiagnostics().Should().ContainSingle().Which.Message.Should().Be("Invalid whitespace in header name");
+        }
+
+        [Fact]
+        public void Missing_header_value_produces_a_diagnostic()
+        {
+            var result = Parse(
+                """
+                GET https://example.com 
+                Accept:
+                """);
+
+            result.SyntaxTree.RootNode.DescendantNodesAndTokens()
+                  .Should().ContainSingle<HttpHeaderNode>()
+                  .Which.GetDiagnostics()
+                  .Should().ContainSingle()
+                  .Which.Message.Should().Be("Missing header value");
         }
     }
 }
