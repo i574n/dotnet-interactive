@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);2003;CS8002;NU1608;</NoWarn> <!-- AssemblyInformationalVersionAttribute contains a non-standard value -->
     <NoWarn>$(NoWarn);NU5100</NoWarn><!-- dll outside of lib/ folder; expected since it's under contentFiles/any/any/Modules/ -->
@@ -51,6 +51,7 @@
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlVersion)" />
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.3.6" />
+    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0-preview.2" />
   </ItemGroup>
 
 </Project>
