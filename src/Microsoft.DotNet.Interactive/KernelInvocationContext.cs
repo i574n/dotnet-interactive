@@ -275,10 +275,12 @@ public class KernelInvocationContext : IDisposable
         }
         else
         {
-            var events = _childCommands[command];
-            var result = new KernelCommandResult(command);
-            using var _ = events.Subscribe(result.AddEvent);
-            return result;
+            if (_childCommands.TryGetValue(command, out var events)) {
+                var result = new KernelCommandResult(command);
+                using var _ = events.Subscribe(result.AddEvent);
+                return result;
+            }
+            return Result;
         }
     }
 
