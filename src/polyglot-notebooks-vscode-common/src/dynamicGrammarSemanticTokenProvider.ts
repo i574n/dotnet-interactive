@@ -161,6 +161,7 @@ export class DynamicGrammarSemanticTokenProvider {
         }
 
         try {
+            Logger.default.info(`loading tokens for: source.${customScopePrefix}.${initialKernelName}`);
             const grammar = await registry.loadGrammar(`source.${customScopePrefix}.${initialKernelName}`);
             if (grammar) {
                 let ruleStack = vsctm.INITIAL;
@@ -529,6 +530,10 @@ export class DynamicGrammarSemanticTokenProvider {
             }
         });
 
+        const isEmpty = (text: string) => {
+            return text === null || text.match(/^\s*$/) !== null;
+        };
+
         // prepare grammar scope loader
         const registry = new vsctm.Registry({
             onigLib: Promise.resolve({
@@ -537,18 +542,29 @@ export class DynamicGrammarSemanticTokenProvider {
             }),
             loadGrammar: (scopeName) => {
                 return new Promise<vsctm.IRawGrammar | null>((resolve, reject) => {
+                    Logger.default.info(`-------------------------Loading grammar for scope ${scopeName}`);
                     const grammarContentPair = scopeNameToGrammarMap.get(scopeName);
                     if (grammarContentPair) {
-                        Logger.default.info(`Loading grammar for scope ${scopeName}`);
                         try {
+                            if (isEmpty(grammarContentPair.grammarContents)) {
+                                Logger.default.warn(`Empty grammar for scope ${scopeName}`);
+                            }
                             const grammar = vsctm.parseRawGrammar(grammarContentPair.grammarContents, `${scopeName}.${grammarContentPair.extension}`);
-                            Logger.default.info(`Finished loading rammar for scope ${scopeName}`);
+                            Logger.default.info(`Finished loading rammar for scope ${scopeName} :
+                            name            : ${grammar.name}
+                            pattern count   : ${grammar.patterns?.length}
+                            pattern names   : ${grammar.patterns?.map(p => p.name).join(', ')}
+                            file location   : ${grammar.$vscodeTextmateLocation?.filename}
+                            -------------------------`);
                             resolve(grammar);
                         } catch (error) {
-                            Logger.default.error(`Error loading grammar for scope ${scopeName}: ${error}`);
+                            Logger.default.error(`Error loading grammar for scope ${scopeName}: ${error}
+                            -------------------------`);
                             reject(error);
                         }
                     } else {
+                        Logger.default.error(`Error loading grammar for scope ${scopeName}: no grammar found
+                        -------------------------`);
                         resolve(null);
                     }
                 });
@@ -557,6 +573,8 @@ export class DynamicGrammarSemanticTokenProvider {
 
         return registry;
     }
+
+
 
     private scopeNameToTokenType(scopeNames: string[], tokenText: string): string | null {
         const attemptedScopeNames: string[] = [];
@@ -627,7 +645,7 @@ function fixAutoClosingPairs(value: any) {
                     open: pair[0],
                     close: pair[1]
                 }
-                )
+                );
             } else if (typeof pair === 'object' && pair.open && pair.close) {
                 newAutoClosingPairs.push(pair);
             }
