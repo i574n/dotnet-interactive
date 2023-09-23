@@ -13,7 +13,7 @@ public class KernelCommandResult
 {
     private readonly List<KernelEvent> _events = new();
 
-    public KernelCommandResult(KernelCommand command)
+    internal KernelCommandResult(KernelCommand command)
     {
         Command = command;
     }
@@ -22,5 +22,16 @@ public class KernelCommandResult
 
     public IReadOnlyList<KernelEvent> Events => _events;
 
-    internal void AddEvent(KernelEvent @event) => _events.Add(@event);
+    internal void AddEvent(KernelEvent @event)
+    {
+        if (!@event.Command.Equals(Command))
+        {
+            if (!Command.ShouldResultIncludeEventsFrom(@event.Command))
+            {
+                return;
+            }
+        }
+
+        _events.Add(@event);
+    }
 }
