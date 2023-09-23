@@ -491,7 +491,8 @@ public static class CommandLineParser
         compositeKernel.Add(
             new SpiralKernel()
                 // .UseNugetDirective()
-                // .UseKernelHelpers(),
+                // .UseKernelHelpers()
+                ,
             new[] { "spiral", "Spiral" });
 
         compositeKernel.Add(
