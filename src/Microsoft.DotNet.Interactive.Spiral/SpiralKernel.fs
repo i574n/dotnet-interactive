@@ -39,8 +39,9 @@ type SpiralKernel () as this =
     do this.KernelInfo.LanguageVersion <- "2.3"
     do this.KernelInfo.DisplayName <- $"{this.KernelInfo.LocalName} - Spiral Script"
 
-    do Polyglot.Common.traceLevel <- Polyglot.Common.TraceLevel.Info
-
+    do
+        Polyglot.Common.traceLevel <- Polyglot.Common.TraceLevel.Info
+        Polyglot.Common.traceDump <- true
     static let lockObj = Object();
 
     let createScript () =
@@ -59,6 +60,19 @@ type SpiralKernel () as this =
 
     [<DefaultValue>] val mutable workingDirectory : string
 
+    let log2 (text : string) =
+        try
+            let tmpPath = Path.GetTempPath ()
+            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+            Directory.CreateDirectory logDir |> ignore
+            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH-mm-ss-fff"
+            let logFile = Path.Combine (logDir, $"log_{dateTimeStr}_{Random().Next()}.txt")
+            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+            let fileName = "SpiralKernel"
+            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+        with ex ->
+            Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+
     let log (text : string) =
         try
             let tmpPath = Path.GetTempPath ()
@@ -70,6 +84,7 @@ type SpiralKernel () as this =
             File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
         with ex ->
             Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+            log2 text
 
     let serialize1 obj =
         try
@@ -88,8 +103,18 @@ type SpiralKernel () as this =
                     )
             )
         with ex ->
-            log $"SpiralKernel.serialize2 / ex: {ex |> Polyglot.Common.printException}"
-            "Serialize error"
+            log $"SpiralKernel.serialize2 1 / ex: {ex |> Polyglot.Common.printException}"
+            try
+                Json.JsonSerializer.Serialize (
+                        obj,
+                        Json.JsonSerializerOptions (
+                            ReferenceHandler = Json.Serialization.ReferenceHandler.Preserve,
+                            WriteIndented = true
+                        )
+                )
+            with ex ->
+                log $"SpiralKernel.serialize2 2 / ex: {ex |> Polyglot.Common.printException}"
+                "Serialize error"
 
     let serialize obj =
         let result = serialize1 obj
@@ -262,7 +287,7 @@ type SpiralKernel () as this =
                 CancellationTokenSource.CreateLinkedTokenSource
                     [|
                         cancellationTokenSource.Token
-                        context.CancellationToken
+                        // context.CancellationToken
                     |]
             let result, fsiDiagnostics =
                 try
@@ -330,126 +355,127 @@ type SpiralKernel () as this =
         }
 
     let handleRequestHoverText (requestHoverText: RequestHoverText) (context: KernelInvocationContext) =
-        log $"handleRequestHoverText / requestHoverText: %A{requestHoverText |> serialize2}"
+        // log $"handleRequestHoverText / requestHoverText: %A{requestHoverText |> serialize2}"
+        task { () }
 
-        task {
-            let fsiModuleRx = System.Text.RegularExpressions.Regex @"FSI_[0-9]+\."
-            let stdinRx = System.Text.RegularExpressions.Regex @"Stdin\."
-            let parse, check, _ctx = script.Value.Fsi.ParseAndCheckInteraction(requestHoverText.Code)
+        // task {
+        //     let fsiModuleRx = System.Text.RegularExpressions.Regex @"FSI_[0-9]+\."
+        //     let stdinRx = System.Text.RegularExpressions.Regex @"Stdin\."
+        //     let parse, check, _ctx = script.Value.Fsi.ParseAndCheckInteraction(requestHoverText.Code)
 
-            let res = FsAutoComplete.ParseAndCheckResults(parse, check, EntityCache())
-            let text = FSharp.Compiler.Text.SourceText.ofString requestHoverText.Code
+        //     let res = FsAutoComplete.ParseAndCheckResults(parse, check, EntityCache())
+        //     let text = FSharp.Compiler.Text.SourceText.ofString requestHoverText.Code
 
-            // seem to be off by one
-            let line = requestHoverText.LinePosition.Line + 1
-            let col = requestHoverText.LinePosition.Character + 1
+        //     // seem to be off by one
+        //     let line = requestHoverText.LinePosition.Line + 1
+        //     let col = requestHoverText.LinePosition.Character + 1
 
-            let fsiAssemblyRx = System.Text.RegularExpressions.Regex @"^\s*Assembly:\s+FSI-ASSEMBLY\s*$"
+        //     let fsiAssemblyRx = System.Text.RegularExpressions.Regex @"^\s*Assembly:\s+FSI-ASSEMBLY\s*$"
 
-            let lineContent = text.GetLineString(line - 1)
-            let! value =
-                async {
-                    match res.TryGetSymbolUse (mkPos line col) lineContent with
-                    | Some symbolUse ->
-                        let fullName =
-                            match symbolUse with
-                            | FsAutoComplete.Patterns.SymbolUse.Val sym ->
-                                match sym.DeclaringEntity with
-                                | Some ent when ent.IsFSharpModule ->
-                                    match ent.TryFullName with
-                                    | Some _ -> Some sym.FullName
-                                    | None -> None
-                                | _ -> None
-                            | _ -> None
-                        match fullName with
-                        | Some name ->
-                            let expr = name
-                            let expr = stdinRx.Replace(expr, "")
-                            let expr = fsiModuleRx.Replace(expr, "")
-                            try
-                                return script.Value.Fsi.EvalExpression(expr) |> Some
-                            with e ->
-                                return None
-                        | None -> return None
-                    | None -> return None
-                }
+        //     let lineContent = text.GetLineString(line - 1)
+        //     let! value =
+        //         async {
+        //             match res.TryGetSymbolUse (mkPos line col) lineContent with
+        //             | Some symbolUse ->
+        //                 let fullName =
+        //                     match symbolUse with
+        //                     | FsAutoComplete.Patterns.SymbolUse.Val sym ->
+        //                         match sym.DeclaringEntity with
+        //                         | Some ent when ent.IsFSharpModule ->
+        //                             match ent.TryFullName with
+        //                             | Some _ -> Some sym.FullName
+        //                             | None -> None
+        //                         | _ -> None
+        //                     | _ -> None
+        //                 match fullName with
+        //                 | Some name ->
+        //                     let expr = name
+        //                     let expr = stdinRx.Replace(expr, "")
+        //                     let expr = fsiModuleRx.Replace(expr, "")
+        //                     try
+        //                         return script.Value.Fsi.EvalExpression(expr) |> Some
+        //                     with e ->
+        //                         return None
+        //                 | None -> return None
+        //             | None -> return None
+        //         }
 
-            log $"handleRequestHoverText / requestHoverText: %A{serialize2 requestHoverText} / parse: %A{parse} / check: %A{check} / res: %A{serialize2 res} / text: %A{text} / line: %A{line} / col: %A{col} / lineContent: %A{lineContent} / value: %A{value}"
+        //     log $"handleRequestHoverText / requestHoverText: %A{serialize2 requestHoverText} / parse: %A{parse} / check: %A{check} / res: %A{serialize2 res} / text: %A{text} / line: %A{line} / col: %A{col} / lineContent: %A{lineContent} / value: %A{value}"
 
-            match res.TryGetToolTipEnhanced (mkPos line col) lineContent with
-            | Result.Ok (Some (tip, signature, footer, typeDoc)) ->
-                let results =
-                    FsAutoComplete.TipFormatter.formatTipEnhanced
-                        tip signature footer typeDoc
-                        FsAutoComplete.TipFormatter.FormatCommentStyle.Legacy
-                    |> Seq.concat
-                    |> Seq.map (fun (signature, comment, footer) ->
-                        // make footer look like in Ionide
-                        let newFooter =
-                            footer.Split([|'\n'|], StringSplitOptions.RemoveEmptyEntries)
-                            |> Seq.map (fun line -> line.TrimEnd('\r'))
-                            |> Seq.filter (fsiAssemblyRx.IsMatch >> not)
-                            |> Seq.map (sprintf "*%s*")
-                            |> String.concat "\n\n----\n"
+        //     match res.TryGetToolTipEnhanced (mkPos line col) lineContent with
+        //     | Result.Ok (Some (tip, signature, footer, typeDoc)) ->
+        //         let results =
+        //             FsAutoComplete.TipFormatter.formatTipEnhanced
+        //                 tip signature footer typeDoc
+        //                 FsAutoComplete.TipFormatter.FormatCommentStyle.Legacy
+        //             |> Seq.concat
+        //             |> Seq.map (fun (signature, comment, footer) ->
+        //                 // make footer look like in Ionide
+        //                 let newFooter =
+        //                     footer.Split([|'\n'|], StringSplitOptions.RemoveEmptyEntries)
+        //                     |> Seq.map (fun line -> line.TrimEnd('\r'))
+        //                     |> Seq.filter (fsiAssemblyRx.IsMatch >> not)
+        //                     |> Seq.map (sprintf "*%s*")
+        //                     |> String.concat "\n\n----\n"
 
-                        let markdown =
-                            String.concat "\n\n----\n" [
-                                if not (String.IsNullOrWhiteSpace signature) then
-                                    let code =
-                                        match value with
-                                        // don't show function-values
-                                        | Some (Some value) when not (Reflection.FSharpType.IsFunction value.ReflectionType) ->
-                                            let valueString = sprintf "%0A" value.ReflectionValue
-                                            let lines = valueString.Split([|'\n'|], StringSplitOptions.RemoveEmptyEntries) |> Array.toList
+        //                 let markdown =
+        //                     String.concat "\n\n----\n" [
+        //                         if not (String.IsNullOrWhiteSpace signature) then
+        //                             let code =
+        //                                 match value with
+        //                                 // don't show function-values
+        //                                 | Some (Some value) when not (Reflection.FSharpType.IsFunction value.ReflectionType) ->
+        //                                     let valueString = sprintf "%0A" value.ReflectionValue
+        //                                     let lines = valueString.Split([|'\n'|], StringSplitOptions.RemoveEmptyEntries) |> Array.toList
 
-                                            match lines with
-                                            | [] ->
-                                                signature
-                                            | [line] ->
-                                                sprintf "%s // %s" signature line
-                                            | first :: rest ->
-                                                String.concat "\n" [
-                                                    let prefix = sprintf "%s " signature
-                                                    yield sprintf "%s// %s" prefix first
+        //                                     match lines with
+        //                                     | [] ->
+        //                                         signature
+        //                                     | [line] ->
+        //                                         sprintf "%s // %s" signature line
+        //                                     | first :: rest ->
+        //                                         String.concat "\n" [
+        //                                             let prefix = sprintf "%s " signature
+        //                                             yield sprintf "%s// %s" prefix first
 
-                                                    let ws = String(' ', prefix.Length)
+        //                                             let ws = String(' ', prefix.Length)
 
-                                                    for line in rest do
-                                                        yield sprintf "%s// %s" ws line
-                                                ]
-                                        | Some None ->
-                                            sprintf "%s // null" signature
-                                        | _ ->
-                                            signature
+        //                                             for line in rest do
+        //                                                 yield sprintf "%s// %s" ws line
+        //                                         ]
+        //                                 | Some None ->
+        //                                     sprintf "%s // null" signature
+        //                                 | _ ->
+        //                                     signature
 
-                                    sprintf "```spiral\n%s\n```" code
+        //                             sprintf "```spiral\n%s\n```" code
 
-                                if not (String.IsNullOrWhiteSpace comment) then
-                                    comment
+        //                         if not (String.IsNullOrWhiteSpace comment) then
+        //                             comment
 
-                                if not (String.IsNullOrWhiteSpace newFooter) then
-                                    newFooter
-                            ]
+        //                         if not (String.IsNullOrWhiteSpace newFooter) then
+        //                             newFooter
+        //                     ]
 
-                        FormattedValue("text/markdown", stdinRx.Replace(fsiModuleRx.Replace(markdown, "").Replace("\r\n", "\n"), ""))
-                    )
-                    |> Seq.toArray
+        //                 FormattedValue("text/markdown", stdinRx.Replace(fsiModuleRx.Replace(markdown, "").Replace("\r\n", "\n"), ""))
+        //             )
+        //             |> Seq.toArray
 
-                let sp = LinePosition(requestHoverText.LinePosition.Line, col)
-                let ep = LinePosition(requestHoverText.LinePosition.Line, col)
-                let lps = LinePositionSpan(sp, ep)
-                context.Publish(HoverTextProduced(requestHoverText, results, lps))
-                log $"handleRequestHoverText / Publish(HoverTextProduced): %A{HoverTextProduced(requestHoverText, results, lps) |> serialize2}"
+        //         let sp = LinePosition(requestHoverText.LinePosition.Line, col)
+        //         let ep = LinePosition(requestHoverText.LinePosition.Line, col)
+        //         let lps = LinePositionSpan(sp, ep)
+        //         context.Publish(HoverTextProduced(requestHoverText, results, lps))
+        //         log $"handleRequestHoverText / Publish(HoverTextProduced): %A{HoverTextProduced(requestHoverText, results, lps) |> serialize2}"
 
-            | _ ->
-                let sp = LinePosition(requestHoverText.LinePosition.Line, col)
-                let ep = LinePosition(requestHoverText.LinePosition.Line, col)
-                let lps = LinePositionSpan(sp, ep)
-                let reply = [| FormattedValue("text/markdown", "") |]
-                context.Publish(HoverTextProduced(requestHoverText, reply, lps))
-                log $"handleRequestHoverText / Publish(HoverTextProduced) ERROR: %A{HoverTextProduced(requestHoverText, reply, lps) |> serialize2}"
-                ()
-        }
+        //     | _ ->
+        //         let sp = LinePosition(requestHoverText.LinePosition.Line, col)
+        //         let ep = LinePosition(requestHoverText.LinePosition.Line, col)
+        //         let lps = LinePositionSpan(sp, ep)
+        //         let reply = [| FormattedValue("text/markdown", "") |]
+        //         context.Publish(HoverTextProduced(requestHoverText, reply, lps))
+        //         log $"handleRequestHoverText / Publish(HoverTextProduced) ERROR: %A{HoverTextProduced(requestHoverText, reply, lps) |> serialize2}"
+        //         ()
+        // }
 
     let handleRequestDiagnostics (requestDiagnostics: RequestDiagnostics) (context: KernelInvocationContext) =
         // log $"handleRequestDiagnostics / requestDiagnostics: %A{serialize requestDiagnostics}"
@@ -557,7 +583,7 @@ type SpiralKernel () as this =
 
     interface IKernelCommandHandler<RequestValueInfos> with
         member this.HandleAsync(command: RequestValueInfos, context: KernelInvocationContext) =
-            log $"IKernelCommandHandler<RequestValueInfos>.HandleAsync / command: %A{command |> serialize2}"
+            // log $"IKernelCommandHandler<RequestValueInfos>.HandleAsync / command: %A{command |> serialize2}"
             handleRequestValueValueInfos command context
 
     interface IKernelCommandHandler<RequestValue> with
