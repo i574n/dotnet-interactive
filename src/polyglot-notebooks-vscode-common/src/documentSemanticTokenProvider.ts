@@ -126,14 +126,14 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     const cellMetadata = metadataUtilities.getNotebookCellMetadataFromNotebookCellElement(cell);
                     const cellKernelName = cellMetadata.kernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
 
-                    console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / text: ${text} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
+                    // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / text: ${text} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
 
                     if (cellKernelName === "spiral") {
                         const hash = crypto.createHash('sha256');
                         hash.update(text, 'utf8');
                         const hashHex = hash.digest('hex');
 
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / hashHex: ${hashHex}`);
+                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / hashHex: ${hashHex}`);
 
                         const codePath = path.join(this._tmpCodePath, hashHex);
                         const tokensPath = path.join(this._tmpTokensPath, hashHex);
@@ -155,7 +155,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                             }
                             await new Promise(resolve => setTimeout(resolve, 60));
                         }
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / elapsed: ${Date.now() - start}`);
+                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / elapsed: ${Date.now() - start}`);
 
                         const tokens = new Uint32Array(JSON.parse(tokensText));
 

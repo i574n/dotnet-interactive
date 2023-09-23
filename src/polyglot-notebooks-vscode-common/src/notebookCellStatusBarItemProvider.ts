@@ -74,6 +74,7 @@ class DotNetNotebookCellStatusBarItemProvider {
     }
 
     async provideCellStatusBarItems(cell: vscode.NotebookCell, token: vscode.CancellationToken): Promise<vscode.NotebookCellStatusBarItem[]> {
+        // console.log(`notebookCellStatusBarItemProvider.provideCellStatusBarItems / cell: ${JSON.stringify(cell, null, 2)}`);
         if (!metadataUtilities.isDotNetNotebook(cell.notebook) || cell.document.languageId === 'markdown') {
             return [];
         }

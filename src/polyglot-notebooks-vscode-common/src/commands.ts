@@ -149,6 +149,7 @@ export function registerKernelCommands(context: vscode.ExtensionContext, clientM
 
     context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook.stopCurrentNotebookKernel', async (notebook?: vscode.NotebookDocument | undefined) => {
         notebook = notebook || getCurrentNotebookDocument();
+        // console.log(`commands.stopCurrentNotebookKernel / notebook: ${notebook}`);
         if (notebook) {
             for (const cell of notebook.getCells()) {
                 notebookControllers.endExecution(undefined, cell, false);

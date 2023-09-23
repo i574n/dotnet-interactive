@@ -184,8 +184,10 @@ export class DotNetNotebookKernel {
 
                 const outputObserver = (output: vscodeLike.NotebookCellOutput) => {
                     outputUpdatePromise = outputUpdatePromise.catch(ex => {
+                        // console.log(`notebookControllers.DotNetNotebookKernel.executeCell / outputUpdatePromise outputObserver catch / ex: ${ex}`);
                         Logger.default.error(`Failed to update output: ${ex}`);
                     }).finally(() => this.applyCellOutput(executionTask, output).catch(ex => {
+                        // console.log(`notebookControllers.DotNetNotebookKernel.executeCell / outputUpdatePromise outputObserver finally catch / ex: ${ex}`);
                         Logger.default.error(`Failed to update output: ${ex}`);
                     }));
                 };
@@ -217,11 +219,13 @@ export class DotNetNotebookKernel {
 
                     await vscodeNotebookManagement.replaceNotebookMetadata(cell.notebook.uri, rawNotebookDocumentMetadata);
                     endExecution(client, cell, success);
-                }).catch(async () => {
+                }).catch(async (reason: any) => {
+                    // console.log(`notebookControllers.DotNetNotebookKernel.executeCell / catch 1 / reason: ${reason}`);
                     await outputUpdatePromise;
                     endExecution(client, cell, false);
                 });
             } catch (err) {
+                // console.log(`notebookControllers.DotNetNotebookKernel.executeCell / catch 2 / err: ${err}`);
                 const errorOutput = new vscode.NotebookCellOutput(this.config.createErrorOutput(`Error executing cell: ${err}`).items.map(oi => generateVsCodeNotebookCellOutputItem(oi.data, oi.mime, oi.stream)));
                 await executionTask.appendOutput(errorOutput);
                 await outputUpdatePromise;
@@ -422,6 +426,7 @@ async function updateKernelInfoMetadata(client: InteractiveClient, document: vsc
 export function endExecution(client: InteractiveClient | undefined, cell: vscode.NotebookCell, success: boolean) {
     const key = cell.document.uri.toString();
     const executionTask = executionTasks.get(key);
+    // console.log(`notebookControllers.endExecution / client: ${client} / cell: ${JSON.stringify(cell, null, 2)} / success: ${success} / key: ${key} / executionTask: ${executionTask}`);
     if (executionTask) {
         executionTasks.delete(key);
         executionTask.executionOrder = client?.getNextExecutionCount();
