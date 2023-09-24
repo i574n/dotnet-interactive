@@ -14,16 +14,17 @@ type internal IMarker = interface end
 module DisplayFunctions =
 
     let log (text : string) =
-        try
-            let tmpPath = Path.GetTempPath ()
-            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-            Directory.CreateDirectory logDir |> ignore
-            let logFile = Path.Combine (logDir, "log.txt")
-            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-            let fileName = "SpiralKernelHelpers"
-            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
-        with ex ->
-            Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelHelpers.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
+            try
+                let tmpPath = Path.GetTempPath ()
+                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+                Directory.CreateDirectory logDir |> ignore
+                let logFile = Path.Combine (logDir, "log.txt")
+                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+                let fileName = "SpiralKernelHelpers"
+                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+            with ex ->
+                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelHelpers.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
 
     /// Display the object using current display settings
     let display (value: obj) =

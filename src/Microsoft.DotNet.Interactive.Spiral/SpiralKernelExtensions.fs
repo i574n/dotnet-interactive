@@ -18,16 +18,17 @@ open System.IO
 type SpiralKernelExtensions private () =
 
     static let log (text : string) =
-        try
-            let tmpPath = Path.GetTempPath ()
-            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-            Directory.CreateDirectory logDir |> ignore
-            let logFile = Path.Combine (logDir, "log.txt")
-            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-            let fileName = "SpiralKernelExtensions"
-            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
-        with ex ->
-            Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelExtensions.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
+            try
+                let tmpPath = Path.GetTempPath ()
+                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+                Directory.CreateDirectory logDir |> ignore
+                let logFile = Path.Combine (logDir, "log.txt")
+                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+                let fileName = "SpiralKernelExtensions"
+                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+            with ex ->
+                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelExtensions.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
 
     static let referenceAssemblyContaining (typ: Type) =
         log $"referenceAssemblyContaining / typ: %A{typ}"
