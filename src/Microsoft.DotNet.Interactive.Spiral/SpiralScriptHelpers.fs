@@ -50,30 +50,32 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     let fsi = FsiEvaluationSession.Create (config, argv, stdin, stdout, stderr)
 
     let log2 (text : string) =
-        try
-            let tmpPath = Path.GetTempPath ()
-            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-            Directory.CreateDirectory logDir |> ignore
-            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH-mm-ss-fff"
-            let logFile = Path.Combine (logDir, $"log_{dateTimeStr}_{Random().Next()}.txt")
-            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-            let fileName = "SpiralScriptHelpers"
-            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
-        with ex ->
-            Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"V.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
+            try
+                let tmpPath = Path.GetTempPath ()
+                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+                Directory.CreateDirectory logDir |> ignore
+                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH-mm-ss-fff"
+                let logFile = Path.Combine (logDir, $"log_{dateTimeStr}_{Random().Next()}.txt")
+                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+                let fileName = "SpiralScriptHelpers"
+                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+            with ex ->
+                trace Debug (fun () -> $"V.log / ex: {ex |> Polyglot.Common.printException}") getLocals
 
     let log (text : string) =
-        try
-            let tmpPath = Path.GetTempPath ()
-            let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-            Directory.CreateDirectory logDir |> ignore
-            let logFile = Path.Combine (logDir, "log.txt")
-            let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-            let fileName = "SpiralScriptHelpers"
-            File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
-        with ex ->
-            Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralScriptHelpers.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
-            log2 text
+        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
+            try
+                let tmpPath = Path.GetTempPath ()
+                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
+                Directory.CreateDirectory logDir |> ignore
+                let logFile = Path.Combine (logDir, "log.txt")
+                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
+                let fileName = "SpiralScriptHelpers"
+                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+            with ex ->
+                trace Debug (fun () -> $"SpiralScriptHelpers.log / ex: {ex |> Polyglot.Common.printException}") getLocals
+                log2 text
 
     do
         log $"SpiralScript () / argv: %A{argv}"
@@ -220,6 +222,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 if traceLevel = Info
                 then traceLevel <- Verbose
                 else traceLevel <- Info
+                traceDump <- traceLevel = Verbose
                 "inl main () = ()"
 
         let isRust = rawCellCode |> String.startsWith "// // rust"
@@ -231,7 +234,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
             let ch, errors = fsi.EvalInteractionNonThrowing(code, cancellationToken)
             match ch with
             | Choice1Of2 v -> Ok(v), errors
-            | Choice2Of2 ex -> Result.Error(ex), errors
+            | Choice2Of2 ex -> Error(ex), errors
         else
             try
                 let lastBlock =
@@ -306,10 +309,19 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                             newAllCode
                             |> Supervisor.persistCode timeout cancellationToken
                         use _ = disposable
-                        let! code =
+                        let! codeChoice =
                             mainPath
                             |> Supervisor.buildFile timeout cancellationToken
+                            |> Async.catch
                             |> Async.runWithTimeoutAsync timeout
+                        let code =
+                            match codeChoice with
+                            | Some (Ok code) -> Some code
+                            | Some (Error ex) ->
+                                log $"SpiralScriptHelpers.Eval / errors: {ex |> printException}"
+                                None
+                            | _ -> None
+
                         match code with
                         | Some (Some code, spiralErrors) ->
                             let spiralErrors = self.mapErrors (FSharpDiagnosticSeverity.Warning, spiralErrors, lastTopLevelIndex)
@@ -340,7 +352,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                                 }
 
                                         if exitCode <> 0
-                                        then return Some (Result.Error result)
+                                        then return Some (Error result)
                                         else
                                             let rsPath = outPath </> $"{hash}.rs"
                                             let! rsCode = rsPath |> FileSystem.readAllTextAsync
@@ -393,7 +405,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                                     |> String.concat "\n"
                                                 return Some (Ok result)
                                             else
-                                                return Some (Result.Error result)
+                                                return Some (Error result)
                                     }
 
                             let cancellationToken = defaultArg cancellationToken CancellationToken.None
@@ -414,7 +426,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                         if ex.Message |> String.contains "Could not load type 'FSI_" |> not
                                         then raise ex
                                         else
-                                            trace Error (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
+                                            trace Critical (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
                                             None
 
                             match fsxResult, rustResult with
@@ -424,12 +436,12 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 | Choice1Of2 v ->
                                     allCode <- newAllCode
                                     return Ok(v), errors
-                                | Choice2Of2 ex -> return Result.Error(ex), errors
+                                | Choice2Of2 ex -> return Error ex, errors
                             | _, Some result ->
                                 let result, errors =
                                     match result with
                                     | Ok result -> result, [||]
-                                    | Result.Error error ->
+                                    | Error error ->
                                         "",
                                         [|
                                             FSharpDiagnostic.Create (
@@ -447,7 +459,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                     allCode <- newAllCode
                                     return Ok(v), errors
                                 | Choice2Of2 ex ->
-                                    return Result.Error(ex), errors
+                                    return Error ex, errors
                             | _ ->
                                 let ch, errors = fsi.EvalInteractionNonThrowing("()", cancellationToken)
                                 match ch with
@@ -455,12 +467,12 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                     allCode <- newAllCode
                                     return Ok(v), errors
                                 | Choice2Of2 ex ->
-                                    return Result.Error(ex), errors
+                                    return Error ex, errors
                         | Some (None, errors) when errors |> List.isEmpty |> not ->
-                            return errors.[0] |> fst |> Exception |> Result.Error,
+                            return errors.[0] |> fst |> Exception |> Error,
                             self.mapErrors (FSharpDiagnosticSeverity.Error, errors, lastTopLevelIndex)
                         | _ ->
-                            return Result.Error (Exception "Spiral error or timeout"),
+                            return Error (Exception "Spiral error or timeout"),
                             [|
                                 FSharpDiagnostic.Create (
                                     FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout", 0, Text.range.Zero
@@ -468,7 +480,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                             |]
                     with ex ->
                         log $"Eval / ex: {ex |> printException}"
-                        return Result.Error (Exception "Spiral error or timeout (4)"),
+                        return Error (Exception "Spiral error or timeout (4)"),
                         [|
                             FSharpDiagnostic.Create (
                                 FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (4)", 0, Text.range.Zero
@@ -477,7 +489,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 }
                 |> Async.runWithTimeoutStrict timeout
                 |> Option.defaultValue (
-                    Result.Error (Exception "Spiral error or timeout (2)"),
+                    Error (Exception "Spiral error or timeout (2)"),
                     [|
                         FSharpDiagnostic.Create (
                             FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (2)", 0, Text.range.Zero
@@ -486,7 +498,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 )
             with ex ->
                 log $"Eval / ex: {ex |> printException}"
-                Result.Error (Exception "Spiral error or timeout (3)"),
+                Error (Exception "Spiral error or timeout (3)"),
                 [|
                     FSharpDiagnostic.Create (
                         FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (3)", 0, Text.range.Zero
