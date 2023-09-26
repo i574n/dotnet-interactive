@@ -216,7 +216,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         log $"Eval / code: %A{code}"
 
         let rawCellCode =
-            if code <> "//// trace"
+            if code.Trim() <> "//// trace"
             then code |> String.replace "\r\n" "\n"
             else
                 if traceLevel = Info
