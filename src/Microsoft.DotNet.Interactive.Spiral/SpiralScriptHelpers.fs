@@ -373,22 +373,22 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
                                             let cargoTomlPath = outPath </> $"Cargo.toml"
                                             let cargoTomlContent = $"""[package]
-    name = "{hash}"
-    version = "0.0.1"
-    edition = "2021"
+name = "{hash}"
+version = "0.0.1"
+edition = "2021"
 
-    [workspace]
+[workspace]
 
-    [dependencies]
-    fable_library_rust = {{ path = "fable_modules/fable-library-rust", optional = true, default-features = false }}
+[dependencies]
+fable_library_rust = {{ path = "fable_modules/fable-library-rust", optional = true, default-features = false }}
 
-    [features]
-    default = ["fable_library_rust/default", "fable_library_rust/static_do_bindings"]
+[features]
+default = ["fable_library_rust/default", "fable_library_rust/static_do_bindings"]
 
-    [[bin]]
-    name = "{hash}"
-    path = "{hash}.rs"
-    """
+[[bin]]
+name = "{hash}"
+path = "{hash}.rs"
+"""
                                             do! cargoTomlContent |> FileSystem.writeAllTextExists cargoTomlPath
 
                                             let! exitCode, result =
