@@ -14,7 +14,7 @@ open FSharp.Compiler.EditorServices
 
 open Polyglot
 open Polyglot.Common
-open Polyglot.FileSystem
+open Polyglot.FileSystem.Operators
 
 [<RequireQualifiedAccess>]
 type LangVersion =
@@ -88,7 +88,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         [tmpSpiralPath; tmpCodePath; tmpTokensPath]
         |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
 
-    let stream, disposable = watchDirectory true tmpCodePath
+    let stream, disposable = FileSystem.watchDirectory true tmpCodePath
 
     do
         try
@@ -98,11 +98,14 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     try
                         let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
                         match event with
-                        | FileSystemChange.Created (path, Some code) ->
+                        | FileSystem.FileSystemChange.Created (path, Some code) ->
                             let! tokens = code |> Supervisor.getCodeTokenRange 10000 None
                             match tokens with
                             | Some tokens ->
-                                do! tokens |> FSharp.Json.Json.serialize |> writeAllTextAsync (tmpTokensPath </> path)
+                                do!
+                                    tokens
+                                    |> FSharp.Json.Json.serialize
+                                    |> FileSystem.writeAllTextAsync (tmpTokensPath </> path)
                             | None ->
                                 log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
                         | _ -> ()
@@ -118,11 +121,14 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     try
                         let tokensPath = tmpTokensPath </> (codePath |> System.IO.Path.GetFileName)
                         if File.Exists tokensPath |> not then
-                            let! code = codePath |> readAllTextAsync
+                            let! code = codePath |> FileSystem.readAllTextAsync
                             let! tokens = code |> Supervisor.getCodeTokenRange 10000 None
                             match tokens with
                             | Some tokens ->
-                                do! tokens |> FSharp.Json.Json.serialize |> writeAllTextAsync tokensPath
+                                do!
+                                    tokens
+                                    |> FSharp.Json.Json.serialize
+                                    |> FileSystem.writeAllTextAsync tokensPath
                             | None ->
                                 log $"SpiralScriptHelpers.watchDirectory / GetFiles / tokens: None / {getLocals ()}"
                     with ex ->
