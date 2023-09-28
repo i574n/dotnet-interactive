@@ -99,7 +99,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                         let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
                         match event with
                         | FileSystem.FileSystemChange.Created (path, Some code) ->
-                            let! tokens = code |> Supervisor.getCodeTokenRange 10000 None
+                            let! tokens = code |> Supervisor.getCodeTokenRange None
                             match tokens with
                             | Some tokens ->
                                 do!
@@ -122,7 +122,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                         let tokensPath = tmpTokensPath </> (codePath |> System.IO.Path.GetFileName)
                         if File.Exists tokensPath |> not then
                             let! code = codePath |> FileSystem.readAllTextAsync
-                            let! tokens = code |> Supervisor.getCodeTokenRange 10000 None
+                            let! tokens = code |> Supervisor.getCodeTokenRange None
                             match tokens with
                             | Some tokens ->
                                 do!
@@ -308,12 +308,18 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
                 let newAllCode = $"{allCode}\n\n{cellCode}"
 
-                let timeout = 60000 * 3
+                let timeout =
+                    lines
+                    |> Array.tryPick (fun line ->
+                        if line |> String.startsWith "// // timeout="
+                        then line |> String.split [| '=' |] |> Array.tryItem 1 |> Option.map int
+                        else None
+                    )
+                    |> Option.defaultValue 60000
+
                 async {
                     try
-                        let! mainPath, disposable =
-                            newAllCode
-                            |> Supervisor.persistCode timeout cancellationToken
+                        let! mainPath, disposable = newAllCode |> Supervisor.persistCode
                         use _ = disposable
                         let! codeChoice =
                             mainPath

@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="../../../../nbs/Common.fs" />
     <Compile Include="../../../../nbs/CommonFSharp.fs" />
+    <Compile Include="../../../../nbs/Threading.fs" />
     <Compile Include="../../../../nbs/Crypto.fs" />
     <Compile Include="../../../../nbs/Async.fs" />
     <Compile Include="../../../../nbs/AsyncSeq.fs" />
