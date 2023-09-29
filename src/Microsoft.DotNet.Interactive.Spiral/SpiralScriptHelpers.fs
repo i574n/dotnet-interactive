@@ -92,28 +92,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     do
         try
-            let streamAsyncChild =
-                stream
-                |> FSharp.Control.AsyncSeq.iterAsyncParallel (fun (ticks, event) -> async {
-                    try
-                        let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
-                        match event with
-                        | FileSystem.FileSystemChange.Created (path, Some code) ->
-                            let! tokens = code |> Supervisor.getCodeTokenRange None
-                            match tokens with
-                            | Some tokens ->
-                                do!
-                                    tokens
-                                    |> FSharp.Json.Json.serialize
-                                    |> FileSystem.writeAllTextAsync (tmpTokensPath </> path)
-                            | None ->
-                                log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
-                        | _ -> ()
-                    with ex ->
-                        log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / ex: {ex |> printException} / {getLocals ()}"
-                })
-                |> Async.StartChild
-
             let existingFilesChild =
                 tmpCodePath
                 |> System.IO.Directory.GetFiles
@@ -136,15 +114,34 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 })
                 |> Async.Sequential
                 |> Async.Ignore
-                |> Async.StartChild
+
+            let streamAsyncChild =
+                stream
+                |> FSharp.Control.AsyncSeq.iterAsyncParallel (fun (ticks, event) -> async {
+                    try
+                        let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
+                        match event with
+                        | FileSystem.FileSystemChange.Created (path, Some code) ->
+                            let! tokens = code |> Supervisor.getCodeTokenRange None
+                            match tokens with
+                            | Some tokens ->
+                                do!
+                                    tokens
+                                    |> FSharp.Json.Json.serialize
+                                    |> FileSystem.writeAllTextAsync (tmpTokensPath </> path)
+                            | None ->
+                                log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
+                        | _ -> ()
+                    with ex ->
+                        log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / ex: {ex |> printException} / {getLocals ()}"
+                })
 
             async {
                 do! Async.Sleep 3000
-                let! _ = streamAsyncChild
-                let! _ = existingFilesChild
-                ()
+                existingFilesChild |> Async.StartImmediate
+                streamAsyncChild |> Async.Start
             }
-            |> Async.StartImmediate
+            |> Async.Start
         with ex ->
             log $"SpiralScriptHelpers / ex: {ex |> printException}"
 
