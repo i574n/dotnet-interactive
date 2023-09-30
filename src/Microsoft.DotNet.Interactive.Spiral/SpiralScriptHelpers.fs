@@ -315,6 +315,15 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     )
                     |> Option.defaultValue 60000
 
+                let printCode =
+                    lines
+                    |> Array.tryPick (fun line ->
+                        if line |> String.startsWith "// // print_code="
+                        then line |> String.split [| '=' |] |> Array.tryItem 1 |> Option.map ((=) "true")
+                        else None
+                    )
+                    |> Option.defaultValue true
+
                 async {
                     try
                         let! mainPath, disposable = newAllCode |> Supervisor.persistCode
@@ -340,7 +349,8 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 then fn () |> System.Console.WriteLine
                                 else trace Info (fun () -> $"SpiralScriptHelpers.Eval / {fn ()}") getLocals
 
-                            _trace (fun () -> if isRust then $".fsx:\n{code}" else code)
+                            if printCode
+                            then _trace (fun () -> if isRust then $"\n.fsx:\n{code}" else code)
 
                             let! rustResult =
                                 if not isRust || lastTopLevelIndex = None
@@ -368,7 +378,8 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                             let! rsCode = rsPath |> FileSystem.readAllTextAsync
                                             let rsCode = rsCode |> String.replace "),);" "));"
 
-                                            _trace (fun () -> $"\n.rs:\n{rsCode}")
+                                            if printCode
+                                            then _trace (fun () -> $".rs:\n{rsCode}")
 
                                             do!
                                                 $"{rsCode}\n\npub fn main() -> Result<(), String> {{ Ok(()) }}\n"
@@ -433,11 +444,8 @@ path = "{hash}.rs"
                                             )
                                         Some (ch, errors)
                                     with ex ->
-                                        if ex.Message |> String.contains "Could not load type 'FSI_" |> not
-                                        then raise ex
-                                        else
-                                            trace Critical (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
-                                            None
+                                        trace Critical (fun () -> $"SpiralScriptHelpers.Eval / ex: {ex |> printException}") getLocals
+                                        None
 
                             match fsxResult, rustResult with
                             | Some (ch, errors), None ->
