@@ -281,10 +281,10 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                     let m =
                                         System.Text.RegularExpressions.Regex.Match (
                                             line,
-                                            @"^(inl|let) +(\w[\w\d']*) +(:|=)"
+                                            @"^(inl|let) +([~\(\w][\w\d']*(?:| *[~\w][\w\d']*\)|, *[~\w][\w\d']*)) +[:=]"
                                         )
                                     trace Debug (fun () -> $"m: '{m}' / m.Groups.Count: {m.Groups.Count}") getLocals
-                                    if m.Groups.Count = 4
+                                    if m.Groups.Count = 3
                                     then Some i, false
                                     else lastTopLevelIndex, true
                                 | _ -> Some i, false
