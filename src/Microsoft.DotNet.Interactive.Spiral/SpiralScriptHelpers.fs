@@ -264,9 +264,10 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 trace Debug (fun () -> $"i: {i} / line: '{line}' / lastTopLevelIndex: {lastTopLevelIndex} / finished: {finished}") getLocals
                                 match line with
                                 | _ when finished -> lastTopLevelIndex, true
-                                | "" when lastTopLevelIndex |> Option.isSome -> Some i, false
                                 | "" -> lastTopLevelIndex, false
-                                | line when line |> String.startsWith " " -> lastTopLevelIndex, false
+                                | line when
+                                    line |> String.startsWith " "
+                                    || line |> String.startsWith "// " -> lastTopLevelIndex, false
                                 | line when
                                     line |> String.startsWith "open "
                                     || line |> String.startsWith "prototype "
@@ -280,7 +281,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                     let m =
                                         System.Text.RegularExpressions.Regex.Match (
                                             line,
-                                            @"^(inl|let) +([\w\d]+) +(:|=)"
+                                            @"^(inl|let) +(\w[\w\d']*) +(:|=)"
                                         )
                                     trace Debug (fun () -> $"m: '{m}' / m.Groups.Count: {m.Groups.Count}") getLocals
                                     if m.Groups.Count = 4
