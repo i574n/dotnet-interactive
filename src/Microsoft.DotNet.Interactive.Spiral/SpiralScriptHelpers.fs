@@ -80,24 +80,27 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     do
         log $"SpiralScript () / argv: %A{argv}"
 
-    let tmpSpiralPath = Path.GetTempPath () </> "!dotnet-interactive-spiral"
-    let tmpCodePath = tmpSpiralPath </> "code"
-    let tmpTokensPath = tmpSpiralPath </> "tokens"
+    let tmpSpiralDir = Path.GetTempPath () </> "!dotnet-interactive-spiral"
+    let tmpCodeDir = tmpSpiralDir </> "code"
+    let tmpTokensDir = tmpSpiralDir </> "tokens"
+
+    let spiralExDir = Path.GetTempPath () </> "!spiral-ex"
+    let maxTermCountPath = spiralExDir </> "max_term_count.txt"
 
     do
-        [tmpSpiralPath; tmpCodePath; tmpTokensPath]
+        [ tmpSpiralDir; tmpCodeDir; tmpTokensDir ]
         |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
 
-    let stream, disposable = FileSystem.watchDirectory true tmpCodePath
+    let stream, disposable = FileSystem.watchDirectory true tmpCodeDir
 
     do
         try
             let existingFilesChild =
-                tmpCodePath
+                tmpCodeDir
                 |> System.IO.Directory.GetFiles
                 |> Array.map (fun codePath -> async {
                     try
-                        let tokensPath = tmpTokensPath </> (codePath |> System.IO.Path.GetFileName)
+                        let tokensPath = tmpTokensDir </> (codePath |> System.IO.Path.GetFileName)
                         if File.Exists tokensPath |> not then
                             let! code = codePath |> FileSystem.readAllTextAsync
                             let! tokens = code |> Supervisor.getCodeTokenRange None
@@ -128,7 +131,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 do!
                                     tokens
                                     |> FSharp.Json.Json.serialize
-                                    |> FileSystem.writeAllTextAsync (tmpTokensPath </> path)
+                                    |> FileSystem.writeAllTextAsync (tmpTokensDir </> path)
                             | None ->
                                 log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
                         | _ -> ()
@@ -324,15 +327,34 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     )
                     |> Option.defaultValue true
 
+                let maxTermCount =
+                    lines
+                    |> Array.tryPick (fun line ->
+                        if line |> String.startsWith "// // max_term_count="
+                        then line |> String.split [| '=' |] |> Array.tryItem 1 |> Option.map int
+                        else None
+                    )
+
                 async {
                     try
                         let! mainPath, disposable = newAllCode |> Supervisor.persistCode
                         use _ = disposable
+
+                        match maxTermCount with
+                        | Some maxTermCount ->
+                            do! maxTermCount |> string |> FileSystem.writeAllTextAsync maxTermCountPath
+                        | None -> ()
+
                         let! codeChoice =
                             mainPath
                             |> Supervisor.buildFile timeout cancellationToken
                             |> Async.catch
                             |> Async.runWithTimeoutAsync timeout
+
+                        match maxTermCount with
+                        | Some _ -> do! FileSystem.deleteFileAsync maxTermCountPath |> Async.Ignore
+                        | None -> ()
+
                         let code =
                             match codeChoice with
                             | Some (Ok code) -> Some code
