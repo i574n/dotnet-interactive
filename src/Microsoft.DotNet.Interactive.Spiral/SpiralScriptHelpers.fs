@@ -231,9 +231,9 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 traceDump <- traceLevel = Verbose
                 "inl main () = ()"
 
-        let isRust = rawCellCode |> String.startsWith "// // rust"
-
         let lines = rawCellCode |> String.split [| '\n' |]
+
+        let isRust = lines |> Array.contains "// // rust"
 
         if lines |> Array.exists (fun line -> line |> String.startsWith "#r " && line |> String.endsWith "\"") then
             let cancellationToken = defaultArg cancellationToken CancellationToken.None
