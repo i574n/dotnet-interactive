@@ -91,7 +91,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         [ tmpSpiralDir; tmpCodeDir; tmpTokensDir ]
         |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
 
-    let stream, disposable = FileSystem.watchDirectory true tmpCodeDir
+    let stream, disposable = FileSystem.watchDirectory false tmpCodeDir
 
     do
         try
@@ -102,8 +102,8 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     try
                         let tokensPath = tmpTokensDir </> (codePath |> System.IO.Path.GetFileName)
                         if File.Exists tokensPath |> not then
-                            let! code = codePath |> FileSystem.readAllTextAsync
-                            let! tokens = code |> Supervisor.getCodeTokenRange None
+                            let port = Supervisor.getCompilerPort ()
+                            let! tokens = codePath |> Supervisor.getFileTokenRange port None
                             match tokens with
                             | Some tokens ->
                                 do!
@@ -124,8 +124,18 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     try
                         let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
                         match event with
-                        | FileSystem.FileSystemChange.Created (path, Some code) ->
-                            let! tokens = code |> Supervisor.getCodeTokenRange None
+                        | FileSystem.FileSystemChange.Created (path, _) ->
+                            let codePath = tmpCodeDir </> path
+                            do!
+                                codePath
+                                |> FileSystem.waitForFileAccess (Some (
+                                    System.IO.FileAccess.Read,
+                                    System.IO.FileShare.Read
+                                ))
+                                |> Async.runWithTimeoutAsync 1000
+                                |> Async.Ignore
+                            let port = Supervisor.getCompilerPort ()
+                            let! tokens = codePath |> Supervisor.getFileTokenRange port None
                             match tokens with
                             | Some tokens ->
                                 do!
@@ -345,9 +355,11 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                             do! maxTermCount |> string |> FileSystem.writeAllTextAsync maxTermCountPath
                         | None -> ()
 
+                        let port = Supervisor.getCompilerPort ()
+
                         let! codeChoice =
                             mainPath
-                            |> Supervisor.buildFile timeout cancellationToken
+                            |> Supervisor.buildFile timeout port cancellationToken
                             |> Async.catch
                             |> Async.runWithTimeoutAsync timeout
 
