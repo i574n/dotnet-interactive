@@ -326,7 +326,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                         then line |> String.split [| '=' |] |> Array.tryItem 1 |> Option.map int
                         else None
                     )
-                    |> Option.defaultValue 20000
+                    |> Option.defaultValue 15000
 
                 let printCode =
                     lines
