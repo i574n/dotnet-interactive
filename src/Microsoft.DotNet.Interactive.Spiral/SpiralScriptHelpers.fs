@@ -232,7 +232,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         log $"Eval / code: %A{code}"
 
         let rawCellCode =
-            if code.Trim() <> "//// trace"
+            if code |> String.trim <> "// // trace"
             then code |> String.replace "\r\n" "\n"
             else
                 if traceLevel = Info
@@ -242,8 +242,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                 "inl main () = ()"
 
         let lines = rawCellCode |> String.split [| '\n' |]
-
-        let isRust = lines |> Array.contains "// // rust"
 
         if lines |> Array.exists (fun line -> line |> String.startsWith "#r " && line |> String.endsWith "\"") then
             let cancellationToken = defaultArg cancellationToken CancellationToken.None
@@ -319,6 +317,14 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
                 let newAllCode = $"{allCode}\n\n{cellCode}"
 
+                let rustArgs =
+                    lines
+                    |> Array.tryPick (fun line ->
+                        if line |> String.startsWith "// // rust="
+                        then line |> String.split [| '=' |] |> Array.tryItem 1
+                        else None
+                    )
+
                 let timeout =
                     lines
                     |> Array.tryPick (fun line ->
@@ -384,22 +390,42 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 else trace Info (fun () -> $"SpiralScriptHelpers.Eval / {fn ()}") getLocals
 
                             if printCode
-                            then _trace (fun () -> if isRust then $"\n.fsx:\n{code}" else code)
+                            then _trace (fun () -> if rustArgs |> Option.isSome then $"\n.fsx:\n{code}" else code)
 
                             let! rustResult =
-                                if not isRust || lastTopLevelIndex = None
+                                if rustArgs |> Option.isNone || lastTopLevelIndex = None
                                 then None |> Async.init
                                 else
                                     async {
                                         let repositoryRoot = FileSystem.getSourceDirectory () |> FileSystem.findParent ".paket" false
                                         let projectDir = repositoryRoot </> "target/!fs-rs"
-                                        let hash = $"repl_{code |> Crypto.hashText}"
+                                        // let hash = $"repl_{code |> Crypto.hashText}"
+                                        let hash = $"repl_main"
+
+                                        let outDir = projectDir </> $"target/rs_{hash}"
+
+                                        let libLinkTargetPath = projectDir </> "target/fable-library-rust"
+                                        let libLinkPath = outDir </> $"fable_modules/fable-library-rust"
+
+                                        if Directory.Exists libLinkTargetPath |> not
+                                        then libLinkTargetPath |> Directory.CreateDirectory |> ignore
+
+                                        libLinkPath |> Path.GetDirectoryName |> Directory.CreateDirectory |> ignore
+
+                                        let libLinkPathInfo = DirectoryInfo libLinkPath
+                                        if libLinkPathInfo.Exists && libLinkPathInfo.LinkTarget = null then
+                                            Directory.Delete (libLinkPath, true)
+
+                                        if libLinkPath |> Directory.Exists |> not then
+                                            Directory.CreateSymbolicLink (libLinkPath, libLinkTargetPath)
+                                            |> ignore
+
                                         let! fsprojPath = Builder.persistCodeProject ["Fable.Core"] [] projectDir hash code
-                                        let outPath = projectDir </> "target/rs"
+
                                         let! exitCode, result =
                                             Runtime.executeWithOptionsAsync
                                                 {
-                                                    Command = $@"dotnet fable {fsprojPath} --optimize --lang rs --extension .rs --outDir {outPath} --noCache"
+                                                    Command = $@"dotnet fable {fsprojPath} --optimize --lang rs --extension .rs --outDir {outDir}"
                                                     CancellationToken = cancellationToken
                                                     WorkingDirectory = None
                                                     OnLine = None
@@ -408,19 +434,28 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                         if exitCode <> 0
                                         then return Some (Error result)
                                         else
-                                            let rsPath = outPath </> $"{hash}.rs"
+                                            let rsPath = outDir </> $"{hash}.rs"
                                             let! rsCode = rsPath |> FileSystem.readAllTextAsync
-                                            let rsCode = rsCode |> String.replace "),);" "));"
+
+                                            let mainCode = "pub fn main() -> Result<(), String> {{ Ok(()) }}"
+
+                                            let cached = rsCode |> String.contains mainCode
+
+                                            let rsCode =
+                                                if cached
+                                                then rsCode
+                                                else rsCode |> String.replace "),);" "));"
 
                                             if printCode
                                             then _trace (fun () -> $".rs:\n{rsCode}")
 
-                                            do!
-                                                $"{rsCode}\n\npub fn main() -> Result<(), String> {{ Ok(()) }}\n"
+                                            if not cached
+                                            then do!
+                                                $"{rsCode}\n\n{mainCode}\n"
                                                 |> FileSystem.writeAllTextAsync rsPath
 
 
-                                            let cargoTomlPath = outPath </> $"Cargo.toml"
+                                            let cargoTomlPath = outDir </> $"Cargo.toml"
                                             let cargoTomlContent = $"""[package]
 name = "{hash}"
 version = "0.0.1"
@@ -466,7 +501,7 @@ path = "{hash}.rs"
                             let cancellationToken = defaultArg cancellationToken CancellationToken.None
 
                             let fsxResult =
-                                if isRust
+                                if rustArgs |> Option.isSome
                                 then None
                                 else
                                     try
@@ -501,7 +536,8 @@ path = "{hash}.rs"
                                             )
                                         |]
 
-                                let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\".rs output:\n{result}\n\"\"\"", cancellationToken)
+                                let header = if printCode then ".rs output:\n" else ""
+                                let ch, errors2 = fsi.EvalInteractionNonThrowing($"\"\"\"{header}{result}\n\"\"\"", cancellationToken)
                                 let errors =
                                     errors
                                     |> Array.append spiralErrors
@@ -532,10 +568,10 @@ path = "{hash}.rs"
                             |]
                     with ex ->
                         log $"Eval / ex: {ex |> printException}"
-                        return Error (Exception "Spiral error or timeout (4)"),
+                        return Error (Exception $"Spiral error or timeout (4) / ex: {ex |> printException}"),
                         [|
                             FSharpDiagnostic.Create (
-                                FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (4)", 0, Text.range.Zero
+                                FSharpDiagnosticSeverity.Error, $"Diag: Spiral error or timeout (4) / ex: {ex |> printException}", 0, Text.range.Zero
                             )
                         |]
                 }
@@ -550,10 +586,10 @@ path = "{hash}.rs"
                 )
             with ex ->
                 log $"Eval / ex: {ex |> printException}"
-                Error (Exception "Spiral error or timeout (3)"),
+                Error (Exception $"Spiral error or timeout (3) / ex: {ex |> printException}"),
                 [|
                     FSharpDiagnostic.Create (
-                        FSharpDiagnosticSeverity.Error, "Diag: Spiral error or timeout (3)", 0, Text.range.Zero
+                        FSharpDiagnosticSeverity.Error, $"Diag: Spiral error or timeout (3) / ex: {ex |> printException}", 0, Text.range.Zero
                     )
                 |]
 
