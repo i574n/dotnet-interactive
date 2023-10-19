@@ -91,7 +91,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         [ tmpSpiralDir; tmpCodeDir; tmpTokensDir ]
         |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
 
-    let stream, disposable = FileSystem.watchDirectory false tmpCodeDir
+    let stream, disposable = FileSystem.watchDirectory (fun _ -> false) tmpCodeDir
 
     do
         try
@@ -124,7 +124,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     try
                         let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
                         match event with
-                        | FileSystem.FileSystemChange.Created (path, _) ->
+                        | FileSystem.FileSystemChange.Changed (path, _) ->
                             let codePath = tmpCodeDir </> path
                             do!
                                 codePath
