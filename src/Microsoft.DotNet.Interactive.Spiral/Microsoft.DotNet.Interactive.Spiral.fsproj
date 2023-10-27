@@ -48,7 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(PkgFSharp_Core)\lib\netstandard2.1\FSharp.Core.xml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
