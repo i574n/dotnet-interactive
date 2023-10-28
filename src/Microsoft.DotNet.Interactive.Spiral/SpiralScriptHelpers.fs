@@ -95,6 +95,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     do
         try
+            let port = Supervisor.getCompilerPort () + 2
             let existingFilesChild =
                 tmpCodeDir
                 |> System.IO.Directory.GetFiles
@@ -102,7 +103,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     try
                         let tokensPath = tmpTokensDir </> (codePath |> System.IO.Path.GetFileName)
                         if File.Exists tokensPath |> not then
-                            let port = Supervisor.getCompilerPort ()
                             let! tokens = codePath |> Supervisor.getFileTokenRange port None
                             match tokens with
                             | Some tokens ->
@@ -134,7 +134,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 ))
                                 |> Async.runWithTimeoutAsync 1000
                                 |> Async.Ignore
-                            let port = Supervisor.getCompilerPort ()
                             let! tokens = codePath |> Supervisor.getFileTokenRange port None
                             match tokens with
                             | Some tokens ->
