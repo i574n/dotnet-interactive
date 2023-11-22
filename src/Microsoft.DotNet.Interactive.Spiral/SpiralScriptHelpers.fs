@@ -80,82 +80,87 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     do
         log $"SpiralScript () / argv: %A{argv}"
 
-    let tmpSpiralDir = Path.GetTempPath () </> "!dotnet-interactive-spiral"
-    let tmpCodeDir = tmpSpiralDir </> "code"
-    let tmpTokensDir = tmpSpiralDir </> "tokens"
+    let assemblyName = Reflection.Assembly.GetEntryAssembly().GetName().Name
+
+    let disposable =
+        if [ "dotnet-repl" ] |> List.contains assemblyName |> not then
+            let tmpSpiralDir = Path.GetTempPath () </> "!dotnet-interactive-spiral"
+            let tmpCodeDir = tmpSpiralDir </> "code"
+            let tmpTokensDir = tmpSpiralDir </> "tokens"
+
+            [ tmpSpiralDir; tmpCodeDir; tmpTokensDir ]
+            |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
+
+            let stream, disposable = FileSystem.watchDirectory (fun _ -> false) tmpCodeDir
+
+            try
+                let port = Supervisor.getCompilerPort () + 2
+                let existingFilesChild =
+                    tmpCodeDir
+                    |> System.IO.Directory.GetFiles
+                    |> Array.map (fun codePath -> async {
+                        try
+                            let tokensPath = tmpTokensDir </> (codePath |> System.IO.Path.GetFileName)
+                            if File.Exists tokensPath |> not then
+                                let! tokens = codePath |> Supervisor.getFileTokenRange port None
+                                match tokens with
+                                | Some tokens ->
+                                    do!
+                                        tokens
+                                        |> FSharp.Json.Json.serialize
+                                        |> FileSystem.writeAllTextAsync tokensPath
+                                | None ->
+                                    log $"SpiralScriptHelpers.watchDirectory / GetFiles / tokens: None / {getLocals ()}"
+                        with ex ->
+                            log $"SpiralScriptHelpers.watchDirectory / GetFiles / ex: {ex |> printException} / {getLocals ()}"
+                    })
+                    |> Async.Sequential
+                    |> Async.Ignore
+
+                let streamAsyncChild =
+                    stream
+                    |> FSharp.Control.AsyncSeq.iterAsyncParallel (fun (ticks, event) -> async {
+                        try
+                            let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
+                            match event with
+                            | FileSystem.FileSystemChange.Changed (path, _) ->
+                                let codePath = tmpCodeDir </> path
+                                do!
+                                    codePath
+                                    |> FileSystem.waitForFileAccess (Some (
+                                        System.IO.FileAccess.Read,
+                                        System.IO.FileShare.Read
+                                    ))
+                                    |> Async.runWithTimeoutAsync 1000
+                                    |> Async.Ignore
+                                let! tokens = codePath |> Supervisor.getFileTokenRange port None
+                                match tokens with
+                                | Some tokens ->
+                                    do!
+                                        tokens
+                                        |> FSharp.Json.Json.serialize
+                                        |> FileSystem.writeAllTextAsync (tmpTokensDir </> path)
+                                | None ->
+                                    log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
+                            | _ -> ()
+                        with ex ->
+                            log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / ex: {ex |> printException} / {getLocals ()}"
+                    })
+
+                async {
+                    do! Async.Sleep 3000
+                    existingFilesChild |> Async.StartImmediate
+                    streamAsyncChild |> Async.Start
+                }
+                |> Async.Start
+            with ex ->
+                log $"SpiralScriptHelpers / ex: {ex |> printException}"
+
+            disposable
+        else newDisposable (fun () -> ())
 
     let spiralExDir = Path.GetTempPath () </> "!spiral-ex"
     let maxTermCountPath = spiralExDir </> "max_term_count.txt"
-
-    do
-        [ tmpSpiralDir; tmpCodeDir; tmpTokensDir ]
-        |> List.iter (fun dir -> if Directory.Exists dir |> not then Directory.CreateDirectory dir |> ignore)
-
-    let stream, disposable = FileSystem.watchDirectory (fun _ -> false) tmpCodeDir
-
-    do
-        try
-            let port = Supervisor.getCompilerPort () + 2
-            let existingFilesChild =
-                tmpCodeDir
-                |> System.IO.Directory.GetFiles
-                |> Array.map (fun codePath -> async {
-                    try
-                        let tokensPath = tmpTokensDir </> (codePath |> System.IO.Path.GetFileName)
-                        if File.Exists tokensPath |> not then
-                            let! tokens = codePath |> Supervisor.getFileTokenRange port None
-                            match tokens with
-                            | Some tokens ->
-                                do!
-                                    tokens
-                                    |> FSharp.Json.Json.serialize
-                                    |> FileSystem.writeAllTextAsync tokensPath
-                            | None ->
-                                log $"SpiralScriptHelpers.watchDirectory / GetFiles / tokens: None / {getLocals ()}"
-                    with ex ->
-                        log $"SpiralScriptHelpers.watchDirectory / GetFiles / ex: {ex |> printException} / {getLocals ()}"
-                })
-                |> Async.Sequential
-                |> Async.Ignore
-
-            let streamAsyncChild =
-                stream
-                |> FSharp.Control.AsyncSeq.iterAsyncParallel (fun (ticks, event) -> async {
-                    try
-                        let getLocals () = $"ticks: {ticks} / event: {event} / {getLocals ()}"
-                        match event with
-                        | FileSystem.FileSystemChange.Changed (path, _) ->
-                            let codePath = tmpCodeDir </> path
-                            do!
-                                codePath
-                                |> FileSystem.waitForFileAccess (Some (
-                                    System.IO.FileAccess.Read,
-                                    System.IO.FileShare.Read
-                                ))
-                                |> Async.runWithTimeoutAsync 1000
-                                |> Async.Ignore
-                            let! tokens = codePath |> Supervisor.getFileTokenRange port None
-                            match tokens with
-                            | Some tokens ->
-                                do!
-                                    tokens
-                                    |> FSharp.Json.Json.serialize
-                                    |> FileSystem.writeAllTextAsync (tmpTokensDir </> path)
-                            | None ->
-                                log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / tokens: None / {getLocals ()}"
-                        | _ -> ()
-                    with ex ->
-                        log $"SpiralScriptHelpers.watchDirectory / iterAsyncParallel / ex: {ex |> printException} / {getLocals ()}"
-                })
-
-            async {
-                do! Async.Sleep 3000
-                existingFilesChild |> Async.StartImmediate
-                streamAsyncChild |> Async.Start
-            }
-            |> Async.Start
-        with ex ->
-            log $"SpiralScriptHelpers / ex: {ex |> printException}"
 
     let mutable allCode = ""
 
