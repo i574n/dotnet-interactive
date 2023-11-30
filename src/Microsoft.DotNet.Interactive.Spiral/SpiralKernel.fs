@@ -269,13 +269,13 @@ type SpiralKernel () as this =
         let errorId = sprintf "FS%04i" error.ErrorNumber
         Diagnostic(linePositionSpan, severity, errorId, error.Message)
 
-    let handleChangeWorkingDirectory (changeDirectory: ChangeWorkingDirectory) (context: KernelInvocationContext) =
-        log $"handleChangeWorkingDirectory / changeDirectory: %A{changeDirectory |> serialize2}"
+    // let handleChangeWorkingDirectory (changeDirectory: ChangeWorkingDirectory) (context: KernelInvocationContext) =
+    //     log $"handleChangeWorkingDirectory / changeDirectory: %A{changeDirectory |> serialize2}"
 
-        task {
-            this.workingDirectory <- changeDirectory.WorkingDirectory;
-            return Task.CompletedTask;
-        }
+    //     task {
+    //         this.workingDirectory <- changeDirectory.WorkingDirectory;
+    //         return Task.CompletedTask;
+    //     }
 
     let handleSubmitCode (codeSubmission: SubmitCode) (context: KernelInvocationContext) =
         log $"handleSubmitCode / codeSubmission: %A{codeSubmission |> serialize2}"
@@ -520,14 +520,14 @@ type SpiralKernel () as this =
             //     log $"handleRequestValue / Fail: %A{requestValue}"
         }
 
-    let createPackageRestoreContext (useResultsCache:bool) (registerForDisposal) =
-        log $"createPackageRestoreContext"
+    // let createPackageRestoreContext (useResultsCache:bool) (registerForDisposal) =
+    //     log $"createPackageRestoreContext"
 
-        let packageRestoreContext = new PackageRestoreContext(useResultsCache)
-        do registerForDisposal(fun () -> packageRestoreContext.Dispose())
-        packageRestoreContext
+    //     let packageRestoreContext = new PackageRestoreContext(useResultsCache)
+    //     do registerForDisposal(fun () -> packageRestoreContext.Dispose())
+    //     packageRestoreContext
 
-    let mutable _packageRestoreContext = lazy createPackageRestoreContext true this.RegisterForDisposal
+    // let mutable _packageRestoreContext = lazy createPackageRestoreContext true this.RegisterForDisposal
 
     member this.GetValues() =
         log $"GetValues"
@@ -560,13 +560,13 @@ type SpiralKernel () as this =
         // | _ ->
         //     false
 
-    member _.RestoreSources with get () = _packageRestoreContext.Value.RestoreSources
+    // member _.RestoreSources with get () = _packageRestoreContext.Value.RestoreSources
 
-    member _.RequestedPackageReferences with get () = _packageRestoreContext.Value.RequestedPackageReferences;
+    // member _.RequestedPackageReferences with get () = _packageRestoreContext.Value.RequestedPackageReferences;
 
-    member _.ResolvedPackageReferences with get () = _packageRestoreContext.Value.ResolvedPackageReferences;
+    // member _.ResolvedPackageReferences with get () = _packageRestoreContext.Value.ResolvedPackageReferences;
 
-    member _.PackageRestoreContext with get () = _packageRestoreContext.Value
+    // member _.PackageRestoreContext with get () = _packageRestoreContext.Value
 
     interface IKernelCommandHandler<RequestCompletions> with
         member this.HandleAsync(command: RequestCompletions, context: KernelInvocationContext) =
@@ -606,54 +606,54 @@ type SpiralKernel () as this =
             // log $"IKernelCommandHandler<SubmitCode>.HandleAsync / command: %A{command |> serialize}"
             handleSubmitCode command context
 
-    interface IKernelCommandHandler<ChangeWorkingDirectory> with
-        member this.HandleAsync(command: ChangeWorkingDirectory, context: KernelInvocationContext) =
-            // log $"IKernelCommandHandler<ChangeWorkingDirectory>.HandleAsync / command: %A{command |> serialize}"
-            handleChangeWorkingDirectory command context
+    // interface IKernelCommandHandler<ChangeWorkingDirectory> with
+    //     member this.HandleAsync(command: ChangeWorkingDirectory, context: KernelInvocationContext) =
+    //         // log $"IKernelCommandHandler<ChangeWorkingDirectory>.HandleAsync / command: %A{command |> serialize}"
+    //         handleChangeWorkingDirectory command context
 
-    interface ISupportNuget with
-        member _.TryAddRestoreSource(source: string) =
-            log $"ISupportNuget.TryAddRestoreSource / source: %A{source}"
-            this.PackageRestoreContext.TryAddRestoreSource source
+    // interface ISupportNuget with
+    //     member _.TryAddRestoreSource(source: string) =
+    //         log $"ISupportNuget.TryAddRestoreSource / source: %A{source}"
+    //         this.PackageRestoreContext.TryAddRestoreSource source
 
-        member _.GetOrAddPackageReference(packageName: string, packageVersion: string) =
-            log $"ISupportNuget.GetOrAddPackageReference / packageName: %A{packageName}, packageVersion: %A{packageVersion}"
-            this.PackageRestoreContext.GetOrAddPackageReference (packageName, packageVersion)
+    //     member _.GetOrAddPackageReference(packageName: string, packageVersion: string) =
+    //         log $"ISupportNuget.GetOrAddPackageReference / packageName: %A{packageName}, packageVersion: %A{packageVersion}"
+    //         this.PackageRestoreContext.GetOrAddPackageReference (packageName, packageVersion)
 
-        member _.Configure(useResultsCache:bool) =
-             _packageRestoreContext <- lazy createPackageRestoreContext useResultsCache this.RegisterForDisposal
-        member _.RestoreAsync() =
-            log $"ISupportNuget.RestoreAsync"
-            this.PackageRestoreContext.RestoreAsync()
+    //     member _.Configure(useResultsCache:bool) =
+    //          _packageRestoreContext <- lazy createPackageRestoreContext useResultsCache this.RegisterForDisposal
+    //     member _.RestoreAsync() =
+    //         log $"ISupportNuget.RestoreAsync"
+    //         this.PackageRestoreContext.RestoreAsync()
 
-        member _.RestoreSources =
-            this.PackageRestoreContext.RestoreSources
+    //     member _.RestoreSources =
+    //         this.PackageRestoreContext.RestoreSources
 
-        member _.RequestedPackageReferences =
-            this.PackageRestoreContext.RequestedPackageReferences
+    //     member _.RequestedPackageReferences =
+    //         this.PackageRestoreContext.RequestedPackageReferences
 
-        member _.ResolvedPackageReferences =
-            this.PackageRestoreContext.ResolvedPackageReferences
+    //     member _.ResolvedPackageReferences =
+    //         this.PackageRestoreContext.ResolvedPackageReferences
 
-        member _.RegisterResolvedPackageReferences (packageReferences: IReadOnlyList<ResolvedPackageReference>) =
-            log $"ISupportNuget.RegisterResolvedPackageReferences / packageReferences: %A{packageReferences |> serialize}"
-            // Generate #r and #I from packageReferences
-            let sb = StringBuilder()
-            let hashset = HashSet()
+    //     member _.RegisterResolvedPackageReferences (packageReferences: IReadOnlyList<ResolvedPackageReference>) =
+    //         log $"ISupportNuget.RegisterResolvedPackageReferences / packageReferences: %A{packageReferences |> serialize}"
+    //         // Generate #r and #I from packageReferences
+    //         let sb = StringBuilder()
+    //         let hashset = HashSet()
 
-            for reference in packageReferences do
-                for assembly in reference.AssemblyPaths do
-                    if hashset.Add(assembly) then
-                        if File.Exists assembly then
-                            sb.AppendFormat("#r @\"{0}\"", assembly) |> ignore
-                            sb.Append(Environment.NewLine) |> ignore
+    //         for reference in packageReferences do
+    //             for assembly in reference.AssemblyPaths do
+    //                 if hashset.Add(assembly) then
+    //                     if File.Exists assembly then
+    //                         sb.AppendFormat("#r @\"{0}\"", assembly) |> ignore
+    //                         sb.Append(Environment.NewLine) |> ignore
 
-                match reference.PackageRoot with
-                | null -> ()
-                | root ->
-                    if hashset.Add(root) then
-                        if File.Exists root then
-                            sb.AppendFormat("#I @\"{0}\"", root) |> ignore
-                            sb.Append(Environment.NewLine) |> ignore
-            let command = new SubmitCode(sb.ToString(), "spiral")
-            this.DeferCommand(command)
+    //             match reference.PackageRoot with
+    //             | null -> ()
+    //             | root ->
+    //                 if hashset.Add(root) then
+    //                     if File.Exists root then
+    //                         sb.AppendFormat("#I @\"{0}\"", root) |> ignore
+    //                         sb.Append(Environment.NewLine) |> ignore
+    //         let command = new SubmitCode(sb.ToString(), "spiral")
+    //         this.DeferCommand(command)
