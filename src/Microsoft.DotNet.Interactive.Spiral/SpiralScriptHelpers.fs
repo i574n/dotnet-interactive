@@ -401,10 +401,12 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 then None |> Async.init
                                 else
                                     async {
-                                        let repositoryRoot = FileSystem.getSourceDirectory () |> FileSystem.findParent ".paket" false
-                                        let projectDir = repositoryRoot </> "target/!fs-rs"
                                         // let hash = $"repl_{code |> Crypto.hashText}"
-                                        let hash = $"repl_main"
+                                        let hash = $"fs-rs"
+
+                                        let! fsprojPath = code |> Builder.persistCodeProject ["Fable.Core"] [] hash
+
+                                        let projectDir = fsprojPath |> Path.GetDirectoryName
 
                                         let outDir = projectDir </> $"target/rs_{hash}"
 
@@ -424,7 +426,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                             Directory.CreateSymbolicLink (libLinkPath, libLinkTargetPath)
                                             |> ignore
 
-                                        let! fsprojPath = Builder.persistCodeProject ["Fable.Core"] [] projectDir hash code
 
                                         let! exitCode, result =
                                             Runtime.executeWithOptionsAsync
