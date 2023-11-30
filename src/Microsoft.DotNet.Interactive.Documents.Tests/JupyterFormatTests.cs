@@ -88,7 +88,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
     [InlineData("PowerShell", "powershell")]
     public void Metadata_default_kernel_name_is_based_on_specified_language(string languageName, string kernelName)
     {
-        var document = new InteractiveDocument().WithJupyterMetadata(languageName);
+        var document = Notebook.Parse(new InteractiveDocument().ToJupyterJson(languageName));
 
         document.GetDefaultKernelName()
                 .Should()
@@ -102,7 +102,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
     [InlineData("PowerShell", "powershell")]
     public void Metadata_default_kernel_name_is_based_on_specified_language_when_serialized_and_deserialized(string languageName, string kernelName)
     {
-        var originalDoc = new InteractiveDocument().WithJupyterMetadata(languageName);
+        var originalDoc = Notebook.Parse(new InteractiveDocument().ToJupyterJson(languageName));
 
         var parsedDoc = Notebook.Parse(originalDoc.ToJupyterJson());
 
@@ -1611,7 +1611,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
     {
         var ipynbJson = new InteractiveDocument
         {
-            new("#!value --from-file @input:filename --name myfile")
+            new("""
+                #!value --from-file @input:"Enter a filename" --name myfile
+                """)
         }.ToJupyterJson();
 
         var document = Notebook.Parse(ipynbJson);
@@ -1622,7 +1624,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .Which
                 .ValueName
                 .Should()
-                .Be("filename");
+                .Be("myfile");
     }
 
     private async Task<string> RoundTripIpynb(string filePath)

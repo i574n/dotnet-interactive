@@ -8,14 +8,14 @@ using Microsoft.DotNet.Interactive.Utility;
 
 namespace Microsoft.DotNet.Interactive.SqlServer;
 
-public class MsSqlKernelExtension : IKernelExtension
+public class MsSqlKernelExtension
 {
-    public async Task OnLoadAsync(Kernel kernel)
+    public static async Task LoadAsync(Kernel kernel)
     {
         if (kernel is CompositeKernel compositeKernel)
         {
             var sqlToolName = "MicrosoftSqlToolsServiceLayer";
-            await Utils.CheckAndInstallGlobalToolAsync(sqlToolName, "1.2.0", "Microsoft.SqlServer.SqlToolsServiceLayer.Tool");
+            await Utils.CheckAndInstallGlobalToolAsync(sqlToolName, "1.3.0", "Microsoft.SqlServer.SqlToolsServiceLayer.Tool");
 
             var sqlToolPath = Path.Combine(Paths.DotnetToolsPath, sqlToolName);
             compositeKernel

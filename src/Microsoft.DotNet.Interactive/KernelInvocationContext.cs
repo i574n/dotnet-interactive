@@ -25,7 +25,7 @@ public class KernelInvocationContext : IDisposable
 
     private readonly ReplaySubject<KernelEvent> _events = new();
 
-    private readonly ConcurrentDictionary<KernelCommand, ReplaySubject<KernelEvent>> _childCommands = new();
+    private readonly ConcurrentDictionary<KernelCommand, ReplaySubject<KernelEvent>> _childCommands = new(KernelCommandTokenComparer.Instance);
 
     private readonly CompositeDisposable _disposables = new();
 
@@ -81,6 +81,19 @@ public class KernelInvocationContext : IDisposable
     internal bool IsFailed { get; private set; }
 
     public KernelCommand Command { get; }
+
+    internal KernelCommand CurrentlyExecutingCommand
+    {
+        get
+        {
+            if (HandlingKernel?.Scheduler?.CurrentValue is { } command)
+            {
+                return command;
+            }
+
+            return Command;
+        }
+    }
 
     public bool IsComplete { get; private set; }
 
@@ -157,17 +170,12 @@ public class KernelInvocationContext : IDisposable
                     TryCancel();
 
                     IsFailed = true;
-                   
                 }
                 else
                 {
                     if (message is not null)
                     {
-                        if (command.Parent is null)
-                        {
-                            Publish(new ErrorProduced(message, command), publishOnAmbientContextOnly: true);
-                        }
-                        else if (command.IsSelfOrDescendantOf(Command))
+                        if (command.IsSelfOrDescendantOf(Command))
                         {
                             Publish(new ErrorProduced(message, command), publishOnAmbientContextOnly: true);
                         }
@@ -195,7 +203,7 @@ public class KernelInvocationContext : IDisposable
 
         void StopPublishingChildCommandEvents()
         {
-            if (_childCommands.TryGetValue(command, out var events) &&
+            if (TryGetChildCommandEvents(command, out var events) &&
                 !events.IsDisposed)
             {
                 events.OnCompleted();
@@ -242,7 +250,7 @@ public class KernelInvocationContext : IDisposable
             @event.StampRoutingSlipAndLog(HandlingKernel.KernelInfo.Uri);
         }
 
-        if (!publishOnAmbientContextOnly && _childCommands.TryGetValue(command, out var events))
+        if (!publishOnAmbientContextOnly && TryGetChildCommandEvents(command, out var events))
         {
             events.OnNext(@event);
         }
@@ -267,6 +275,11 @@ public class KernelInvocationContext : IDisposable
 
     public KernelCommandResult Result { get; }
 
+    private bool TryGetChildCommandEvents(KernelCommand command, out ReplaySubject<KernelEvent> events)
+    {
+        return _childCommands.TryGetValue(command, out events);
+    }
+
     internal KernelCommandResult ResultFor(KernelCommand command)
     {
         if (command.Equals(Command))
@@ -275,12 +288,10 @@ public class KernelInvocationContext : IDisposable
         }
         else
         {
-            if (_childCommands.TryGetValue(command, out var events)) {
-                var result = new KernelCommandResult(command);
-                using var _ = events.Subscribe(result.AddEvent);
-                return result;
-            }
-            return Result;
+            TryGetChildCommandEvents(command, out var events);
+            var result = new KernelCommandResult(command);
+            using var _ = events.Subscribe(result.AddEvent);
+            return result;
         }
     }
 
@@ -318,18 +329,11 @@ public class KernelInvocationContext : IDisposable
         {
             _current.Value = new KernelInvocationContext(command);
         }
-        else
+        else if (!ReferenceEquals(_current.Value.Command, command))
         {
-            if (!_current.Value.Command.Equals(command))
-            {
-                var currentContext = _current.Value;
+            var currentContext = _current.Value;
 
-                AddChildCommandToContext(command, currentContext);
-            }
-            else
-            {
-                // FIX: (Establish) when does this happen?
-            }
+            AddChildCommandToContext(command, currentContext);
         }
 
         return _current.Value;
@@ -400,8 +404,40 @@ public class KernelInvocationContext : IDisposable
 
     internal DirectiveNode CurrentlyParsingDirectiveNode { get; set; }
 
-    public Task ScheduleAsync(Func<KernelInvocationContext, Task> func) =>
-        // FIX: (ScheduleAsync) inline this
-        HandlingKernel.SendAsync(new AnonymousKernelCommand((_, invocationContext) =>
-            func(invocationContext)));
+    public async Task ScheduleAsync(Func<KernelInvocationContext, Task> func)
+    {
+        // FIX: (ScheduleAsync) make this method internal
+        var anonymousCommand = new AnonymousKernelCommand((_, invocationContext) => func(invocationContext));
+        anonymousCommand.SetParent(Command, true);
+        await HandlingKernel.SendAsync(anonymousCommand);
+    }
+
+    internal class KernelCommandTokenComparer : IEqualityComparer<KernelCommand>
+    {
+        private KernelCommandTokenComparer()
+        {
+        }
+
+        public static readonly KernelCommandTokenComparer Instance = new();
+
+        public bool Equals(KernelCommand x, KernelCommand y)
+        {
+            if (ReferenceEquals(x, y))
+            {
+                return true;
+            }
+
+            if (x is not null && y is not null)
+            {
+                return x.GetOrCreateToken() == y.GetOrCreateToken();
+            }
+
+            return false;
+        }
+
+        public int GetHashCode(KernelCommand obj)
+        {
+            return obj.GetOrCreateToken().GetHashCode();
+        }
+    }
 }

@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <!-- Ignore: warning NU1608: Detected package version outside of dependency constraint:
+    xunit 2.4.1 requires xunit.core (= 2.4.1) but version xunit.core 2.4.2 was resolved.
+    This suppression can be removed once PocketLogger.For.XUnit which currently references
+    xunit v2.4.1 is updated to reference xunit v2.4.2. -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="TestResults\**" />
+    <EmbeddedResource Remove="TestResults\**" />
+    <None Remove="TestResults\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\dotnet-interactive\Pocket\Format.CustomizeLogString.cs" Link="Pocket\Format.CustomizeLogString.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\ProxyKernelConnectionTestsBase.cs" Link="ProxyKernelConnectionTestsBase.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\StdIoKernelConnectorTests.cs" Link="StdIoKernelConnectorTests.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\ConnectHost.cs" Link="Utility\ConnectHost.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\FactSkipLinux.cs" Link="Utility\FactSkipLinux.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\FactSkipNetFramework.cs" Link="Utility\FactSkipNetFramework.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\FakeKernel.cs" Link="Utility\FakeKernel.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\MarkupTestFile.cs" Link="Utilitiy\MarkupTestFile.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\TestUtility.cs" Link="Utility\TestUtility.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\KernelTests.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\KernelRoutingTests.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\KernelSchedulerTests.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\WindowsFact.cs" Link="Utility\WindowsFact.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="6.8.0" />
+    <PackageReference Include="Pocket.Disposable" Version="1.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="PocketLogger" Version="0.8.2">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="PocketLogger.For.Xunit" Version="0.6.1">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="PocketLogger.Subscribe" Version="0.8.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Update="xunit.runner.visualstudio" Version="$(xunitrunnervisualstudioVersion)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.DotNet.Interactive\Microsoft.DotNet.Interactive.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -15,8 +15,10 @@ if ($IsWindows) {
 else
 {
     $projectsToSkip = @(
-        "Microsoft.DotNet.Interactive.VisualStudio.Tests",
+        "Microsoft.DotNet.Interactive.NetFramework.Tests",
         "Microsoft.DotNet.Interactive.CSharpProject.Tests"
+        "Microsoft.DotNet.Interactive.NamedPipeConnector.Tests",
+        "Microsoft.DotNet.Interactive.VisualStudio.Tests"        
         )
 }
 
@@ -31,6 +33,7 @@ try {
     $flakyTestAssemblyDirectories = @(
         "Microsoft.DotNet.Interactive.Tests",
         "Microsoft.DotNet.Interactive.App.Tests",
+        "Microsoft.DotNet.Interactive.Browser.Tests",
         "Microsoft.DotNet.Interactive.Jupyter.Tests"
         )
     

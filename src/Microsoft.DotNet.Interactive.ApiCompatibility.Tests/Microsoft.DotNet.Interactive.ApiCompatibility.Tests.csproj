@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
     <NoWarn>$(NoWarn);VSTHRD200</NoWarn>    <!-- Ignore: Use "Async" suffix for async methods -->
     <NoWarn>$(NoWarn);8002</NoWarn>         <!-- Assent isn't strongly signed -->
@@ -50,8 +50,8 @@
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Documents\Microsoft.DotNet.Interactive.Documents.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Formatting\Microsoft.DotNet.Interactive.Formatting.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.FSharp\Microsoft.DotNet.Interactive.FSharp.fsproj" />
+    <ProjectReference Include="..\Microsoft.DotNet.Interactive.Http\Microsoft.DotNet.Interactive.Http.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Spiral\Microsoft.DotNet.Interactive.Spiral.fsproj" />
-    <ProjectReference Include="..\Microsoft.DotNet.Interactive.HttpRequest\Microsoft.DotNet.Interactive.HttpRequest.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Journey\Microsoft.DotNet.Interactive.Journey.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Kql\Microsoft.DotNet.Interactive.Kql.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Mermaid\Microsoft.DotNet.Interactive.Mermaid.csproj" />

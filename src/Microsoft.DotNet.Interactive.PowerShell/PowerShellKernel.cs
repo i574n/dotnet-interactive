@@ -49,6 +49,7 @@ public class PowerShellKernel :
 
     private readonly PSKernelHost _psHost;
     private readonly Lazy<PowerShell> _lazyPwsh;
+    private int _errorCount;
 
     private PowerShell pwsh => _lazyPwsh.Value;
 
@@ -265,12 +266,6 @@ public class PowerShellKernel :
             return;
         }
 
-        // Do nothing if we get a Diagnose type.
-        if (submitCode.SubmissionType == SubmissionType.Diagnose)
-        {
-            return;
-        }
-
         if (context.CancellationToken.IsCancellationRequested)
         {
             context.Fail(submitCode, null, "Command cancelled");
@@ -283,9 +278,9 @@ public class PowerShellKernel :
         }
         else
         {
-            RunSubmitCodeLocally(code);
+            var success = RunSubmitCodeLocally(code);
 
-            if (pwsh.HadErrors)
+            if (!success || pwsh.HadErrors)
             {
                 context.Fail(context.Command);
             }
@@ -376,24 +371,47 @@ public class PowerShellKernel :
         }
     }
 
-    private void RunSubmitCodeLocally(string code)
+    private bool RunSubmitCodeLocally(string code)
     {
+        var succeeded = true;
+
         try
         {
             pwsh.AddScript(code).AddCommand(_outDefaultCommand);
 
             pwsh.Commands.Commands[0].MergeMyResults(PipelineResultTypes.Error, PipelineResultTypes.Output);
 
-            pwsh.InvokeAndClearCommands();
+            pwsh.InvokeAndClear();
+
+            pwsh.AddScript("$error");
+            var output = new List<string>();
+            try
+            {
+                pwsh.Invoke(input: null, output: output);
+            }
+            finally
+            {
+                pwsh.Clear();
+            }
+            
+            if (output.Count > _errorCount)
+            {
+                succeeded = false;
+            }
+
+            _errorCount = output.Count;
         }
         catch (Exception e)
         {
             ReportException(e);
+            succeeded = false;
         }
         finally
         {
             ((PSKernelHostUserInterface)_psHost.UI).ResetProgress();
         }
+
+        return succeeded;
     }
 
     private static bool IsCompleteSubmission(string code, out ParseError[] errors)
@@ -412,7 +430,7 @@ public class PowerShellKernel :
 
         pwsh.AddCommand(_outDefaultCommand)
             .AddParameter("InputObject", psObject)
-            .InvokeAndClearCommands();
+            .InvokeAndClear();
     }
 
     private void ReportException(Exception e)

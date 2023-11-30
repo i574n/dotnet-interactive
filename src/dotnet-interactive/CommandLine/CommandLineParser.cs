@@ -24,7 +24,6 @@ using Microsoft.DotNet.Interactive.Formatting.Csv;
 using Microsoft.DotNet.Interactive.Formatting.TabularData;
 using Microsoft.DotNet.Interactive.FSharp;
 using Microsoft.DotNet.Interactive.Http;
-using Microsoft.DotNet.Interactive.HttpRequest;
 using Microsoft.DotNet.Interactive.Jupyter;
 using Microsoft.DotNet.Interactive.Jupyter.Formatting;
 using Microsoft.DotNet.Interactive.Mermaid;
@@ -102,7 +101,7 @@ public static class CommandLineParser
 
         startKernelHost ??= StdIoMode.Do;
 
-        startNotebookParser ??=  ParseNotebookCommand.RunParserServer;
+        startNotebookParser ??= ParseNotebookCommand.RunParserServer;
 
         startHttp ??= HttpCommand.Do;
 
@@ -138,7 +137,7 @@ public static class CommandLineParser
         rootCommand.AddCommand(StdIO());
         rootCommand.AddCommand(NotebookParser());
 
-        var filter = new StartupTelemetryEventBuilder(Sha256Hasher.ToSha256HashWithNormalizedCasing);
+        var eventBuilder = new StartupTelemetryEventBuilder(Sha256Hasher.ToSha256HashWithNormalizedCasing);
 
         return new CommandLineBuilder(rootCommand)
             .UseDefaults()
@@ -147,7 +146,7 @@ public static class CommandLineParser
             {
                 if (context.ParseResult.Errors.Count == 0)
                 {
-                    telemetrySender.TrackStartupEvent(context.ParseResult, filter);
+                    telemetrySender.TrackStartupEvent(context.ParseResult, eventBuilder);
                 }
 
                 // If sentinel does not exist, print the welcome message showing the telemetry notification.
@@ -217,7 +216,7 @@ public static class CommandLineParser
                 var kernel = CreateKernel(options.DefaultKernel, frontendEnvironment, startupOptions, telemetrySender);
                 cancellationToken.Register(kernel.Dispose);
 
-                await new JupyterClientKernelExtension().OnLoadAsync(kernel);
+                await JupyterClientKernelExtension.LoadAsync(kernel);
 
                 services.AddKernel(kernel);
 
@@ -365,8 +364,7 @@ public static class CommandLineParser
 
                     if (isVSCode)
                     {
-                        var vscodeSetup = new VSCodeClientKernelExtension();
-                        await vscodeSetup.OnLoadAsync(kernel);
+                        await VSCodeClientKernelExtension.LoadAsync(kernel);
                     }
 
                     if (startupOptions.EnableHttpApi)
@@ -511,13 +509,16 @@ public static class CommandLineParser
         compositeKernel.Add(
             new MermaidKernel());
 
+        compositeKernel.Add(
+            new HttpKernel()
+                .UseValueSharing());
+
         var kernel = compositeKernel
             .UseDefaultMagicCommands()
             .UseAboutMagicCommand()
             .UseImportMagicCommand()
-            .UseNuGetExtensions();
+            .UseNuGetExtensions(telemetrySender);
 
-        kernel.AddKernelConnector(new ConnectNamedPipeCommand());
         kernel.AddKernelConnector(new ConnectSignalRCommand());
         kernel.AddKernelConnector(new ConnectStdIoCommand(startupOptions.KernelHost));
 

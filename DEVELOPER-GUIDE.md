@@ -131,7 +131,7 @@ If you've made changes to `dotnet-interactive` and want to try them out with Vis
       ```json
         "dotnet-interactive.kernelTransportArgs": [
             "{dotnet_path}",
-            "/PATH/TO/REPO/ROOT/artifacts/bin/dotnet-interactive/Debug/net7.0/Microsoft.DotNet.Interactive.App.dll",
+            "/PATH/TO/REPO/ROOT/artifacts/bin/dotnet-interactive/Debug/net8.0/Microsoft.DotNet.Interactive.App.dll",
             "[vscode]",
             "stdio",
             "--log-path",
@@ -143,7 +143,7 @@ If you've made changes to `dotnet-interactive` and want to try them out with Vis
 
         "dotnet-interactive.notebookParserArgs": [
             "{dotnet_path}",
-            "/PATH/TO/REPO/ROOT/artifacts/bin/dotnet-interactive/Debug/net7.0/Microsoft.DotNet.Interactive.App.dll",
+            "/PATH/TO/REPO/ROOT/artifacts/bin/dotnet-interactive/Debug/net8.0/Microsoft.DotNet.Interactive.App.dll",
             "notebook-parser",
             "--log-path",
             "/path/to/a/folder/for/your/parser-logs/",
@@ -233,14 +233,10 @@ jupyter notebook --no-browser --NotebookApp.token=<your_token> --port=8888
     conda install -c r r-irkernel
     ```
 
-3. Start Anaconda Bash prompt and create an environment variable `TEST_DOTNET_JUPYTER_ZMQ_CONN` and set to `true` and reactivate your conda environment
-
-    ```bash
-    conda env config vars set TEST_DOTNET_JUPYTER_ZMQ_CONN=true 
-    conda activate base
-    ```
-
-3. Restart `dotnet-interactive.sln` from the Anaconda Bash prompt.
+3. Set an environment variable `TEST_DOTNET_JUPYTER_ZMQ_CONN` pointing to conda installation and environment that has jupyter installed
+```
+--conda-env base
+```
 
 4. The tests will now use the environment variable to connect to your server. 
 

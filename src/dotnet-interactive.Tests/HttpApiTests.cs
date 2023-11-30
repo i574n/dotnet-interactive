@@ -389,6 +389,7 @@ var f = new { Field= ""string value""};", Language.CSharp.LanguageName()));
                 "spiral",
                 "pwsh",
                 "html",
+                "http",
                 "javascript",
                 "mermaid",
                 "value");

@@ -7,6 +7,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.DotNet.Interactive.Commands;
 using Microsoft.DotNet.Interactive.Connection;
 using Microsoft.DotNet.Interactive.CSharp;
 
@@ -82,8 +83,8 @@ public class ConnectMsSqlCommand : ConnectKernelCommand
         context.DisplayAs($"Scaffolding a `DbContext` and initializing an instance of it called `{kernelName}` in the C# kernel.", "text/markdown");
 
         var submission1 = @$"  
-#r ""nuget: Microsoft.EntityFrameworkCore.Design, 7.0.0""
-#r ""nuget: Microsoft.EntityFrameworkCore.SqlServer, 7.0.0""
+#r ""nuget: Microsoft.EntityFrameworkCore.Design, 7.0.13""
+#r ""nuget: Microsoft.EntityFrameworkCore.SqlServer, 7.0.13""
 #r ""nuget: Humanizer.Core, 2.14.1""
 #r ""nuget: Humanizer, 2.14.1""
 #r ""nuget: Microsoft.Identity.Client, 4.48.1""
@@ -132,11 +133,11 @@ foreach (var file in  new[] {{ model.ContextFile.Code }}.Concat(model.Additional
     code += fileCode;
 }}
 ";
-
-        await csharpKernel.SubmitCodeAsync(submission1);
+        var submitCode = new SubmitCode(submission1);
+        submitCode.SetParent(context.Command);
+        await csharpKernel.SendAsync(submitCode, context.CancellationToken);
 
         csharpKernel.TryGetValue("code", out string submission2);
-
         await csharpKernel.SubmitCodeAsync(submission2);
 
         var submission3 = $@"

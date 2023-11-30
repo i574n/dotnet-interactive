@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <AssetTargetFallback>$(AssetTargetFallback);dotnet5.4;portable-net45+win8</AssetTargetFallback>
     <LangVersion>preview</LangVersion>
@@ -41,7 +41,7 @@
   <ItemGroup>
     <PackageReference Include="Buildalyzer" Version="5.0.0" />
     <PackageReference Include="Buildalyzer.Workspaces" Version="5.0.0" />
-    <PackageReference Include="Markdig.Signed" Version="0.32.0" />
+    <PackageReference Include="Markdig.Signed" Version="0.33.0" />
     <PackageReference Include="Microsoft.AspNetCore.Html.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(MicrosoftCodeAnalysisCommonVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisCommonVersion)" />
@@ -63,6 +63,7 @@
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlVersion)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="PocketLogger" Version="0.8.2">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

@@ -3,6 +3,7 @@
 
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.DotNet.Interactive.Commands;
 using Microsoft.DotNet.Interactive.Events;
 using Microsoft.DotNet.Interactive.Tests.Utility;
 using Xunit;
@@ -22,25 +23,23 @@ public class MagicCommandTests
             using var kernel = new CompositeKernel()
                 .UseAboutMagicCommand();
 
-            using var events = kernel.KernelEvents.ToSubscribedList();
+            var result = await kernel.SendAsync(new SubmitCode("#!about"));
 
-            await kernel.SubmitCodeAsync("#!about");
-
-            events.Should()
-                .ContainSingle<DisplayedValueProduced>()
-                .Which
-                .FormattedValues
-                .Should()
-                .ContainSingle(v => v.MimeType == "text/html")
-                .Which
-                .Value
-                .As<string>()
-                .Should()
-                .ContainAll(
-                    ".NET Interactive",
-                    "Version",
-                    "Library version",
-                    "https://github.com/dotnet/interactive");
+            result.Events.Should()
+                  .ContainSingle<DisplayedValueProduced>()
+                  .Which
+                  .FormattedValues
+                  .Should()
+                  .ContainSingle(v => v.MimeType == "text/html")
+                  .Which
+                  .Value
+                  .As<string>()
+                  .Should()
+                  .ContainAll(
+                      ".NET Interactive",
+                      "Version",
+                      "Library version",
+                      "https://github.com/dotnet/interactive");
         }
     }
 }

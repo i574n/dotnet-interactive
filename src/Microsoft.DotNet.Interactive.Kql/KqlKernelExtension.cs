@@ -9,14 +9,14 @@ using Microsoft.DotNet.Interactive.Utility;
 
 namespace Microsoft.DotNet.Interactive.Kql;
 
-public class KqlKernelExtension : IKernelExtension
+public class KqlKernelExtension
 {
-    public async Task OnLoadAsync(Kernel kernel)
+    public static async Task LoadAsync(Kernel kernel)
     {
         if (kernel is CompositeKernel compositeKernel)
         {
             var kqlToolName = "MicrosoftKustoServiceLayer";
-            await Utils.CheckAndInstallGlobalToolAsync(kqlToolName, "1.2.0", "Microsoft.SqlServer.KustoServiceLayer.Tool");
+            await Utils.CheckAndInstallGlobalToolAsync(kqlToolName, "1.3.0", "Microsoft.SqlServer.KustoServiceLayer.Tool");
 
             var kqlToolPath = Path.Combine(Paths.DotnetToolsPath, kqlToolName);
             compositeKernel

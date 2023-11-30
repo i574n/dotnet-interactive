@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AssetTargetFallback>portable-net45+win8+wp8+wpa81</AssetTargetFallback>
     <NoWarn>$(NoWarn);8002</NoWarn><!-- Assent isn't strongly signed -->
@@ -13,6 +13,11 @@
     <NoWarn>$(NoWarn);VSTHRD110</NoWarn><!-- Ignore: Observe result of async calls -->
     <NoWarn>$(NoWarn);VSTHRD200</NoWarn><!-- Ignore: Use "Async" suffix for async methods -->
     <NoWarn>$(NoWarn);CS0219</NoWarn><!-- Ignore: The variable is assigned but its value is never used -->
+    <!-- Ignore: warning NU1608: Detected package version outside of dependency constraint:
+    xunit 2.4.1 requires xunit.core (= 2.4.1) but version xunit.core 2.4.2 was resolved.
+    This suppression can be removed once PocketLogger.For.XUnit which currently references
+    xunit v2.4.1 is updated to reference xunit v2.4.2. -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\dotnet-interactive\Pocket\Format.CustomizeLogString.cs" Link="Pocket\Format.CustomizeLogString.cs" />
     <Compile Include="..\dotnet-interactive\Utility\KernelDiagnostics.cs" Link="Utility\KernelDiagnostics.cs" />
     <Compile Include="..\Microsoft.DotNet.Interactive.CSharpProject\%28Recipes%29\AsyncLazy{T}.cs" Link="Utility\AsyncLazy{T}.cs" />
     <Compile Include="..\Microsoft.DotNet.Interactive.Jupyter\(Recipes)\BareObjectConverter.cs" />
@@ -69,7 +75,6 @@
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.CSharp\Microsoft.DotNet.Interactive.CSharp.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Formatting.Tests\Microsoft.DotNet.Interactive.Formatting.Tests.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.FSharp\Microsoft.DotNet.Interactive.FSharp.fsproj" />
-    <ProjectReference Include="..\Microsoft.DotNet.Interactive.Http\Microsoft.DotNet.Interactive.Http.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.PowerShell\Microsoft.DotNet.Interactive.PowerShell.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Jupyter\Microsoft.DotNet.Interactive.Jupyter.csproj" />
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Formatting\Microsoft.DotNet.Interactive.Formatting.csproj" />

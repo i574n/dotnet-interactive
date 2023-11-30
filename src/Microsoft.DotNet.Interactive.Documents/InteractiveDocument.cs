@@ -46,8 +46,8 @@ public class InteractiveDocument : IEnumerable
 
     private static Parser? _inputFieldsParser;
     private static Option<string>? _valueNameOption;
-    private static Option<string[]>? _discoveredInputName;
-    private static Option<string[]>? _discoveredPasswordName;
+    private static Option<string[]>? _discoveredInputPrompts;
+    private static Option<string[]>? _discoveredPasswordPrompts;
 
     private IDictionary<string, object>? _metadata;
 
@@ -65,7 +65,7 @@ public class InteractiveDocument : IEnumerable
     {
         EnsureImportFieldParserIsInitialized();
 
-        if (!TryGetKernelInfoFromMetadata(Metadata, out var kernelInfos))
+        if (!TryGetKernelInfosFromMetadata(Metadata, out var kernelInfos))
         {
             kernelInfos = new();
         }
@@ -121,19 +121,21 @@ public class InteractiveDocument : IEnumerable
             var inputFields = new List<InputField>();
             var result = _inputFieldsParser!.Parse(line);
 
-            if (result.GetValueForOption(_discoveredInputName!) is { } inputNames)
+            var nameOptionValue = result.GetValueForOption(_valueNameOption!);
+
+            if (result.GetValueForOption(_discoveredInputPrompts!) is { } inputNames)
             {
                 foreach (var inputName in inputNames.Distinct())
                 {
-                    inputFields.Add(new InputField(inputName, "text"));
+                    inputFields.Add(new InputField(nameOptionValue ?? inputName, "text"));
                 }
             }
 
-            if (result.GetValueForOption(_discoveredPasswordName!) is { } passwordNames)
+            if (result.GetValueForOption(_discoveredPasswordPrompts!) is { } passwordNames)
             {
                 foreach (var passwordName in passwordNames.Distinct())
                 {
-                    inputFields.Add(new InputField(passwordName, "password"));
+                    inputFields.Add(new InputField(nameOptionValue ?? passwordName, "password"));
                 }
             }
 
@@ -198,9 +200,9 @@ public class InteractiveDocument : IEnumerable
 
     public string? GetDefaultKernelName()
     {
-        if (TryGetKernelInfoFromMetadata(Metadata, out var kernelInfo))
+        if (TryGetKernelInfosFromMetadata(Metadata, out var kernelInfos))
         {
-            return kernelInfo.DefaultKernelName;
+            return kernelInfos.DefaultKernelName;
         }
 
         return null;
@@ -208,42 +210,17 @@ public class InteractiveDocument : IEnumerable
 
     internal string? GetDefaultKernelName(KernelInfoCollection kernelInfos)
     {
-        if (TryGetKernelInfoFromMetadata(Metadata, out var kernelInfoCollection))
+        if (TryGetKernelInfosFromMetadata(Metadata, out var kernelInfoCollection))
         {
             return kernelInfoCollection.DefaultKernelName;
         }
-
-        if (Metadata is null)
-        {
-            return null;
-        }
-
-        if (Metadata.TryGetValue("kernelspec", out var kernelspecObj))
-        {
-            if (kernelspecObj is IDictionary<string, object> kernelspecDict)
-            {
-                if (kernelspecDict.TryGetValue("language", out var languageObj) &&
-                    languageObj is string defaultLanguage)
-                {
-                    return defaultLanguage;
-                }
-            }
-        }
-
-        if (kernelInfos.DefaultKernelName is { } defaultFromKernelInfos)
-        {
-            if (kernelInfos.TryGetByAlias(defaultFromKernelInfos, out var info))
-            {
-                return info.Name;
-            }
-        }
-
-        return null;
+        
+        return kernelInfos.DefaultKernelName;
     }
 
     internal static void MergeKernelInfos(InteractiveDocument document, KernelInfoCollection kernelInfos)
     {
-        if (TryGetKernelInfoFromMetadata(document.Metadata, out var kernelInfoCollection))
+        if (TryGetKernelInfosFromMetadata(document.Metadata, out var kernelInfoCollection))
         {
             MergeKernelInfos(kernelInfoCollection, kernelInfos);
         }
@@ -264,19 +241,19 @@ public class InteractiveDocument : IEnumerable
         destination.AddRange(source.Where(ki => added.Add(ki.Name)));
     }
 
-    internal static bool TryGetKernelInfoFromMetadata(
+    internal static bool TryGetKernelInfosFromMetadata(
         IDictionary<string, object>? metadata,
-        [NotNullWhen(true)] out KernelInfoCollection? kernelInfo)
+        [NotNullWhen(true)] out KernelInfoCollection? kernelInfos)
     {
         if (metadata is not null)
         {
             if (metadata.TryGetValue("kernelInfo", out var kernelInfoObj))
             {
                 if (kernelInfoObj is JsonElement kernelInfoJson &&
-                    JsonSerializer.Deserialize<KernelInfoCollection>(kernelInfoJson, JsonSerializerOptions) is
+                    kernelInfoJson.Deserialize<KernelInfoCollection>(JsonSerializerOptions) is
                         { } kernelInfoDeserialized)
                 {
-                    kernelInfo = kernelInfoDeserialized;
+                    kernelInfos = kernelInfoDeserialized;
                     return true;
                 }
 
@@ -319,7 +296,7 @@ public class InteractiveDocument : IEnumerable
                                     deserializedKernelInfo.Add(new KernelInfo(name, language, aliases));
                                 }
                             }
-                            kernelInfo = deserializedKernelInfo;
+                            kernelInfos = deserializedKernelInfo;
                             return true;
                         }
                     }
@@ -327,7 +304,7 @@ public class InteractiveDocument : IEnumerable
 
                 if (kernelInfoObj is KernelInfoCollection kernelInfoCollection)
                 {
-                    kernelInfo = kernelInfoCollection;
+                    kernelInfos = kernelInfoCollection;
                     return true;
                 }
             }
@@ -338,17 +315,17 @@ public class InteractiveDocument : IEnumerable
                 {
                     case KernelInfoCollection kernelInfoCollection:
 
-                        kernelInfo = kernelInfoCollection;
+                        kernelInfos = kernelInfoCollection;
                         return true;
 
                     case IDictionary<string, object> dotnetInteractiveDict:
                         {
-                            kernelInfo = new();
+                            kernelInfos = new();
 
                             if (dotnetInteractiveDict.TryGetValue("defaultKernelName", out var nameObj) &&
                                 nameObj is string name)
                             {
-                                kernelInfo.DefaultKernelName = name;
+                                kernelInfos.DefaultKernelName = name;
                             }
 
                             return true;
@@ -364,7 +341,7 @@ public class InteractiveDocument : IEnumerable
                     if (kernelspecDict.TryGetValue("language", out var languageObj) &&
                         languageObj is string defaultLanguage)
                     {
-                        kernelInfo = new KernelInfoCollection
+                        kernelInfos = new KernelInfoCollection
                         {
                             DefaultKernelName = defaultLanguage
                         };
@@ -375,7 +352,7 @@ public class InteractiveDocument : IEnumerable
         }
 
         // check if a KernelInfoCollection was directly serialized into the metadata
-        kernelInfo = default;
+        kernelInfos = default;
         return false;
     }
 
@@ -419,29 +396,35 @@ public class InteractiveDocument : IEnumerable
         {
             _valueNameOption
         };
+        
+        var setCommand = new Command("#!set")
+        {
+            _valueNameOption
+        };
 
         var rootCommand = new RootCommand
         {
+            setCommand,
             valueCommand
         };
 
-        _discoveredInputName = new Option<string[]>("--discovered-input-name");
-        _discoveredPasswordName = new Option<string[]>("--discovered-password-name");
-        rootCommand.AddGlobalOption(_discoveredInputName);
-        rootCommand.AddGlobalOption(_discoveredPasswordName);
+        _discoveredInputPrompts = new Option<string[]>("--discovered-input-name");
+        _discoveredPasswordPrompts = new Option<string[]>("--discovered-password-name");
+        rootCommand.AddGlobalOption(_discoveredInputPrompts);
+        rootCommand.AddGlobalOption(_discoveredPasswordPrompts);
 
         _inputFieldsParser = new CommandLineBuilder(rootCommand)
                              .UseTokenReplacer((string replace, out IReadOnlyList<string>? tokens, out string? message) =>
                              {
                                  if (replace.StartsWith("input:"))
                                  {
-                                     tokens = new[] { _discoveredInputName.Aliases.First(), replace.Split(':')[1] };
+                                     tokens = new[] { _discoveredInputPrompts.Aliases.First(), replace.Split(':')[1] };
                                      message = null;
                                      return true;
                                  }
                                  else if (replace.StartsWith("password:"))
                                  {
-                                     tokens = new[] { _discoveredPasswordName.Aliases.First(), replace.Split(':')[1] };
+                                     tokens = new[] { _discoveredPasswordPrompts.Aliases.First(), replace.Split(':')[1] };
                                      message = null;
                                      return true;
                                  }

@@ -46,7 +46,6 @@ import {
     ValueInfosProducedType,
     ValueProduced,
     ValueProducedType,
-    SubmissionType,
     SubmitCode,
     SubmitCodeType,
     CancelType,
@@ -64,6 +63,7 @@ import { KernelHost } from './polyglot-notebooks/kernelHost';
 import { KernelCommandAndEventChannel } from './DotnetInteractiveChannel';
 import * as connection from './polyglot-notebooks/connection';
 import { DisposableSubscription } from './polyglot-notebooks/disposables';
+import { Logger } from './polyglot-notebooks';
 
 export interface ErrorOutputCreator {
     (message: string, outputId?: string): vscodeLike.NotebookCellOutput;
@@ -155,14 +155,12 @@ export class InteractiveClient {
                 SubmitCodeType,
                 <SubmitCode>{
                     code: source,
-                    submissionType: SubmissionType.Run,
                     targetKernelName: language
                 }
             );
-            if (configuration !== undefined && configuration.id !== undefined) {
-                command.setId(configuration.id);
-            }
-            const commandId = command.id;
+
+            const commandToken = command.getOrCreateToken();
+
             try {
                 return this.submitCode(command, language, eventEnvelope => {
                     if (this.deferredOutput.length > 0) {
@@ -175,18 +173,19 @@ export class InteractiveClient {
                     switch (eventEnvelope.eventType) {
                         // if kernel languages were added, handle those events here
                         case CommandSucceededType:
-                            if (eventEnvelope.command?.id === commandId) {
+                            if (eventEnvelope.command?.getToken() === commandToken) {
                                 // only complete this promise if it's the root command
                                 resolve(!failureReported);
                             }
                             break;
                         case CommandFailedType:
                             {
-                                const err = <CommandFailed>eventEnvelope.event;
-                                const errorOutput = this.config.createErrorOutput(err.message, this.getNextOutputId());
-                                outputReporter(errorOutput);
-                                failureReported = true;
-                                if (eventEnvelope.command?.id === commandId) {
+                                if (eventEnvelope.command?.getToken() === commandToken) {
+                                    const err = <CommandFailed>eventEnvelope.event;
+                                    const errorOutput = this.config.createErrorOutput(err.message, this.getNextOutputId());
+                                    outputReporter(errorOutput);
+                                    failureReported = true;
+
                                     // only complete this promise if it's the root command
                                     reject(err);
                                 }
@@ -406,20 +405,19 @@ export class InteractiveClient {
         return new Promise<void>((resolve, reject) => {
             let failureReported = false;
             const token = command.getOrCreateToken();
-            const id = command.id;
-            const commandType = command.commandType;
+
             let disposable = this.subscribeToKernelTokenEvents(token, eventEnvelope => {
                 switch (eventEnvelope.eventType) {
                     case CommandFailedType:
                         let err = <CommandFailed>eventEnvelope.event;
                         failureReported = true;
-                        if (eventEnvelope.command?.id === id) {
+                        if (eventEnvelope.command?.getToken() === token) {
                             disposable.dispose();
                             reject(err);
                         }
                         break;
                     case CommandSucceededType:
-                        if (eventEnvelope.command?.id === id) {
+                        if (eventEnvelope.command?.getToken() === token) {
                             disposable.dispose();
                             resolve();
                         }
@@ -467,7 +465,7 @@ export class InteractiveClient {
     }
 
     private eventListener(eventEnvelope: KernelEventEnvelope) {
-        let token = eventEnvelope.command?.getOrCreateToken();
+        let token = eventEnvelope.command?.getToken();
         if (token) {
             if (token.startsWith("deferredCommand::")) {
                 switch (eventEnvelope.eventType) {

@@ -5,19 +5,19 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FSharp.Compiler.DependencyManager;
 using Pocket;
 using static Pocket.Logger;
-using FSharp.Compiler.DependencyManager;
-using System.Globalization;
 
-namespace Microsoft.DotNet.Interactive;
+namespace Microsoft.DotNet.Interactive.PackageManagement;
 
 public class PackageRestoreContext : IDisposable
 {
-    private const string restoreTfm = "net7.0";
+    private const string restoreTfm = "net8.0";
     private readonly ConcurrentDictionary<string, PackageReference> _requestedPackageReferences = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, ResolvedPackageReference> _resolvedPackageReferences = new(StringComparer.OrdinalIgnoreCase);
 
@@ -26,9 +26,9 @@ public class PackageRestoreContext : IDisposable
 
     private readonly DependencyProvider _dependencyProvider;
 
-    public PackageRestoreContext(bool useResultsCache = true)
+    public PackageRestoreContext(bool forceRestore = false)
     {
-        _dependencyProvider = new DependencyProvider(AssemblyProbingPaths, NativeProbingRoots, useResultsCache: useResultsCache);
+        _dependencyProvider = new DependencyProvider(AssemblyProbingPaths, NativeProbingRoots, useResultsCache: !forceRestore);
         AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
     }
 
@@ -266,6 +266,7 @@ public class PackageRestoreContext : IDisposable
         if (!result.Success)
         {
             errors.AddRange(result.StdOut);
+
             packageRestoreResult = new PackageRestoreResult(
                 succeeded: false,
                 requestedPackages: newlyRequestedPackageReferences,

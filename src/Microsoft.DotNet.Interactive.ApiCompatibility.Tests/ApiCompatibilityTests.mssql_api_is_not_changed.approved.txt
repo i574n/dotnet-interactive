@@ -63,7 +63,7 @@ Microsoft.DotNet.Interactive.SqlServer
     public CompletionContext Context { get; set;}
     public Position Position { get; set;}
     public TextDocumentIdentifier TextDocument { get; set;}
-  public enum CompletionTriggerKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable
+  public enum CompletionTriggerKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
     Invoked=1
     TriggerCharacter=2
     TriggerForIncompleteCompletions=3
@@ -106,9 +106,9 @@ Microsoft.DotNet.Interactive.SqlServer
     .ctor()
     public ResultMessage Message { get; set;}
     public System.String OwnerUri { get; set;}
-  public class MsSqlKernelExtension, Microsoft.DotNet.Interactive.IKernelExtension
+  public class MsSqlKernelExtension
+    public static System.Threading.Tasks.Task LoadAsync(Microsoft.DotNet.Interactive.Kernel kernel)
     .ctor()
-    public System.Threading.Tasks.Task OnLoadAsync(Microsoft.DotNet.Interactive.Kernel kernel)
   public class Position
     .ctor()
     public System.Int32 Character { get; set;}
@@ -194,7 +194,7 @@ Microsoft.DotNet.Interactive.SqlServer
     public System.Nullable<System.Boolean> Preselect { get; set;}
     public System.String SortText { get; set;}
     public TextEdit TextEdit { get; set;}
-  public enum SqlCompletionItemKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable
+  public enum SqlCompletionItemKind : System.Enum, System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
     Text=1
     Method=2
     Function=3
