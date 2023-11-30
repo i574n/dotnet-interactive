@@ -402,13 +402,13 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                 else
                                     async {
                                         // let hash = $"repl_{code |> Crypto.hashText}"
-                                        let hash = $"fs-rs"
+                                        let hash = $"fs_rs"
 
                                         let! fsprojPath = code |> Builder.persistCodeProject ["Fable.Core"] [] hash
 
                                         let projectDir = fsprojPath |> Path.GetDirectoryName
 
-                                        let outDir = projectDir </> $"target/rs_{hash}"
+                                        let outDir = projectDir </> $"target/repl_{hash}"
 
                                         let libLinkTargetPath = projectDir </> "target/fable-library-rust"
                                         let libLinkPath = outDir </> $"fable_modules/fable-library-rust"
