@@ -45,6 +45,7 @@ public class KernelScheduler<T, TResult> : IDisposable, IKernelScheduler<T, TRes
         if (_currentlyRunningTopLevelOperation is { } operation)
         {
             _currentlyRunningTopLevelOperation = null;
+            _currentlyRunningOperation = null;
             operation.TaskCompletionSource.TrySetCanceled(_schedulerDisposalSource.Token);
         }
     }
@@ -96,7 +97,7 @@ public class KernelScheduler<T, TResult> : IDisposable, IKernelScheduler<T, TRes
 
     internal async Task IdleAsync()
     {
-        if (_currentlyRunningTopLevelOperation is { } currentlyRunning && !currentlyRunning.IsCompleted)
+        if (_currentlyRunningTopLevelOperation is { IsCompleted: false } currentlyRunning)
         {
             await currentlyRunning.TaskCompletionSource.Task;
         }

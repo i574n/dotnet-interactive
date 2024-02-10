@@ -10,6 +10,12 @@
     <None Remove="CommandEvents\LanguageHandlers\r\coe_comm_handler.r" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageDescription>Enables connection to Jupyter kernels as .NET Interactive subkernels</PackageDescription>
+    <PackageTags>polyglot notebook dotnet interactive python jupyter</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\Microsoft.DotNet.Interactive\Utility\InvocationContextExtensions.cs" Link="Utility\InvocationContextExtensions.cs" />
   </ItemGroup>
@@ -20,7 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Markdig.Signed" Version="0.33.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="NetMQ" Version="4.0.1.8" />
     <PackageReference Include="PocketLogger" Version="0.8.2">
       <PrivateAssets>all</PrivateAssets>

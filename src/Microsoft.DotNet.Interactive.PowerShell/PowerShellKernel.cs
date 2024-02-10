@@ -90,6 +90,10 @@ public class PowerShellKernel :
     {
         KernelInfo.LanguageName = LanguageName;
         KernelInfo.LanguageVersion = "7";
+        KernelInfo.Description = """
+                                 This Kernel can evaluate Powershell scripts and commands. 
+                                 It uses Powershell Core and can interop with the operative system and host machine.
+                                 """;
 
         _psHost = new PSKernelHost(this);
         _lazyPwsh = new Lazy<PowerShell>(CreatePowerShell);
@@ -280,7 +284,7 @@ public class PowerShellKernel :
         {
             var success = RunSubmitCodeLocally(code);
 
-            if (!success || pwsh.HadErrors)
+            if (!success)
             {
                 context.Fail(context.Command);
             }
@@ -383,23 +387,31 @@ public class PowerShellKernel :
 
             pwsh.InvokeAndClear();
 
-            pwsh.AddScript("$error");
-            var output = new List<string>();
-            try
-            {
-                pwsh.Invoke(input: null, output: output);
-            }
-            finally
-            {
-                pwsh.Clear();
-            }
-            
-            if (output.Count > _errorCount)
+            if (pwsh.HadErrors)
             {
                 succeeded = false;
             }
+            else
+            {
+                // certain kinds of errors aren't signaled by the HadErrors so we can check using $error
+                pwsh.AddScript("$error");
+                var output = new List<string>();
+                try
+                {
+                    pwsh.Invoke(input: null, output: output);
+                }
+                finally
+                {
+                    pwsh.Clear();
+                }
 
-            _errorCount = output.Count;
+                if (output.Count > _errorCount)
+                {
+                    succeeded = false;
+                }
+
+                _errorCount = output.Count;
+            }
         }
         catch (Exception e)
         {

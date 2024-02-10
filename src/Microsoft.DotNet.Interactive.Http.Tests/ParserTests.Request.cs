@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Microsoft.DotNet.Interactive.Http.Tests;
 
-public partial class ParserTests
+public partial class HttpParserTests
 {
     public class Request
     {
@@ -62,6 +62,54 @@ public partial class ParserTests
             bindingResult.IsSuccessful.Should().BeTrue();
             bindingResult.Value.RequestUri.ToString().Should().Be("https://example.com/");
             bindingResult.Value.Method.Should().Be(HttpMethod.Get);
+        }
+
+        [Fact]
+        public void request_node_with_multiple_variables_declared_prior_parsed_correctly()
+        {
+            var result = Parse(
+                """
+                @searchTerm=some-search-term
+                @hostname=httpbin.org
+                # variable using another variable
+                @host=https://{{hostname}}
+                # variable using "dynamic variables"
+                @createdAt = {{$datetime iso8601}}
+
+                https://httpbin.org/get
+                """);
+
+            var requestNode = result.SyntaxTree.RootNode.ChildNodes.Should().ContainSingle<HttpRequestNode>().Which;
+
+            var variableNodes = result.SyntaxTree.RootNode.ChildNodes.OfType<HttpVariableDeclarationAndAssignmentNode>();
+            variableNodes.Count().Should().Be(4);
+
+            variableNodes.Select(n => n.DeclarationNode.Text).Should().BeEquivalentTo(new[] { "@searchTerm", "@hostname", "@host", "@createdAt" });
+            variableNodes.Select(n => n.ValueNode.Text).Should().BeEquivalentTo( new[] { "some-search-term", "httpbin.org", "https://{{hostname}}", "{{$datetime iso8601}}" });
+
+            variableNodes.Last().DescendantNodesAndTokens().OfType<HttpExpressionNode>().Count().Should().Be(1);
+        }
+
+        [Fact]
+        public void request_node_with_embedded_expression_after_embedded_expression()
+        {
+            var result = Parse(
+                """
+                @host=https://httpbin.org
+                @anything=anything
+                @anyhost={{host}}/{{anything}}
+
+                https://httpbin.org/get
+                """);
+
+            var requestNode = result.SyntaxTree.RootNode.ChildNodes.Should().ContainSingle<HttpRequestNode>().Which;
+
+            var variableNodes = result.SyntaxTree.RootNode.ChildNodes.OfType<HttpVariableDeclarationAndAssignmentNode>();
+            variableNodes.Count().Should().Be(3);
+
+            variableNodes.Last().DescendantNodesAndTokens().OfType<HttpExpressionNode>().Count().Should().Be(2);
+
+            requestNode.UrlNode.Text.Should().Be("https://httpbin.org/get");
         }
 
         [Fact]

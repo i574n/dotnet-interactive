@@ -15,6 +15,7 @@ export class JavascriptKernel extends Kernel {
     constructor(name?: string) {
         super(name ?? "javascript", "JavaScript");
         this.kernelInfo.displayName = `${this.kernelInfo.localName} - ${this.kernelInfo.languageName}`;
+        this.kernelInfo.description = `This Kernel is for executing JavaScript code.`;
         this.suppressedLocals = new Set<string>(this.allLocalVariableNames());
         this.registerCommandHandler({ commandType: commandsAndEvents.SubmitCodeType, handle: invocation => this.handleSubmitCode(invocation) });
         this.registerCommandHandler({ commandType: commandsAndEvents.RequestValueInfosType, handle: invocation => this.handleRequestValueInfos(invocation) });
@@ -74,13 +75,22 @@ export class JavascriptKernel extends Kernel {
     }
 
     private handleRequestValueInfos(invocation: IKernelCommandInvocation): Promise<void> {
-        const valueInfos: commandsAndEvents.KernelValueInfo[] = this.allLocalVariableNames().filter(v => !this.suppressedLocals.has(v)).map(v => (
-            {
-                name: v,
-                typeName: getType(this.getLocalVariable(v)),
-                formattedValue: formatValue(this.getLocalVariable(v), "text/plain"),
-                preferredMimeTypes: []
-            }));
+        const valueInfos: commandsAndEvents.KernelValueInfo[] = [];
+
+        this.allLocalVariableNames().filter(v => !this.suppressedLocals.has(v)).forEach(v => {
+            const variableValue = this.getLocalVariable(v);
+            try {
+                const valueInfo = {
+                    name: v,
+                    typeName: getType(variableValue),
+                    formattedValue: formatValue(variableValue, "text/plain"),
+                    preferredMimeTypes: []
+                };
+                valueInfos.push(valueInfo);
+            } catch (e) {
+                Logger.default.error(`error formatting value ${v} : ${e}`);
+            }
+        });
 
         const event: commandsAndEvents.ValueInfosProduced = {
             valueInfos
