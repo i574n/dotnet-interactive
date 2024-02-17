@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <IsPackable>true</IsPackable>
     <PackageDescription>Run an ASP.NET Core playground in a .NET Interactive notebook.</PackageDescription>

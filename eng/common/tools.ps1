@@ -296,7 +296,7 @@ function InstallDotNet([string] $dotnetRoot,
     if ($runtime -eq "aspnetcore") { $runtimePath = $runtimePath + "\Microsoft.AspNetCore.App" }
     if ($runtime -eq "windowsdesktop") { $runtimePath = $runtimePath + "\Microsoft.WindowsDesktop.App" }
     $runtimePath = $runtimePath + "\" + $version
-  
+
     $dotnetVersionLabel = "runtime toolset '$runtime/$architecture v$version'"
 
     if (Test-Path $runtimePath) {
@@ -604,7 +604,7 @@ function InitializeBuildTool() {
 
     # Use override if it exists - commonly set by source-build
     if ($null -eq $env:_OverrideArcadeInitializeBuildToolFramework) {
-      $initializeBuildToolFramework="net8.0"
+      $initializeBuildToolFramework="net9.0"
     } else {
       $initializeBuildToolFramework=$env:_OverrideArcadeInitializeBuildToolFramework
     }

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <IncludeBuildOutput>false</IncludeBuildOutput>
 
     <PackageId>Library</PackageId>
@@ -20,14 +20,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None 
-      Include="../Library/bin/$(Configuration)/$(TargetFramework)/*.dll" 
-      Pack="true" 
+    <None
+      Include="../Library/bin/$(Configuration)/$(TargetFramework)/*.dll"
+      Pack="true"
       PackagePath="lib/$(TargetFramework)" />
-    <None 
-      Include="../Library.InteractiveExtension/bin/$(Configuration)/$(TargetFramework)/*.dll" 
+    <None
+      Include="../Library.InteractiveExtension/bin/$(Configuration)/$(TargetFramework)/*.dll"
       Exclude="../Library.InteractiveExtension/bin/$(Configuration)/$(TargetFramework)/Library.dll"
-      Pack="true" 
+      Pack="true"
       PackagePath="interactive-extensions/dotnet" />
   </ItemGroup>
 

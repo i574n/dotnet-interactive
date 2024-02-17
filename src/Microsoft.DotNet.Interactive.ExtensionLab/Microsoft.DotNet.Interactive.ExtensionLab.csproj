@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
@@ -10,7 +10,7 @@
     <PackageDescription>Experimental kernel extensions for dotnet-interactive</PackageDescription>
     <PackageTags>polyglot notebook dotnet interactive</PackageTags>
     <IncludeBuildOutput>true</IncludeBuildOutput>
-    <NoWarn>$(NoWarn);NU5100;VSTHRD002</NoWarn> 
+    <NoWarn>$(NoWarn);NU5100;VSTHRD002</NoWarn>
     <!-- dll outside of lib/ folder -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
