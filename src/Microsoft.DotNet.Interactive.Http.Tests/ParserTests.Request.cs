@@ -85,7 +85,7 @@ public partial class HttpParserTests
             variableNodes.Count().Should().Be(4);
 
             variableNodes.Select(n => n.DeclarationNode.Text).Should().BeEquivalentTo(new[] { "@searchTerm", "@hostname", "@host", "@createdAt" });
-            variableNodes.Select(n => n.ValueNode.Text).Should().BeEquivalentTo( new[] { "some-search-term", "httpbin.org", "https://{{hostname}}", "{{$datetime iso8601}}" });
+            variableNodes.Select(n => n.ValueNode.Text).Should().BeEquivalentTo(new[] { "some-search-term", "httpbin.org", "https://{{hostname}}", "{{$datetime iso8601}}" });
 
             variableNodes.Last().DescendantNodesAndTokens().OfType<HttpExpressionNode>().Count().Should().Be(1);
         }
@@ -110,6 +110,29 @@ public partial class HttpParserTests
             variableNodes.Last().DescendantNodesAndTokens().OfType<HttpExpressionNode>().Count().Should().Be(2);
 
             requestNode.UrlNode.Text.Should().Be("https://httpbin.org/get");
+        }
+
+        [Fact]
+        public void request_with_forward_slash_at_beginning_of_nodes_works()
+        {
+            var result = Parse(
+                """
+                @host=https://httpbin.org
+                @anything=/anything
+                @anyhost={{host}}{{anything}}
+
+                {{anyhost}}
+                """);
+
+            var requestNode = result.SyntaxTree.RootNode.ChildNodes.Should().ContainSingle<HttpRequestNode>().Which;
+
+            var bindingResult = requestNode.TryGetHttpRequestMessage(node =>
+            {
+                return node.CreateBindingFailure(CreateDiagnosticInfo(""));
+            });
+
+            bindingResult.IsSuccessful.Should().BeTrue();
+            bindingResult.Value.RequestUri.ToString().Should().Be("https://httpbin.org/anything");
         }
 
         [Fact]
@@ -206,6 +229,39 @@ public partial class HttpParserTests
 
             bindingResult.IsSuccessful.Should().BeTrue();
             bindingResult.Value.RequestUri.ToString().Should().Be("https://httpbin.org/anything");
+        }
+
+        [Fact]
+        public void binding_for_variable_in_header_is_correct()
+        {
+            var result = Parse(
+                """             
+                @hostname = httpbin.org
+                @host = https://{{hostname}}      
+                @contentType = application/json
+
+                POST {{host}}/anything HTTP/1.1
+                content-type: {{contentType}}
+
+                {
+                    "name": "sample1",
+                }
+
+                
+                """
+                );
+
+            var requestNode = result.SyntaxTree.RootNode.ChildNodes
+                                    .Should().ContainSingle<HttpRequestNode>().Which;
+
+            var bindingResult = requestNode.TryGetHttpRequestMessage(node =>
+            {
+                return node.CreateBindingFailure(CreateDiagnosticInfo(""));
+            });
+
+            bindingResult.IsSuccessful.Should().BeTrue();
+            bindingResult.Value.RequestUri.ToString().Should().Be("https://httpbin.org/anything");
+            bindingResult.Value.Headers.ToString().Should().Be("");
         }
     }
 }
