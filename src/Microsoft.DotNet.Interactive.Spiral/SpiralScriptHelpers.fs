@@ -442,7 +442,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                                             let rsPath = outDir </> $"{hash}.rs"
                                             let! rsCode = rsPath |> FileSystem.readAllTextAsync
 
-                                            let mainCode = "pub fn main() -> Result<(), String> {{ Ok(()) }}"
+                                            let mainCode = "pub fn main() -> Result<(), String> { Ok(()) }"
 
                                             let cached = rsCode |> String.contains mainCode
 
@@ -490,15 +490,18 @@ path = "{hash}.rs"
                                                     }
 
                                             if exitCode = 0 then
-                                                let result =
-                                                    result
-                                                    |> String.split [| '\n' |]
-                                                    |> Array.skipWhile (fun line ->
-                                                        line |> String.contains @"Finished release [optimized] target" |> not
-                                                    )
-                                                    |> Array.skip 2
-                                                    |> String.concat "\n"
-                                                return Some (Ok result)
+                                                try
+                                                    let result =
+                                                        result
+                                                        |> String.split [| '\n' |]
+                                                        |> Array.skipWhile (fun line ->
+                                                            line |> String.contains @"[optimized] target" |> not
+                                                        )
+                                                        |> Array.skip 2
+                                                        |> String.concat "\n"
+                                                    return Some (Ok result)
+                                                with ex ->
+                                                    return $"ex: {ex}\nresult:\n{result}" |> Error |> Some
                                             else
                                                 return Some (Error result)
                                     }
