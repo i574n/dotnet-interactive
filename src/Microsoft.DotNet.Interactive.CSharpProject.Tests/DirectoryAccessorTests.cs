@@ -242,7 +242,7 @@ public abstract class DirectoryAccessorTests
     [Fact]
     public void It_can_make_a_directory_accessor_from_an_absolute_DirectoryInfo()
     {
-            
+
         var directory = GetDirectory(TestAssets.SampleConsole);
 
         var fullyQualifiedSubdirectory = new DirectoryInfo(directory.GetFullyQualifiedFilePath("./Subdirectory/").FullName);
@@ -299,7 +299,7 @@ public class InMemoryDirectoryAccessorTests : DirectoryAccessorTests
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
 
 </Project>
