@@ -61,12 +61,14 @@
     <PackageReference Include="FSharp.Json" Version="0.4.1" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.Reactive.Linq" Version="6.0.1-preview.1" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0-preview.2.24128.4" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0-preview.1.24081.5" />
 
     <PackageReference Include="FSharp.Compiler.Service" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(MicrosoftCodeAnalysisCommonVersion)" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+
+    <PackageReference Update="FSharp.Core" Version="8.0.300-beta.24080.5" />
   </ItemGroup>
 
 </Project>
