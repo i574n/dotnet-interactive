@@ -22,7 +22,7 @@ type LangVersion =
     | V50
     | Preview
 
-type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVersion) as self =
+type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVersion) =
 
     let additionalArgs = defaultArg additionalArgs [||]
     let quiet = defaultArg quiet true
