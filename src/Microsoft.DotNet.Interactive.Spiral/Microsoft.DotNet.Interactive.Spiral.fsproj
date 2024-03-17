@@ -27,8 +27,9 @@
     <Compile Include="../../../../lib/fsharp/Networking.fs" />
     <Compile Include="../../../../lib/fsharp/Runtime.fs" />
     <Compile Include="../../../../lib/fsharp/FileSystem.fs" />
-    <Compile Include="../../../../apps/spiral/Supervisor.fs" />
     <Compile Include="../../../../apps/builder/Builder.fs" />
+    <Compile Include="../../../../apps/spiral/Supervisor.fs" />
+    <Compile Include="../../../../apps/spiral/Eval.fs" />
 
     <Compile Include="FsAutoComplete\Utils.fs" />
     <Compile Include="FsAutoComplete\TypedAstUtils.fs" />
