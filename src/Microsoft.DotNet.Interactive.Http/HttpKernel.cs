@@ -3,6 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 using Microsoft.DotNet.Interactive.Commands;
+using Microsoft.DotNet.Interactive.Connection;
 using Microsoft.DotNet.Interactive.Events;
 using Microsoft.DotNet.Interactive.Formatting;
 using Microsoft.DotNet.Interactive.Http.Parsing;
@@ -10,11 +11,8 @@ using Microsoft.DotNet.Interactive.ValueSharing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,6 +22,7 @@ using Diagnostic = CodeAnalysis.Diagnostic;
 
 public class HttpKernel :
     Kernel,
+    IKernelCommandHandler<ClearValues>,
     IKernelCommandHandler<RequestValue>,
     IKernelCommandHandler<SendValue>,
     IKernelCommandHandler<SubmitCode>,
@@ -38,6 +37,11 @@ public class HttpKernel :
     private readonly long _contentByteLengthThreshold;
 
     private readonly Dictionary<string, object> _variables = new(StringComparer.InvariantCultureIgnoreCase);
+
+    static HttpKernel()
+    {
+        KernelCommandEnvelope.RegisterCommand<ClearValues>();
+    }
 
     public HttpKernel(
         string? name = null,
@@ -56,6 +60,12 @@ public class HttpKernel :
         _contentByteLengthThreshold = contentByteLengthThreshold;
 
         RegisterForDisposal(_client);
+    }
+
+    public Task HandleAsync(ClearValues command, KernelInvocationContext context)
+    {
+        _variables.Clear();
+        return Task.CompletedTask;
     }
 
     Task IKernelCommandHandler<RequestValue>.HandleAsync(RequestValue command, KernelInvocationContext context)

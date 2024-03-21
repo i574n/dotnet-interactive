@@ -52,10 +52,10 @@ internal class MsSqlKernel : ToolsServiceKernel
 
         static string MapToSqlDataType(string name, object value)
         {
+            
             var sqlMetaData = SqlMetaData.InferFromValue(value, name);
 
             var dbType = sqlMetaData.SqlDbType;
-
             switch (dbType)
             {
                 case SqlDbType.Char:

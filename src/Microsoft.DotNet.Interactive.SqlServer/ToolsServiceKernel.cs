@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -398,8 +399,23 @@ public abstract class ToolsServiceKernel :
 
         foreach (var variableNameAndValue in _variables)
         {
-            var declareStatement = CreateVariableDeclaration(variableNameAndValue.Key, variableNameAndValue.Value);
-            context.Display($"Adding shared variable declaration statement : {declareStatement}");
+            var value = variableNameAndValue.Value;
+
+            if (value is PasswordString ps)
+            {
+                value = ps.GetClearTextPassword();
+            }
+
+            var declareStatement = CreateVariableDeclaration(variableNameAndValue.Key, value);
+
+            var displayStatement = declareStatement;
+
+            if (variableNameAndValue.Value is PasswordString pwd)
+            {
+                displayStatement = displayStatement.Replace(pwd.GetClearTextPassword(), pwd.ToString());
+            }
+
+            context.Display($"Adding shared variable declaration statement : {displayStatement}");
             sb.AppendLine(declareStatement);
         }
 
@@ -431,6 +447,11 @@ public abstract class ToolsServiceKernel :
             if (value == null)
             {
                 throw new ArgumentNullException(nameof(value), $"Sharing null values is not supported at this time.");
+            }
+
+            if (value is PasswordString ps)
+            {
+                value = ps.GetClearTextPassword();
             }
 
             if (!CanDeclareVariable(name, value, out string msg))

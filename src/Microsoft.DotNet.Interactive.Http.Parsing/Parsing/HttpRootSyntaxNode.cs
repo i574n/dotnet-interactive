@@ -21,6 +21,11 @@ internal class HttpRootSyntaxNode : HttpSyntaxNode
         AddInternal(requestNode);
     }
 
+    public void Add(HttpCommentNode commentNode)
+    {
+        AddInternal(commentNode);
+    } 
+
     public void Add(HttpVariableDeclarationAndAssignmentNode variableNode)
     {
         AddInternal(variableNode);
@@ -57,7 +62,6 @@ internal class HttpRootSyntaxNode : HttpSyntaxNode
                         {
                             return node.CreateBindingSuccess(strinValue);
                         }
-                        
                         else
                         {
                             return DynamicExpressionUtilites.ResolveExpressionBinding(node, node.Text);
