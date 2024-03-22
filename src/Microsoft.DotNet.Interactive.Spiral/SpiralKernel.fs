@@ -331,10 +331,11 @@ type SpiralKernel () as this =
                     match result with
                     | Error (:? FsiCompilationException)
                     | Ok _ ->
-                        let ex = CodeSubmissionCompilationErrorException(Exception(aggregateError))
+                        let ex = CodeSubmissionCompilationErrorException(Exception($"handleSubmitCode / aggregateError: {aggregateError} / result: {result}"))
                         context.Fail(codeSubmission, ex, aggregateError)
-                        log $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex} / aggregateError: %A{aggregateError}"
+                        log $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex} / aggregateError: {aggregateError}"
                     | Error ex ->
+                        let ex = Exception($"handleSubmitCode / aggregateError: {aggregateError} / ex: %A{ex}")
                         context.Fail(codeSubmission, ex, null)
                         log $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}"
                 else
