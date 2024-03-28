@@ -72,7 +72,7 @@ type SpiralKernel () as this =
                 let fileName = "SpiralKernel"
                 File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
             with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.formatException}") Polyglot.Common.getLocals
 
     let log (text : string) =
         if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
@@ -85,14 +85,14 @@ type SpiralKernel () as this =
                 let fileName = "SpiralKernel"
                 File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
             with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Polyglot.Common.formatException}") Polyglot.Common.getLocals
                 log2 text
 
     let serialize1 obj =
         try
             obj |> FSharp.Json.Json.serializeEx (FSharp.Json.JsonConfig.create false)
         with ex ->
-            log $"SpiralKernel.serialize1 / ex: {ex |> Polyglot.Common.printException}"
+            log $"SpiralKernel.serialize1 / ex: {ex |> Polyglot.Common.formatException}"
             "Serialize error"
 
     let serialize2 obj =
@@ -105,7 +105,7 @@ type SpiralKernel () as this =
                     )
             )
         with ex ->
-            log $"SpiralKernel.serialize2 1 / ex: {ex |> Polyglot.Common.printException}"
+            log $"SpiralKernel.serialize2 1 / ex: {ex |> Polyglot.Common.formatException}"
             try
                 Json.JsonSerializer.Serialize (
                         obj,
@@ -115,7 +115,7 @@ type SpiralKernel () as this =
                         )
                 )
             with ex ->
-                log $"SpiralKernel.serialize2 2 / ex: {ex |> Polyglot.Common.printException}"
+                log $"SpiralKernel.serialize2 2 / ex: {ex |> Polyglot.Common.formatException}"
                 "Serialize error"
 
     let serialize obj =

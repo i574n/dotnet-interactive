@@ -28,7 +28,7 @@ type SpiralKernelExtensions private () =
                 let fileName = "SpiralKernelExtensions"
                 File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
             with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelExtensions.log / ex: {ex |> Polyglot.Common.printException}") Polyglot.Common.getLocals
+                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelExtensions.log / ex: {ex |> Polyglot.Common.formatException}") Polyglot.Common.getLocals
 
     static let referenceAssemblyContaining (typ: Type) =
         log $"referenceAssemblyContaining / typ: %A{typ}"
