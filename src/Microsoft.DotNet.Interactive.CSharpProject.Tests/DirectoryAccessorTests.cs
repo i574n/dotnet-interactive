@@ -242,7 +242,6 @@ public abstract class DirectoryAccessorTests
     [Fact]
     public void It_can_make_a_directory_accessor_from_an_absolute_DirectoryInfo()
     {
-
         var directory = GetDirectory(TestAssets.SampleConsole);
 
         var fullyQualifiedSubdirectory = new DirectoryInfo(directory.GetFullyQualifiedFilePath("./Subdirectory/").FullName);
@@ -299,7 +298,7 @@ public class InMemoryDirectoryAccessorTests : DirectoryAccessorTests
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
 </Project>
@@ -328,7 +327,7 @@ namespace BasicConsoleApp
 using System.Collections.Generic;
 using System.Text;
 
-namespace MLS.Agent.Tests.TestProjects.BasicConsoleApp.Subdirectory
+namespace TestProjects.BasicConsoleApp.Subdirectory
 {
     class AnotherPorgram
     {
