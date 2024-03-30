@@ -24,7 +24,7 @@ module DisplayFunctions =
                 let fileName = "SpiralKernelHelpers"
                 File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
             with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelHelpers.log / ex: {ex |> Polyglot.Common.formatException}") Polyglot.Common.getLocals
+                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelHelpers.log / ex: {ex |> Sm.format_exception}") Polyglot.Common.getLocals
 
     /// Display the object using current display settings
     let display (value: obj) =
