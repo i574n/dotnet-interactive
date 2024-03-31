@@ -14,7 +14,6 @@ open FSharp.Compiler.EditorServices
 
 open Polyglot
 open Polyglot.Common
-open Polyglot.FileSystem.Operators
 
 [<RequireQualifiedAccess>]
 type LangVersion =
