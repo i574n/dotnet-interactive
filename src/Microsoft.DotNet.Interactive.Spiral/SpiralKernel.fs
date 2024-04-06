@@ -60,33 +60,7 @@ type SpiralKernel () as this =
 
     [<DefaultValue>] val mutable workingDirectory : string
 
-    let log2 (text : string) =
-        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
-            try
-                let tmpPath = Path.GetTempPath ()
-                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-                Directory.CreateDirectory logDir |> ignore
-                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH-mm-ss-fff"
-                let logFile = Path.Combine (logDir, $"log_{dateTimeStr}_{Random().Next()}.txt")
-                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-                let fileName = "SpiralKernel"
-                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
-            with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Sm.format_exception}") Polyglot.Common.getLocals
-
-    let log (text : string) =
-        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
-            try
-                let tmpPath = Path.GetTempPath ()
-                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-                Directory.CreateDirectory logDir |> ignore
-                let logFile = Path.Combine (logDir, "log.txt")
-                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-                let fileName = "SpiralKernel"
-                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
-            with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernel.log / ex: {ex |> Sm.format_exception}") Polyglot.Common.getLocals
-                log2 text
+    let log = Polyglot.Eval.log
 
     let serialize1 obj =
         try

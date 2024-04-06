@@ -12,9 +12,6 @@ open FSharp.Compiler.Interactive.Shell
 open FSharp.Compiler.Diagnostics
 open FSharp.Compiler.EditorServices
 
-open Polyglot
-open Polyglot.Common
-
 [<RequireQualifiedAccess>]
 type LangVersion =
     | V47
@@ -48,8 +45,6 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     let fsi = FsiEvaluationSession.Create (config, argv, stdin, stdout, stderr)
 
-    let disposable = Eval.startTokenRangeWatcher ()
-
     member _.ValueBound = fsi.ValueBound
 
     member _.Fsi = fsi
@@ -66,25 +61,25 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
                     let d = x.Range
                     let a =
                         match a with
-                        | FSharpDiagnosticSeverity.Error -> Critical
-                        | FSharpDiagnosticSeverity.Warning -> Warning
-                        | FSharpDiagnosticSeverity.Info -> Info
-                        | FSharpDiagnosticSeverity.Hidden -> Debug
+                        | FSharpDiagnosticSeverity.Error -> Polyglot.Common.Critical
+                        | FSharpDiagnosticSeverity.Warning -> Polyglot.Common.Warning
+                        | FSharpDiagnosticSeverity.Info -> Polyglot.Common.Info
+                        | FSharpDiagnosticSeverity.Hidden -> Polyglot.Common.Debug
                     let d =
                         d.FileName, (d.StartColumn, d.EndColumn), (d.StartLine, d.EndLine)
                     a, b, c, d
                 )
             ch, errors
 
-        let ch, errors = code |> Eval.eval fsi_eval cancellationToken
+        let ch, errors = code |> Polyglot.Eval.eval fsi_eval cancellationToken
         let errors =
             errors
             |> Array.map (fun (severity, message, error, (file, (a, b), (c, d))) ->
                 let severity =
                     match severity with
-                    | Critical -> FSharpDiagnosticSeverity.Error
-                    | Warning -> FSharpDiagnosticSeverity.Warning
-                    | Info -> FSharpDiagnosticSeverity.Info
+                    | Polyglot.Common.Critical -> FSharpDiagnosticSeverity.Error
+                    | Polyglot.Common.Warning -> FSharpDiagnosticSeverity.Warning
+                    | Polyglot.Common.Info -> FSharpDiagnosticSeverity.Info
                     | _ -> FSharpDiagnosticSeverity.Hidden
                 let range =
                     Text.Range.mkRange
@@ -114,4 +109,3 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     interface IDisposable with
         member _.Dispose() =
             (fsi :> IDisposable).Dispose()
-            disposable.Dispose ()
