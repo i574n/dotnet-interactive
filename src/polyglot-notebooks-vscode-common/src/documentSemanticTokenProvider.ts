@@ -11,6 +11,10 @@ import { Logger } from './polyglot-notebooks';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as os from 'os';
+import * as file_system from '../../lib/spiral/file_system';
+import * as big from '../../deps/Fable/src/fable-library-ts/lib/big.js';
+
+export const big_ = () => big.default;
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#standard-token-types-and-modifiers
 const defaultTokenTypes = [
@@ -61,9 +65,8 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     private _onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     private _semanticTokensLegend: vscode.SemanticTokensLegend;
 
-    private _tmpSpiralPath = path.join(os.tmpdir(), '!dotnet-interactive-spiral');
-    private _tmpCodePath = path.join(this._tmpSpiralPath, 'code');
-    private _tmpTokensPath = path.join(this._tmpSpiralPath, 'tokens');
+    private _repositoryRoot = file_system.find_parent(".paket")(false)(file_system.get_source_directory());
+    private _targetDir = path.join(this._repositoryRoot, 'target/polyglot/spiral_eval');
 
     private _spiralTokenLegend = ['variable','symbol','string','number','operator','unary_operator','comment','keyword','parenthesis','type_variable','escaped_char','unescaped_char','number_suffix'];
 
@@ -73,10 +76,8 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
         const tokenTypes = [...this._spiralTokenLegend, ...defaultTokenTypes, ...this._dynamicTokenProvider.semanticTokenTypes];
         this._semanticTokensLegend = new vscode.SemanticTokensLegend(tokenTypes, defaultTokenModifiers);
 
-        if (!fs.existsSync(this._tmpSpiralPath)) {
-            fs.mkdirSync(this._tmpSpiralPath);
-            fs.mkdirSync(this._tmpCodePath);
-            fs.mkdirSync(this._tmpTokensPath);
+        if (!fs.existsSync(this._targetDir)) {
+            fs.mkdirSync(this._targetDir);
         }
     }
 
@@ -134,24 +135,30 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                         hash.update(text, 'utf8');
                         const hashHex = hash.digest('hex');
 
-                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / hashHex: ${hashHex}`);
-
-                        const codePath = path.join(this._tmpCodePath, hashHex);
-                        const tokensPath = path.join(this._tmpTokensPath, hashHex);
+                        const codeDir = path.join(this._targetDir, 'packages', hashHex);
 
                         const fileExists = async (path: string) =>
                             !!(await fs.promises.stat(path).catch(_e => false));
 
-                        if (!(await fileExists(codePath))) {
-                            await fs.promises.writeFile(codePath, text, 'utf8');
+                        if (!(await fileExists(codeDir))) {
+                            fs.mkdirSync(codeDir, { recursive: true });
+                        }
+
+                        const codeFile = path.join(codeDir, "main.spi");
+                        const tokensFile = path.join(codeDir, "tokens.json");
+
+                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / hashHex: ${hashHex} / codeFile: ${codeFile} / tokensFile: ${tokensFile}`);
+
+                        if (!(await fileExists(codeFile))) {
+                            await fs.promises.writeFile(codeFile, text, 'utf8');
                         }
 
                         const timeout = 4000;
                         const start = Date.now();
                         let tokensText = "[]";
                         while (Date.now() - start < timeout) {
-                            if (await fileExists(tokensPath)) {
-                                tokensText = await fs.promises.readFile(tokensPath, 'utf8');
+                            if (await fileExists(tokensFile)) {
+                                tokensText = await fs.promises.readFile(tokensFile, 'utf8');
                                 break;
                             }
                             await new Promise(resolve => setTimeout(resolve, 60));

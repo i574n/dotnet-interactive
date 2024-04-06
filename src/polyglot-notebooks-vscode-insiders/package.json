@@ -54,7 +54,7 @@
     "onCommand:polyglot-notebook.saveAsNotebook",
     "onView:polyglot-notebook-panel-values"
   ],
-  "main": "./out/src/vscode-common/extension.js",
+  "main": "./out/deps/dotnet-interactive/src/polyglot-notebooks-vscode-insiders/src/vscode-common/extension.js",
   "extensionDependencies": [
     "ms-toolsai.jupyter"
   ],
@@ -221,7 +221,7 @@
         },
         "dotnet-interactive.requiredInteractiveToolVersion": {
           "type": "string",
-          "default": "1.0.516801",
+          "default": "1.0.445401",
           "description": "%description.requiredInteractiveToolVersion%"
         }
       }
@@ -792,7 +792,6 @@
     "copy-preloads": "npx copyfiles --error --verbose --up 3 ../polyglot-notebooks/dist/activation.js ./resources",
     "compile-variable-grid": "cd ../polyglot-notebooks-ui-components && npm run buildDev",
     "copy-variable-grid": "npx copyfiles --error --verbose --up 3 ../polyglot-notebooks-ui-components/dist/*.* ./resources",
-    "vscode:prepublish": "npm run compile",
     "compile": "npm run lint && tsc -p ./ && npm run compile-preloads && npm run compile-variable-grid && npm run copy-preloads && npm run copy-variable-grid",
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",

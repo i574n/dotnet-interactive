@@ -102,7 +102,7 @@ export class DynamicGrammarSemanticTokenProvider {
     async init(): Promise<void> {
         try {
             // prepare grammar parser
-            const nodeModulesDir = path.join(__dirname, '..', '..', '..', 'node_modules');
+            const nodeModulesDir = path.join(__dirname, '..', '..', '..', '..', '..', '..', '..', 'node_modules');
             const onigWasmPath = path.join(nodeModulesDir, 'vscode-oniguruma', 'release', 'onig.wasm');
             const wasmBin = fs.readFileSync(onigWasmPath).buffer;
             await oniguruma.loadWASM(wasmBin);
@@ -253,7 +253,7 @@ export class DynamicGrammarSemanticTokenProvider {
         const seenLanguages: Set<string> = new Set();
 
         // grammars shipped with this extension
-        const grammarDir = path.join(__dirname, '..', '..', '..', 'grammars');
+        const grammarDir = path.join(__dirname, '..', '..', '..', '..', '..', '..', '..', 'grammars');
         for (const wellKnown of wellKnownLanguages) {
             const grammarPath = path.join(grammarDir, `${wellKnown.languageName}.tmGrammar.json`);
             const languageInfo = this.createLanguageInfoFromGrammar(normalizeLanguageName(wellKnown.languageName), `source.${wellKnown.languageName}`, grammarPath);
