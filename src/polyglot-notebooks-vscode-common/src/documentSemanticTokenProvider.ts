@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import * as os from 'os';
 import * as file_system from '../../lib/spiral/file_system';
+import * as supervisor from '../../apps/spiral/supervisor';
 import * as big from '../../deps/Fable/src/fable-library-ts/lib/big.js';
 
 export const big_ = () => big.default;
@@ -128,46 +129,12 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     const cellMetadata = metadataUtilities.getNotebookCellMetadataFromNotebookCellElement(cell);
                     const cellKernelName = cellMetadata.kernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
 
-                    // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / text: ${text} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
-
                     if (cellKernelName === "spiral") {
-                        const hash = crypto.createHash('sha256');
-                        hash.update(text, 'utf8');
-                        const hashHex = hash.digest('hex');
+                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`)
 
-                        const codeDir = path.join(this._targetDir, 'packages', hashHex);
+                        const tokens = await supervisor.getFileTokenRange(this._targetDir, text)
 
-                        const fileExists = async (path: string) =>
-                            !!(await fs.promises.stat(path).catch(_e => false));
-
-                        if (!(await fileExists(codeDir))) {
-                            fs.mkdirSync(codeDir, { recursive: true });
-                        }
-
-                        const codeFile = path.join(codeDir, "main.spi");
-                        const tokensFile = path.join(codeDir, "tokens.json");
-
-                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / hashHex: ${hashHex} / codeFile: ${codeFile} / tokensFile: ${tokensFile}`);
-
-                        if (!(await fileExists(codeFile))) {
-                            await fs.promises.writeFile(codeFile, text, 'utf8');
-                        }
-
-                        const timeout = 4000;
-                        const start = Date.now();
-                        let tokensText = "[]";
-                        while (Date.now() - start < timeout) {
-                            if (await fileExists(tokensFile)) {
-                                tokensText = await fs.promises.readFile(tokensFile, 'utf8');
-                                break;
-                            }
-                            await new Promise(resolve => setTimeout(resolve, 60));
-                        }
-                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / elapsed: ${Date.now() - start}`);
-
-                        const tokens = new Uint32Array(JSON.parse(tokensText));
-
-                        return new vscode.SemanticTokens(tokens, "");
+                        return new vscode.SemanticTokens(tokens, "")
                     }
 
                     const tokens = await this._dynamicTokenProvider.getTokens(notebookDocument.uri, cellKernelName, text);
