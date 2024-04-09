@@ -130,11 +130,11 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     const cellKernelName = cellMetadata.kernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
 
                     if (cellKernelName === "spiral") {
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`)
+                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
 
-                        const tokens = await supervisor.getFileTokenRange(this._targetDir, text)
+                        const tokens = await supervisor.getFileTokenRange(this._targetDir, text);
 
-                        return new vscode.SemanticTokens(tokens, "")
+                        return new vscode.SemanticTokens(tokens, "");
                     }
 
                     const tokens = await this._dynamicTokenProvider.getTokens(notebookDocument.uri, cellKernelName, text);
