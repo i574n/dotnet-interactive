@@ -18,15 +18,10 @@ open System.IO
 type SpiralKernelExtensions private () =
 
     static let log (text : string) =
-        if Polyglot.Common.traceLevel = Polyglot.Common.TraceLevel.Verbose then
+        let struct (_, _, _, level, _) = Lib.SpiralTrace.get_trace_state ()
+        if level.l0 = Lib.SpiralTrace.US0_0 then
             try
-                let tmpPath = Path.GetTempPath ()
-                let logDir = Path.Combine (tmpPath, "_log_spiral_kernel")
-                Directory.CreateDirectory logDir |> ignore
-                let logFile = Path.Combine (logDir, "log.txt")
-                let dateTimeStr = DateTime.Now.ToString "yyyy-MM-dd HH:mm:ss.fff"
-                let fileName = "SpiralKernelExtensions"
-                File.AppendAllText (logFile, $"{dateTimeStr} {fileName} {text}{Environment.NewLine}") |> ignore
+                Polyglot.Eval.log text
             with ex ->
                 Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelExtensions.log / ex: {ex |> Sm.format_exception}") Polyglot.Common.getLocals
 

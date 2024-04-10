@@ -40,7 +40,8 @@ type SpiralKernel () as this =
     do this.KernelInfo.DisplayName <- $"{this.KernelInfo.LocalName} - Spiral Script"
 
     do
-        Polyglot.Common.traceLevel <- Polyglot.Common.TraceLevel.Info
+        let struct (_, _, _, level, _) = Lib.SpiralTrace.get_trace_state ()
+        level.l0 <- Lib.SpiralTrace.US0_2
 
     static let lockObj = Object();
 
