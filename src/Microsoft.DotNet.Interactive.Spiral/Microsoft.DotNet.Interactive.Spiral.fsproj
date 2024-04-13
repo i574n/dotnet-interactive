@@ -24,6 +24,7 @@
     <Compile Include="../../../../lib/spiral/date_time.fsx" />
     <Compile Include="../../../../lib/spiral/async_.fsx" />
     <Compile Include="../../../../lib/spiral/threading.fsx" />
+    <Compile Include="../../../../lib/spiral/networking.fsx" />
     <Compile Include="../../../../lib/spiral/runtime.fsx" />
     <Compile Include="../../../../lib/spiral/file_system.fsx" />
     <Compile Include="../../../../lib/spiral/trace.fsx" />
@@ -32,7 +33,6 @@
     <Compile Include="../../../../lib/fsharp/CommonFSharp.fs" />
     <Compile Include="../../../../lib/fsharp/Async.fs" />
     <Compile Include="../../../../lib/fsharp/AsyncSeq.fs" />
-    <Compile Include="../../../../lib/fsharp/Networking.fs" />
     <Compile Include="../../../../lib/fsharp/Runtime.fs" />
     <Compile Include="../../../../lib/fsharp/FileSystem.fs" />
     <Compile Include="../../../../apps/builder/Builder.fs" />
