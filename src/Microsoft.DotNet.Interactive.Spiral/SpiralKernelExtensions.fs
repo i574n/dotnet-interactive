@@ -19,7 +19,7 @@ type SpiralKernelExtensions private () =
 
     static let log (text : string) =
         let struct (_, _, _, level, _) = Lib.SpiralTrace.get_trace_state ()
-        if level.l0 = Lib.SpiralTrace.US0_0 then
+        if level.l0 = Lib.SpiralTrace.TraceLevel.US0_0 then
             try
                 Polyglot.Eval.log text
             with ex ->
