@@ -274,11 +274,11 @@ type SpiralKernel () as this =
             log $"handleSubmitCode / fsiDiagnostics:\n{fsiDiagnostics |> Array.map (fun x -> x.ToString ()) |> serialize}"
 
             if fsiDiagnostics.Length > 0 then
-                let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> fun x -> x.ToImmutableArray()
+                let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> _.ToImmutableArray()
 
                 let formattedDiagnostics =
                     fsiDiagnostics
-                    |> Array.map (fun d -> d.ToString())
+                    |> Array.map _.ToString()
                     |> Array.map (fun text -> new FormattedValue(PlainTextFormatter.MimeType, text))
 
                 context.Publish(DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics))
