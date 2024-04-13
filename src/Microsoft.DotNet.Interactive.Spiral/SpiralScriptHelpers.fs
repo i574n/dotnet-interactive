@@ -19,7 +19,6 @@ type LangVersion =
     | Preview
 
 type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVersion) =
-
     let additionalArgs = defaultArg additionalArgs [||]
     let quiet = defaultArg quiet true
     let langVersion = defaultArg langVersion LangVersion.Preview
