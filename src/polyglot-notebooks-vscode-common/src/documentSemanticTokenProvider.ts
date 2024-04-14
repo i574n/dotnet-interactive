@@ -66,8 +66,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     private _onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     private _semanticTokensLegend: vscode.SemanticTokensLegend;
 
-    private _repositoryRoot = file_system.find_parent(".paket")(false)(file_system.get_source_directory());
-    private _targetDir = path.join(this._repositoryRoot, 'target/polyglot/spiral_eval');
+    private _repositoryRoot = file_system.get_repository_root();
 
     private _spiralTokenLegend = ['variable','symbol','string','number','operator','unary_operator','comment','keyword','parenthesis','type_variable','escaped_char','unescaped_char','number_suffix'];
 
@@ -76,10 +75,6 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
         this._dynamicTokenProvider = new DynamicGrammarSemanticTokenProvider(packageJSON, extensionData, path => fs.existsSync(path), path => fs.readFileSync(path, 'utf8'));
         const tokenTypes = [...this._spiralTokenLegend, ...defaultTokenTypes, ...this._dynamicTokenProvider.semanticTokenTypes];
         this._semanticTokensLegend = new vscode.SemanticTokensLegend(tokenTypes, defaultTokenModifiers);
-
-        if (!fs.existsSync(this._targetDir)) {
-            fs.mkdirSync(this._targetDir);
-        }
     }
 
     get semanticTokensLegend(): vscode.SemanticTokensLegend {
@@ -115,6 +110,8 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
         this._onDidChangeSemanticTokensEmitter.fire();
     }
 
+    throttledGetFileTokenRange : { [key: number] : (typeof supervisor.getFileTokenRange) } = {};
+
     async provideDocumentSemanticTokens(document: vscode.TextDocument, _cancellationToken: vscode.CancellationToken): Promise<vscode.SemanticTokens> {
         Logger.default.info(`[documentSemanticTokenProvider] provideDocumentSemanticTokens called for ${document.uri.toString()}`);
         try {
@@ -132,7 +129,13 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     if (cellKernelName === "spiral") {
                         console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
 
-                        const tokens = await supervisor.getFileTokenRange(this._targetDir, text);
+                        const getFileTokenRange =
+                            this.throttledGetFileTokenRange[cell.index]
+                            || (
+                                this.throttledGetFileTokenRange[cell.index] =
+                                    supervisor.throttle(supervisor.getFileTokenRange, 1000)
+                            );
+                        const tokens = await getFileTokenRange(this._repositoryRoot, text);
 
                         return new vscode.SemanticTokens(tokens, "");
                     }

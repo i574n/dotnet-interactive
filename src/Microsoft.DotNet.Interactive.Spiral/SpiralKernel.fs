@@ -39,6 +39,8 @@ type SpiralKernel () as this =
     do this.KernelInfo.LanguageVersion <- "2.3"
     do this.KernelInfo.DisplayName <- $"{this.KernelInfo.LocalName} - Spiral Script"
 
+    do Lib.SpiralTrace.TraceLevel.US0_2 |> Lib.set_trace_level
+
     static let lockObj = Object();
 
     let createScript () =
