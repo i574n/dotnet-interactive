@@ -13,30 +13,24 @@ open Microsoft.DotNet.Interactive.Formatting
 
 open System.IO
 
+open Polyglot.Common
 
 [<AbstractClass; Extension; Sealed>]
 type SpiralKernelExtensions private () =
 
-    static let log (text : string) =
-        if Lib.get_trace_level () = Lib.SpiralTrace.TraceLevel.US0_0 then
-            try
-                Polyglot.Eval.log text
-            with ex ->
-                Polyglot.Common.trace Polyglot.Common.Debug (fun () -> $"SpiralKernelExtensions.log / ex: {ex |> Sm.format_exception}") Polyglot.Common.getLocals
-
     static let referenceAssemblyContaining (typ: Type) =
-        log $"referenceAssemblyContaining / typ: %A{typ}"
+        trace Verbose (fun () -> $"referenceAssemblyContaining / typ: %A{typ}") _locals
         sprintf "#r \"%s\"" (typ.Assembly.Location.Replace("\\", "/"))
     static let openNamespaceContaining (typ: Type) =
-        log $"openNamespaceContaining / typ: %A{typ}"
+        trace Verbose (fun () -> $"openNamespaceContaining / typ: %A{typ}") _locals
         sprintf "open %s" typ.Namespace
     static let openType (typ: Type) =
-        log $"openType / typ: %A{typ}"
+        trace Verbose (fun () -> $"openType / typ: %A{typ}") _locals
         sprintf "open type %s.%s" typ.Namespace typ.Name
 
     [<Extension>]
     static member UseDefaultFormatting(kernel: SpiralKernel) =
-        log $"UseDefaultFormatting"
+        trace Verbose (fun () -> $"UseDefaultFormatting") _locals
         let code =
             [
                 referenceAssemblyContaining typeof<IHtmlContent>
@@ -55,7 +49,7 @@ type SpiralKernelExtensions private () =
 
     [<Extension>]
     static member UseKernelHelpers(kernel: SpiralKernel) =
-        log $"UseKernelHelpers"
+        trace Verbose (fun () -> $"UseKernelHelpers") _locals
         let code =
             [
                 referenceAssemblyContaining typeof<SpiralKernelHelpers.IMarker>

@@ -111,7 +111,6 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     }
 
     throttledGetFileTokenRange : { [key: number] : (typeof supervisor.getFileTokenRange) } = {};
-    fileTokenRangeHistory : { [key: number] : [number, number] } = {};
 
     async provideDocumentSemanticTokens(document: vscode.TextDocument, _cancellationToken: vscode.CancellationToken): Promise<vscode.SemanticTokens> {
         Logger.default.info(`[documentSemanticTokenProvider] provideDocumentSemanticTokens called for ${document.uri.toString()}`);
@@ -128,34 +127,18 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     const cellKernelName = cellMetadata.kernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
 
                     if (cellKernelName === "spiral") {
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)} / this.semanticTokensLegend: ${JSON.stringify(this.semanticTokensLegend, null, 2)}`);
+                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)}`);
 
-                        let getFileTokenRange = supervisor.getFileTokenRange;
-                        const now = new Date().getTime();
-                        const history = this.fileTokenRangeHistory[cell.index];
-                        let count = 0;
-                        if (history) {
-                            const [lastDate, lastCount] = history;
-                            const diff = now - lastDate;
-                            if (diff < 2000) {
-                                count = lastCount + 1;
-
-                                if (count >= 4) {
-                                    getFileTokenRange =
-                                        this.throttledGetFileTokenRange[cell.index]
-                                        || (
-                                            this.throttledGetFileTokenRange[cell.index] =
-                                                supervisor.throttle(supervisor.getFileTokenRange, 1000)
-                                        );
-                                }
-                            } else if (diff > 5000) {
-                                count = 0;
-                            }
-                        }
-                        this.fileTokenRangeHistory[cell.index] = [now, count];
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / history: ${history} / this.fileTokenRangeHistory[cell.index]: ${this.fileTokenRangeHistory[cell.index]}`);
+                        const start = Date.now();
+                        const getFileTokenRange =
+                            this.throttledGetFileTokenRange[cell.index]
+                            || (
+                                this.throttledGetFileTokenRange[cell.index] =
+                                    supervisor.throttle(supervisor.getFileTokenRange, 1000)
+                            );
                         const tokens = await getFileTokenRange(this._repositoryRoot, text);
-
+                        const diff = Date.now() - start;
+                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / diff: ${diff} / tokens.length: ${tokens.length}`);
                         return new vscode.SemanticTokens(tokens, "");
                     }
 

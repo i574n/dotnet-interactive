@@ -8,31 +8,31 @@ open Microsoft.DotNet.Interactive
 open System
 open System.IO
 
+open Polyglot.Common
+
 type internal IMarker = interface end
 
 [<AutoOpen>]
 module DisplayFunctions =
-    let log = Polyglot.Eval.log
-
     /// Display the object using current display settings
     let display (value: obj) =
-        log $"display / value: %A{value}"
+        trace Verbose (fun () -> $"display / value: %A{value}") _locals
         Kernel.display(value)
 
     /// Display the object as HTML using current display settings
     let HTML (value: string) =
-        log $"HTML / value: %A{value}"
+        trace Verbose (fun () -> $"HTML / value: %A{value}") _locals
 
         Kernel.HTML(value)
 
     /// Specify CSS style specifications.  If displayed, the styles will apply to the current worksheet.
     let CSS (styles: string) =
-        log $"CSS / styles: %A{styles}"
+        trace Verbose (fun () -> $"CSS / styles: %A{styles}") _locals
 
         Kernel.CSS styles
 
     /// Execute the content as Javascript
     let Javascript (content: string) =
-        log $"Javascript / content: %A{content}"
+        trace Verbose (fun () -> $"Javascript / content: %A{content}") _locals
 
         Kernel.Javascript content
