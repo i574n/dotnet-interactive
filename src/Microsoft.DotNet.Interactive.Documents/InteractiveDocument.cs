@@ -188,6 +188,8 @@ public class InteractiveDocument : IEnumerable
             ".cs" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "csharp") },
             ".csx" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "csharp") },
             ".fs" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "fsharp") },
+            ".spi" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "spiral") },
+            ".spir" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "spiral") },
             ".fsx" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "fsharp") },
             ".ps1" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "pwsh") },
             ".html" => new InteractiveDocument { new InteractiveDocumentElement(fileContents, "html") },
