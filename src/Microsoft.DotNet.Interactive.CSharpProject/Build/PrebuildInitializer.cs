@@ -8,11 +8,11 @@ using Microsoft.DotNet.Interactive.Utility;
 
 namespace Microsoft.DotNet.Interactive.CSharpProject.Build;
 
-public class PackageInitializer : IPackageInitializer
+public class PrebuildInitializer : IPrebuildInitializer
 {
     private readonly Func<DirectoryInfo, Task> afterCreate;
 
-    public PackageInitializer(
+    public PrebuildInitializer(
         string template,
         string projectName,
         string language = null,
@@ -45,11 +45,17 @@ public class PackageInitializer : IPackageInitializer
     {
         var dotnet = new Dotnet(directory);
 
-        await dotnet.New("globaljson");
+        await File.WriteAllTextAsync(Path.Combine(directory.FullName, "Directory.Build.props"), "<Project />");
+
+        var targetsFilePath = Path.Combine(directory.FullName, Prebuild.DirectoryBuildTargetFilename);
+
+        await File.WriteAllTextAsync(targetsFilePath, Prebuild.DirectoryBuildTargetsContent);
+
+        await dotnet.New("globaljson", "--force");
 
         var result = await dotnet
-            .New(Template,
-                args: $"--name \"{ProjectName}\" --language \"{Language}\" --output \"{directory.FullName}\"");
+                         .New(Template,
+                              args: $"--name \"{ProjectName}\" --language \"{Language}\" --output \"{directory.FullName}\" --force");
         result.ThrowOnFailure($"Error initializing in {directory.FullName}");
 
         if (afterCreate is not null)

@@ -25,7 +25,7 @@ public class CSharpProjectKernel :
     IKernelCommandHandler<RequestSignatureHelp>,
     IKernelCommandHandler<SubmitCode>
 {
-    private readonly IPackageFinder _packageFinder;
+    private readonly IPrebuildFinder _prebuildFinder;
     private RoslynWorkspaceServer _workspaceServer;
     private Workspace _workspace;
     private Buffer _buffer;
@@ -56,16 +56,16 @@ public class CSharpProjectKernel :
         }
     }
 
-    public CSharpProjectKernel(string name = "csharp", IPackageFinder packageFinder = null) : base(name)
+    public CSharpProjectKernel(string name = "csharp", IPrebuildFinder prebuildFinder = null) : base(name)
     {
-        _packageFinder = packageFinder;
+        _prebuildFinder = prebuildFinder;
         KernelInfo.LanguageName = "C#";
         KernelInfo.LanguageVersion = "11.0";
     }
 
     async Task IKernelCommandHandler<OpenProject>.HandleAsync(OpenProject command, KernelInvocationContext context)
     {
-        _workspaceServer = new RoslynWorkspaceServer(_packageFinder ?? PackageFinder.Create(() => Package.GetOrCreateConsolePackageAsync(enableBuild: false)));
+        _workspaceServer = new RoslynWorkspaceServer(_prebuildFinder ?? PrebuildFinder.Create(() => Prebuild.GetOrCreateConsolePrebuildAsync(enableBuild: false)));
 
         var extractor = new BufferFromRegionExtractor();
         _workspace = extractor.Extract(command.Project.Files.Select(f => new ProjectFileContent(f.RelativeFilePath, f.Content)).ToArray());
@@ -145,15 +145,13 @@ public class CSharpProjectKernel :
         var result = await _workspaceServer.CompileAsync(request);
 
         var diagnostics = GetDiagnostics(_buffer.Content, result).ToArray();
-        if (diagnostics.Any())
-        {
-            context.Publish(new DiagnosticsProduced(diagnostics, command));
+        
+        context.Publish(new DiagnosticsProduced(diagnostics, command));
 
-            if (diagnostics.Any(d => d.Severity == CodeAnalysis.DiagnosticSeverity.Error))
-            {
-                context.Fail(command);
-                return;
-            }
+        if (diagnostics.Any(d => d.Severity == CodeAnalysis.DiagnosticSeverity.Error))
+        {
+            context.Fail(command);
+            return;
         }
 
         context.Publish(new AssemblyProduced(command, new Base64EncodedAssembly(result.Base64Assembly)));
@@ -189,10 +187,8 @@ public class CSharpProjectKernel :
         var result = await _workspaceServer.CompileAsync(request);
 
         var diagnostics = GetDiagnostics(command.Code, result).ToArray();
-        if (diagnostics.Any())
-        {
-            context.Publish(new DiagnosticsProduced(diagnostics, command));
-        }
+
+        context.Publish(new DiagnosticsProduced(diagnostics, command));
     }
 
     async Task IKernelCommandHandler<RequestSignatureHelp>.HandleAsync(RequestSignatureHelp command, KernelInvocationContext context)

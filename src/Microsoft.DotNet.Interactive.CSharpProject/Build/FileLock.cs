@@ -13,15 +13,41 @@ namespace Microsoft.DotNet.Interactive.CSharpProject.Build;
 public class FileLock
 {
     private const string LockFileName = ".trydotnet-lock";
-    
-    public static Task<IDisposable> TryCreateAsync(DirectoryInfo directory)
+
+    public static async Task<IDisposable> TryCreateAsync(DirectoryInfo directory, int timeoutInMs = 30000)
     {
         if (directory is null)
         {
             throw new ArgumentNullException(nameof(directory));
         }
+
         var lockFile = new FileInfo(Path.Combine(directory.FullName, LockFileName));
-        return TryCreateAsync(lockFile);
+
+        var attemptCount = 1;
+        var remainingTimeInMs = timeoutInMs;
+
+        while (remainingTimeInMs > 0)
+        {
+            try
+            {
+                return File.Create(lockFile.FullName, 1, FileOptions.DeleteOnClose);
+            }
+            catch (IOException)
+            {
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
+            remainingTimeInMs -= 100;
+
+            attemptCount++;
+
+            if (attemptCount % 10 == 0)
+            {
+                Logger.Log.Info($"Waiting on {nameof(FileLock)} for {attemptCount / 10} seconds");
+            }
+        }
+
+        throw new IOException($"Cannot acquire file lock {lockFile.FullName} after {attemptCount} attempts in {timeoutInMs / 1000}s.");
     }
 
     public static bool IsLockFile(FileInfo fileInfo)
@@ -32,37 +58,5 @@ public class FileLock
         }
 
         return fileInfo.Name == LockFileName;
-    }
-
-    private static async Task<IDisposable> TryCreateAsync(FileInfo lockFile)
-    {
-        if (lockFile is null)
-        {
-            throw new ArgumentNullException(nameof(lockFile));
-        }
-
-        const int waitAmount = 100;
-        var attemptCount = 1;
-
-        while (attemptCount <= 100)
-        {
-            try
-            {
-                return File.Create(lockFile.FullName, 1, FileOptions.DeleteOnClose);
-            }
-            catch (IOException)
-            {
-            }
-
-            await Task.Delay(waitAmount);
-            attemptCount++;
-
-            if (attemptCount % 10 == 0)
-            {
-                Logger.Log.Info($"Waiting on {nameof(FileLock)} for {attemptCount / 10} seconds");
-            }
-        }
-
-        throw new IOException($"Cannot acquire file lock {lockFile.FullName}");
     }
 }

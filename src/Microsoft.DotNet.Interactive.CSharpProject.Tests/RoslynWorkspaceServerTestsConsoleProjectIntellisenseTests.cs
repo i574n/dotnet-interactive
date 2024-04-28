@@ -10,9 +10,9 @@ using Xunit.Abstractions;
 
 namespace Microsoft.DotNet.Interactive.CSharpProject.Tests;
 
-public class RoslynWorkspaceServerTestsConsoleProjectIntellisenseTests : RoslynWorkspaceServerTestsCore
+public class RoslynWorkspaceServerTestsConsoleProjectIntellisenseTests : WorkspaceServerTestsCore
 {
-    public RoslynWorkspaceServerTestsConsoleProjectIntellisenseTests(ITestOutputHelper output) : base(output)
+    public RoslynWorkspaceServerTestsConsoleProjectIntellisenseTests(PrebuildFixture prebuildFixture, ITestOutputHelper output) : base(prebuildFixture, output)
     {
     }
 
@@ -689,8 +689,8 @@ namespace FibonacciTest
         #endregion
 
         var (processed, position) = CodeManipulation.ProcessMarkup(generator);
-        var package = await PackageUtilities.CreateBuildableCopy(await Package.GetOrCreateConsolePackageAsync(false));
-        var workspace = new Workspace(workspaceType: package.Name, buffers: new[]
+        var prebuild = await PrebuildUtilities.CreateBuildableCopy(await Prebuild.GetOrCreateConsolePrebuildAsync(false));
+        var workspace = new Workspace(workspaceType: prebuild.Name, buffers: new[]
         {
             new Buffer("Program.cs", program),
             new Buffer("generators/FibonacciGenerator.cs", processed, position)
