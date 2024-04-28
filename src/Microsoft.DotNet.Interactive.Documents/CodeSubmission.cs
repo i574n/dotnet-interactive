@@ -27,7 +27,7 @@ public static class CodeSubmission
         var lines = content.SplitIntoLines();
 
         var document = new InteractiveDocument();
-        var currentKernelName = kernelInfos.DefaultKernelName ?? "csharp";
+        var currentKernelName = kernelInfos.DefaultKernelName ?? "spiral";
         var currentElementLines = new List<string>();
 
         kernelInfos = WithMarkdownKernel(kernelInfos);

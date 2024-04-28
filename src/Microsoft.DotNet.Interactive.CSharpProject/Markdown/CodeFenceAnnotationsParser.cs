@@ -25,6 +25,7 @@ public class CodeFenceAnnotationsParser
         IDefaultCodeBlockAnnotations defaultAnnotations = null,
         Action<Command> configureCsharpCommand = null,
         Action<Command> configureFsharpCommand = null,
+        Action<Command> configureSpiralCommand = null,
         Action<Command> configureConsoleCommand = null)
     {
         _defaultAnnotations = defaultAnnotations;
@@ -36,6 +37,7 @@ public class CodeFenceAnnotationsParser
         {
             [CreateCsharpCommand(configureCsharpCommand)] = languageBinder,
             [CreateFsharpCommand(configureFsharpCommand)] = languageBinder,
+            [CreateSpiralCommand(configureSpiralCommand)] = languageBinder,
             [CreateConsoleCommand(configureConsoleCommand)] = new Lazy<ModelBinder>(() => new ModelBinder(typeof(OutputBlockAnnotations)))
         };
 
@@ -186,6 +188,23 @@ public class CodeFenceAnnotationsParser
         fsharp.AddAlias("fs");
         fsharp.AddAlias("f#");
         return fsharp;
+    }
+
+    private Command CreateSpiralCommand(Action<Command> configureSpiralCommand)
+    {
+        var spiral = new Command("spiral");
+
+        foreach (var commandOption in CreateCommandOptions())
+        {
+            spiral.AddOption(commandOption);
+        }
+
+        configureSpiralCommand?.Invoke(spiral);
+
+        spiral.AddAlias("Spiral");
+        spiral.AddAlias("SPIRAL");
+        spiral.AddAlias("spi");
+        return spiral;
     }
 
     private Command CreateConsoleCommand(Action<Command> configureConsoleCommand)

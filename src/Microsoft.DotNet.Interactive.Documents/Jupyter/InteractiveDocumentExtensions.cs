@@ -17,9 +17,10 @@ internal static class InteractiveDocumentExtensions
             language.ToLowerInvariant() switch
             {
                 "c#" or "csharp" => ("csharp","C#", "10.0", ".cs"),
+                "spiral" => ("spiral","Spiral", "2.0", ".spi"),
                 "f#" or "fsharp" => ("fsharp","F#", "6.0", ".fs"),
                 "powershell" or "pwsh" => ("powershell", "PowerShell", "7.0", ".ps1"),
-                _ => throw new ArgumentException($"Unrecognized language: {language}") 
+                _ => throw new ArgumentException($"Unrecognized language: {language}")
             };
 
         document.Metadata.GetOrAdd("kernelspec", _ => new Dictionary<string, object>())

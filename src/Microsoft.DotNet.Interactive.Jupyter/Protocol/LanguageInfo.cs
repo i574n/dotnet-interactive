@@ -76,6 +76,13 @@ public class FSharpLanguageInfo : LanguageInfo
     }
 }
 
+public class SpiralLanguageInfo : LanguageInfo
+{
+    public SpiralLanguageInfo(string version = "2.0") : base("Spiral", version, "text/x-spiral", ".spi", pygmentsLexer: "spiral")
+    {
+    }
+}
+
 public class PowerShellLanguageInfo : LanguageInfo
 {
     public PowerShellLanguageInfo(string version = "7.0") : base("PowerShell", version, "text/x-powershell", ".ps1", pygmentsLexer: "powershell")

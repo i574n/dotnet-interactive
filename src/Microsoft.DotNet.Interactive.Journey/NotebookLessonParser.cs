@@ -95,10 +95,11 @@ public class NotebookLessonParser
             {
                 new("csharp", "C#", new[] { "cs", "c#" }),
                 new("fsharp", "F#", new[] { "fs", "f#" }),
+                new("spiral", "Spiral", new[] { "spi", "spiral" }),
                 new("pwsh", "PowerShell", new[] { "powershell" }),
                 new("markdown", "Markdown", new[] { "md" })
             };
-            names.DefaultKernelName = "csharp";
+            names.DefaultKernelName = "spiral";
             return names;
         }
     }

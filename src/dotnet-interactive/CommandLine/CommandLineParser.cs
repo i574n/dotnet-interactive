@@ -129,7 +129,7 @@ public static class CommandLineParser
         var defaultKernelOption = new Option<string>(
             "--default-kernel",
             description: LocalizationResources.Cli_dotnet_interactive_jupyter_default_kernel_Description(),
-            getDefaultValue: () => "csharp").AddCompletions("fsharp", "csharp", "pwsh");
+            getDefaultValue: () => "spiral").AddCompletions("fsharp", "csharp", "pwsh");
 
         var rootCommand = DotnetInteractive();
 

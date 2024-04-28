@@ -200,6 +200,7 @@ public class Shell : IHostedService
         {
             "csharp" => new CSharpLanguageInfo(),
             "fsharp" => new FSharpLanguageInfo(),
+            "spiral" => new SpiralLanguageInfo(),
             "powershell" => new PowerShellLanguageInfo(),
             _ =>  null
         };
