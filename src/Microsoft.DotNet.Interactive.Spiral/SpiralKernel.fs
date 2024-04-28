@@ -282,7 +282,7 @@ type SpiralKernel () as this =
                 let formattedDiagnostics =
                     fsiDiagnostics
                     |> Array.map _.ToString()
-                    |> Array.map (fun text -> new FormattedValue(PlainTextFormatter.MimeType, text))
+                    |> Array.map (fun text -> new FormattedValue(HtmlFormatter.MimeType, text))
 
                 context.Publish(DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics))
                 trace Verbose (fun () -> $"handleSubmitCode / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics) |> serialize2}") _locals
