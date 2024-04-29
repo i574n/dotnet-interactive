@@ -8,14 +8,8 @@ import { DynamicGrammarSemanticTokenProvider, VSCodeExtensionLike } from './dyna
 import * as constants from './constants';
 import * as vscodeNotebookManagement from './vscodeNotebookManagement';
 import { Logger } from './polyglot-notebooks';
-import * as crypto from 'crypto';
-import * as path from 'path';
-import * as os from 'os';
 import * as file_system from '../../lib/spiral/file_system';
 import * as supervisor from '../../apps/spiral/supervisor';
-import * as big from '../../deps/Fable/src/fable-library-ts/lib/big.js';
-
-export const big_ = () => big.default;
 
 // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#standard-token-types-and-modifiers
 const defaultTokenTypes = [
