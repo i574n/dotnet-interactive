@@ -251,12 +251,12 @@ type SpiralKernel () as this =
     //     }
 
     let handleSubmitCode (codeSubmission: SubmitCode) (context: KernelInvocationContext) =
-        trace Verbose (fun () -> $"handleSubmitCode / codeSubmission: %A{codeSubmission |> serialize2}") _locals
+        trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / codeSubmission: %A{codeSubmission |> serialize2}") _locals
 
         async {
             let codeSubmissionReceived = CodeSubmissionReceived(codeSubmission)
             context.Publish(codeSubmissionReceived)
-            trace Verbose (fun () -> $"handleSubmitCode / Publish(CodeSubmissionReceived): %A{codeSubmissionReceived |> serialize2}") _locals
+            trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(CodeSubmissionReceived): %A{codeSubmissionReceived |> serialize2}") _locals
 
             let tokenSource =
                 CancellationTokenSource.CreateLinkedTokenSource
@@ -273,29 +273,45 @@ type SpiralKernel () as this =
             // script.Eval can succeed with error diagnostics, see https://github.com/dotnet/interactive/issues/691
             let isError = fsiDiagnostics |> Array.exists (fun d -> d.Severity = FSharpDiagnosticSeverity.Error)
 
-            let _text = $"handleSubmitCode / fsiDiagnostics:\n{fsiDiagnostics |> Array.map (fun x -> x.ToString ()) |> serialize}"
+            let _text = $"SpiralKernel.handleSubmitCode / fsiDiagnostics:\n{fsiDiagnostics |> Array.map (fun x -> x.ToString ()) |> serialize}"
             trace Verbose (fun () -> _text) _locals
 
             if fsiDiagnostics.Length > 0 then
-                let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> _.ToImmutableArray()
+                try
+                    let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> _.ToImmutableArray()
 
-                let formattedDiagnostics =
-                    fsiDiagnostics
-                    |> Array.map _.ToString()
-                    |> Array.map (fun text -> new FormattedValue(HtmlFormatter.MimeType, text))
+                    let formattedDiagnostics =
+                        fsiDiagnostics
+                        |> Array.map _.ToString()
+                        |> Array.map (fun text -> new FormattedValue(PlainTextFormatter.MimeType, text))
 
-                context.Publish(DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics))
-                trace Verbose (fun () -> $"handleSubmitCode / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics) |> serialize2}") _locals
+                    context.Publish(DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics))
+                    trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics) |> serialize2}") _locals
+                with ex ->
+                    let ex = Exception($"SpiralKernel.handleSubmitCode / ex: %A{ex}")
+                    trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}") _locals
 
             match result with
             | Ok(result) when not isError ->
                 match result with
                 | Some(value) when value.ReflectionType <> typeof<unit> ->
-                    let value = value.ReflectionValue
-                    let formattedValues = FormattedValue.CreateManyFromObject(value)
-                    context.Publish(ReturnValueProduced(value, codeSubmission, formattedValues))
-                    trace Verbose (fun () -> $"handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(value, codeSubmission, formattedValues) |> serialize2}") _locals
+                    try
+                        let resultValue = value.ReflectionValue
+                        let formattedValues : IReadOnlyList<FormattedValue> =
+                            match resultValue with
+                            | :? FormattedValue as formattedValue -> Seq.singleton( formattedValue ).ToImmutableList()
+                            | :? IEnumerable<FormattedValue> as formattedValueEnumerable -> formattedValueEnumerable.ToImmutableList()
+                            | _ -> FormattedValue.CreateManyFromObject(resultValue)
+                        context.Publish(ReturnValueProduced(resultValue, codeSubmission, formattedValues))
+                        trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(resultValue, codeSubmission, formattedValues) |> serialize2}") _locals
+                    with ex ->
+                        let ex = Exception($"SpiralKernel.handleSubmitCode / ex: %A{ex}")
+                        trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}") _locals
 
+                        let value = value.ReflectionValue
+                        let formattedValues = FormattedValue.CreateManyFromObject(value)
+                        context.Publish(ReturnValueProduced(value, codeSubmission, formattedValues))
+                        trace Verbose (fun () -> $"handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(value, codeSubmission, formattedValues) |> serialize2}") _locals
 
                 | Some _
                 | None -> ()
@@ -305,16 +321,16 @@ type SpiralKernel () as this =
                     match result with
                     | Error (:? FsiCompilationException)
                     | Ok _ ->
-                        let ex = CodeSubmissionCompilationErrorException(Exception($"handleSubmitCode / aggregateError: {aggregateError} / result: {result}"))
+                        let ex = CodeSubmissionCompilationErrorException(Exception($"SpiralKernel.handleSubmitCode / aggregateError: {aggregateError} / result: {result}"))
                         context.Fail(codeSubmission, ex, aggregateError)
-                        trace Critical (fun () -> $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex} / aggregateError: {aggregateError}") _locals
+                        trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex} / aggregateError: {aggregateError}") _locals
                     | Error ex ->
-                        let ex = Exception($"handleSubmitCode / aggregateError: {aggregateError} / ex: %A{ex}")
+                        let ex = Exception($"SpiralKernel.handleSubmitCode / aggregateError: {aggregateError} / ex: %A{ex}")
                         context.Fail(codeSubmission, ex, null)
-                        trace Critical (fun () -> $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}") _locals
+                        trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}") _locals
                 else
                     context.Fail(codeSubmission, null, "Command cancelled")
-                    trace Critical (fun () -> $"handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / Command cancelled") _locals
+                    trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / Command cancelled") _locals
         }
         |> Async.StartAsTask
 
