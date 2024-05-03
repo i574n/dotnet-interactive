@@ -277,41 +277,28 @@ type SpiralKernel () as this =
             trace Verbose (fun () -> _text) _locals
 
             if fsiDiagnostics.Length > 0 then
-                try
-                    let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> _.ToImmutableArray()
+                let diagnostics = fsiDiagnostics |> Array.map getDiagnostic |> _.ToImmutableArray()
 
-                    let formattedDiagnostics =
-                        fsiDiagnostics
-                        |> Array.map _.ToString()
-                        |> Array.map (fun text -> new FormattedValue(PlainTextFormatter.MimeType, text))
+                let formattedDiagnostics =
+                    fsiDiagnostics
+                    |> Array.map _.ToString()
+                    |> Array.map (fun text -> new FormattedValue(PlainTextFormatter.MimeType, text))
 
-                    context.Publish(DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics))
-                    trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, codeSubmission, formattedDiagnostics) |> serialize2}") _locals
-                with ex ->
-                    let ex = Exception($"SpiralKernel.handleSubmitCode / ex: %A{ex}")
-                    trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}") _locals
+                context.Publish(DiagnosticsProduced(diagnostics, formattedDiagnostics, codeSubmission))
+                trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(DiagnosticsProduced): %A{DiagnosticsProduced(diagnostics, formattedDiagnostics, codeSubmission) |> serialize2}") _locals
 
             match result with
             | Ok(result) when not isError ->
                 match result with
                 | Some(value) when value.ReflectionType <> typeof<unit> ->
-                    try
-                        let resultValue = value.ReflectionValue
-                        let formattedValues : IReadOnlyList<FormattedValue> =
-                            match resultValue with
-                            | :? FormattedValue as formattedValue -> Seq.singleton( formattedValue ).ToImmutableList()
-                            | :? IEnumerable<FormattedValue> as formattedValueEnumerable -> formattedValueEnumerable.ToImmutableList()
-                            | _ -> FormattedValue.CreateManyFromObject(resultValue)
-                        context.Publish(ReturnValueProduced(resultValue, codeSubmission, formattedValues))
-                        trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(resultValue, codeSubmission, formattedValues) |> serialize2}") _locals
-                    with ex ->
-                        let ex = Exception($"SpiralKernel.handleSubmitCode / ex: %A{ex}")
-                        trace Critical (fun () -> $"SpiralKernel.handleSubmitCode / Fail / codeSubmission: %A{codeSubmission} / ex: %A{ex}") _locals
-
-                        let value = value.ReflectionValue
-                        let formattedValues = FormattedValue.CreateManyFromObject(value)
-                        context.Publish(ReturnValueProduced(value, codeSubmission, formattedValues))
-                        trace Verbose (fun () -> $"handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(value, codeSubmission, formattedValues) |> serialize2}") _locals
+                    let resultValue = value.ReflectionValue
+                    let formattedValues : IReadOnlyList<FormattedValue> =
+                        match resultValue with
+                        | :? FormattedValue as formattedValue -> Seq.singleton( formattedValue ).ToImmutableList()
+                        | :? IEnumerable<FormattedValue> as formattedValueEnumerable -> formattedValueEnumerable.ToImmutableList()
+                        | _ -> FormattedValue.CreateManyFromObject(resultValue)
+                    context.Publish(ReturnValueProduced(resultValue, codeSubmission, formattedValues))
+                    trace Verbose (fun () -> $"SpiralKernel.handleSubmitCode / Publish(ReturnValueProduced): %A{ReturnValueProduced(resultValue, codeSubmission, formattedValues) |> serialize2}") _locals
 
                 | Some _
                 | None -> ()
