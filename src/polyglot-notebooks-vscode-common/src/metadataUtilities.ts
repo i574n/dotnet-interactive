@@ -167,6 +167,8 @@ export function getNotebookDocumentMetadataFromNotebookDocument(document: vscode
             if (kernelSpecMetadata.name.startsWith('.net-')) {
                 // the command `dotnet interactive jupyter install` lays down 3 well-known kernelspecs, all with the name `.net-<kernelName>`
                 notebookMetadata.kernelInfo.defaultKernelName = kernelSpecMetadata.name.substring('.net-'.length);
+            } else if (kernelSpecMetadata.name.startsWith('.')) {
+                notebookMetadata.kernelInfo.defaultKernelName = kernelSpecMetadata.name.substring('.'.length);
             }
         }
 
@@ -271,6 +273,12 @@ export function getKernelspecMetadataFromNotebookDocumentMetadata(notebookDocume
                 display_name: '.NET (F#)',
                 language: 'F#',
                 name: '.net-fsharp'
+            };
+        case 'spiral':
+            return {
+                display_name: 'Spiral',
+                language: 'Spiral',
+                name: '.spiral'
             };
         case 'pwsh':
             return {
@@ -535,10 +543,10 @@ export function mergeRawMetadata(baseMetadata: { [key: string]: any }, metadataW
 export function createDefaultNotebookDocumentMetadata(): NotebookDocumentMetadata {
     return {
         kernelInfo: {
-            defaultKernelName: 'csharp',
+            defaultKernelName: 'spiral',
             items: [
                 {
-                    name: 'csharp',
+                    name: 'spiral',
                     aliases: [],
                 }
             ],

@@ -32,7 +32,7 @@ export class NotebookParserServer {
                     // ensure at least one cell
                     notebookCells.push({
                         executionOrder: 0,
-                        kernelName: 'csharp',
+                        kernelName: 'spiral',
                         contents: '',
                         outputs: [],
                     });
@@ -51,7 +51,7 @@ export class NotebookParserServer {
             type: commandsAndEvents.RequestType.Serialize,
             id: this.getNextId(),
             serializationType,
-            defaultLanguage: 'csharp',
+            defaultLanguage: 'spiral',
             newLine: eol,
             document,
         };

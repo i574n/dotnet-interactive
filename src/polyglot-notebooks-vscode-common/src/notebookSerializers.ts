@@ -22,7 +22,7 @@ function toInteractiveDocumentElement(cell: vscode.NotebookCellData): commandsAn
     const outputs = cell.outputs || [];
     return {
         executionOrder: cell.executionSummary?.executionOrder ?? 0,
-        kernelName: cell.languageId === 'markdown' ? 'markdown' : notebookCellMetadata.kernelName ?? 'csharp',
+        kernelName: cell.languageId === 'markdown' ? 'markdown' : notebookCellMetadata.kernelName ?? 'spiral',
         contents: cell.value,
         outputs: outputs.map(vscodeUtilities.vsCodeCellOutputToContractCellOutput)
     };

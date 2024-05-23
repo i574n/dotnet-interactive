@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "dotnet",
+    "interactive",
+    "jupyter",
+    "--default-kernel",
+    "spiral",
+    "{connection_file}"
+  ],
+  "display_name": "Spiral",
+  "language": "Spiral",
+  "metadata": {
+    "vscode": {
+      "extension_id": "ms-dotnettools.dotnet-interactive-vscode",
+      "kernel_id": "dotnet-interactive"
+    }
+  }
+}

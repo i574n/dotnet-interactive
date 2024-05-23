@@ -82,7 +82,7 @@ export function toNotebookDocument(document: vscode.NotebookDocument): Interacti
 
 export function getCellKernelName(cell: vscode.NotebookCell): string {
     const cellMetadata = metadataUtilities.getNotebookCellMetadataFromNotebookCellElement(cell);
-    return cellMetadata.kernelName ?? 'csharp';
+    return cellMetadata.kernelName ?? 'spiral';
 }
 
 export async function setCellKernelName(cell: vscode.NotebookCell, kernelName: string): Promise<void> {
@@ -132,7 +132,7 @@ export function toInteractiveDocumentElement(cell: vscode.NotebookCell): Interac
     return {
         executionOrder: cell.executionSummary?.executionOrder ?? 0,
         kernelName: cell.kind === vscode.NotebookCellKind.Code
-            ? cellMetadata.kernelName ?? 'csharp'
+            ? cellMetadata.kernelName ?? 'spiral'
             : 'markdown',
         contents: cell.document.getText(),
         outputs: cell.outputs.map(vsCodeCellOutputToContractCellOutput)
