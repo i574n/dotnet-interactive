@@ -125,11 +125,12 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
 
                         const start = Date.now();
                         const getFileTokenRange =
-                            this.throttledGetFileTokenRange[cell.index]
-                            || (
-                                this.throttledGetFileTokenRange[cell.index] =
-                                    supervisor.throttle(supervisor.getFileTokenRange, 2000)
-                            );
+                            supervisor.getFileTokenRange;
+                            // this.throttledGetFileTokenRange[cell.index]
+                            // || (
+                            //     this.throttledGetFileTokenRange[cell.index] =
+                            //         supervisor.throttle(supervisor.getFileTokenRange, 2000)
+                            // );
                         const tokens = await getFileTokenRange(this._workspaceRoot, text);
                         const diff = Date.now() - start;
                         console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / diff: ${diff} / tokens.length: ${tokens.length}`);
