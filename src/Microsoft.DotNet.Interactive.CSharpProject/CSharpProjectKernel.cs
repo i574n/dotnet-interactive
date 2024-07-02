@@ -27,7 +27,7 @@ public class CSharpProjectKernel :
     IKernelCommandHandler<SubmitCode>
 {
     private readonly IPrebuildFinder _prebuildFinder;
-    private RoslynWorkspaceServer _workspaceServer;
+    private WorkspaceServer _workspaceServer;
     private Workspace _workspace;
     private Buffer _buffer;
 
@@ -66,7 +66,7 @@ public class CSharpProjectKernel :
 
     async Task IKernelCommandHandler<OpenProject>.HandleAsync(OpenProject command, KernelInvocationContext context)
     {
-        _workspaceServer = new RoslynWorkspaceServer(_prebuildFinder ?? PrebuildFinder.Create(() => Prebuild.GetOrCreateConsolePrebuildAsync(enableBuild: false)));
+        _workspaceServer = new WorkspaceServer(_prebuildFinder ?? PrebuildFinder.Create(() => Prebuild.GetOrCreateConsolePrebuildAsync(enableBuild: false)));
 
         var extractor = new BufferFromRegionExtractor();
         _workspace = extractor.Extract(command.Project.Files.Select(f => new ProjectFileContent(f.RelativeFilePath, f.Content)).ToArray());
@@ -276,26 +276,13 @@ public class CSharpProjectKernel :
 
     private static IEnumerable<Diagnostic> GetDiagnostics(string code, CompileResult result)
     {
-        var diagnostics = Enumerable.Empty<SerializableDiagnostic>();
-        var projectDiagnostics = Enumerable.Empty<SerializableDiagnostic>();
-
         if (result.Features.TryGetValue(nameof(Diagnostics), out var candidateDiagnostics) &&
             candidateDiagnostics is Diagnostics diags)
         {
-            diagnostics = diags;
+            return diags.Select(d => new Diagnostic(new LinePositionSpan(GetLinePositionFromPosition(code, d.Start), GetLinePositionFromPosition(code, d.End)), d.Severity, d.Id, d.Message));
         }
 
-        if (result.Features.TryGetValue(nameof(ProjectDiagnostics), out var candidateProjectDiagnostics) &&
-            candidateProjectDiagnostics is ProjectDiagnostics projectDiags)
-        {
-            projectDiagnostics = projectDiags;
-        }
-
-        var allDiagnostics = diagnostics.Concat(projectDiagnostics);
-
-        var finalDiagnostics = allDiagnostics.Select(d => new Diagnostic(new LinePositionSpan(GetLinePositionFromPosition(code, d.Start), GetLinePositionFromPosition(code, d.End)), d.Severity, d.Id, d.Message));
-
-        return finalDiagnostics;
+        return Enumerable.Empty<Diagnostic>();
     }
 
     private void ThrowIfProjectIsNotOpened()
