@@ -9,10 +9,12 @@
     ],
     "sourceMap": true,
     "rootDirs": [".", "../../../.."],
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules",
+    "../../../../node_modules",
     "out"
   ]
 }

@@ -47,7 +47,7 @@
     "onNotebook:polyglot-notebook",
     "onNotebook:polyglot-notebook-window",
     "onNotebook:jupyter-notebook",
-    "onCommand:dotnet-interactive.acquire",
+    "onCommand:dotnet-interactive-i574n.acquire",
     "onCommand:polyglot-notebook.fileNew",
     "onCommand:polyglot-notebook.newNotebook",
     "onCommand:polyglot-notebook.openNotebook",
@@ -184,7 +184,7 @@
             "{dotnet_path}",
             "tool",
             "run",
-            "dotnet-interactive",
+            "dotnet-interactive-i574n",
             "--",
             "[vscode]",
             "stdio",
@@ -199,7 +199,7 @@
             "{dotnet_path}",
             "tool",
             "run",
-            "dotnet-interactive",
+            "dotnet-interactive-i574n",
             "--",
             "notebook-parser"
           ]
@@ -247,7 +247,7 @@
     },
     "commands": [
       {
-        "command": "dotnet-interactive.acquire",
+        "command": "dotnet-interactive-i574n.acquire",
         "title": "%command.acquire%"
       },
       {

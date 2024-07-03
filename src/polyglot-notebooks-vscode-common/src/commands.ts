@@ -34,7 +34,7 @@ export async function registerAcquisitionCommands(context: vscode.ExtensionConte
     let cachedInstallArgs: InstallInteractiveArgs | undefined = undefined;
     let acquirePromise: Promise<InteractiveLaunchOptions> | undefined = undefined;
 
-    context.subscriptions.push(vscode.commands.registerCommand('dotnet-interactive.acquire', async (args?: InstallInteractiveArgs | string | undefined): Promise<InteractiveLaunchOptions | undefined> => {
+    context.subscriptions.push(vscode.commands.registerCommand('dotnet-interactive-i574n.acquire', async (args?: InstallInteractiveArgs | string | undefined): Promise<InteractiveLaunchOptions | undefined> => {
         try {
             const installArgs = computeToolInstallArguments(args);
             DotNetPathManager.setDotNetPath(installArgs.dotnetPath);
@@ -84,7 +84,7 @@ export async function registerAcquisitionCommands(context: vscode.ExtensionConte
         let uninstallArgs = [
             'tool',
             'uninstall',
-            'Microsoft.dotnet-interactive'
+            'i574n.dotnet-interactive-i574n'
         ];
         await executeSafeAndLog(diagnosticChannel, 'tool-uninstall', args.dotnetPath, uninstallArgs, globalStoragePath);
 
@@ -94,7 +94,7 @@ export async function registerAcquisitionCommands(context: vscode.ExtensionConte
             '--add-source',
             interactiveToolSource!,
             '--ignore-failed-sources',
-            'Microsoft.dotnet-interactive'
+            'i574n.dotnet-interactive-i574n'
         ];
         if (args.toolVersion) {
             toolArgs.push('--version', args.toolVersion);

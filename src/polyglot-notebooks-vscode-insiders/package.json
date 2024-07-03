@@ -1,9 +1,9 @@
 {
-  "name": "dotnet-interactive-vscode",
-  "displayName": "Polyglot Notebooks",
+  "name": "dotnet-interactive-vscode-i574n",
+  "displayName": "Polyglot Notebooks (i574n)",
   "description": "%description.package%",
   "icon": "images/icon.png",
-  "publisher": "ms-dotnettools",
+  "publisher": "i574n",
   "author": "Microsoft Corporation",
   "license": "MIT",
   "enabledApiProposals": [
@@ -11,7 +11,7 @@
   ],
   "preview": false,
   "//version": "%description.version%",
-  "version": "42.42.42",
+  "version": "0.1.2",
   "engines": {
     "vscode": "^1.87.0"
   },
@@ -19,7 +19,7 @@
     "url": "https://github.com/dotnet/interactive/issues"
   },
   "repository": {
-    "url": "https://github.com/dotnet/interactive"
+    "url": "https://github.com/i574n/dotnet-interactive"
   },
   "categories": [
     "Data Science",
@@ -47,7 +47,7 @@
     "onNotebook:polyglot-notebook",
     "onNotebook:polyglot-notebook-window",
     "onNotebook:jupyter-notebook",
-    "onCommand:dotnet-interactive.acquire",
+    "onCommand:dotnet-interactive-i574n.acquire",
     "onCommand:polyglot-notebook.fileNew",
     "onCommand:polyglot-notebook.newNotebook",
     "onCommand:polyglot-notebook.openNotebook",
@@ -56,7 +56,8 @@
   ],
   "main": "./out/deps/dotnet-interactive/src/polyglot-notebooks-vscode-insiders/src/vscode-common/extension.js",
   "extensionDependencies": [
-    "ms-toolsai.jupyter"
+    "ms-toolsai.jupyter",
+    "i574n.spiral-lang-vscode-i574n"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -184,7 +185,7 @@
             "{dotnet_path}",
             "tool",
             "run",
-            "dotnet-interactive",
+            "dotnet-interactive-i574n",
             "--",
             "[vscode]",
             "stdio",
@@ -199,7 +200,7 @@
             "{dotnet_path}",
             "tool",
             "run",
-            "dotnet-interactive",
+            "dotnet-interactive-i574n",
             "--",
             "notebook-parser"
           ]
@@ -221,7 +222,7 @@
         },
         "dotnet-interactive.requiredInteractiveToolVersion": {
           "type": "string",
-          "default": "1.0.445401",
+          "default": "0.1.0",
           "description": "%description.requiredInteractiveToolVersion%"
         }
       }
@@ -247,7 +248,7 @@
     },
     "commands": [
       {
-        "command": "dotnet-interactive.acquire",
+        "command": "dotnet-interactive-i574n.acquire",
         "title": "%command.acquire%"
       },
       {

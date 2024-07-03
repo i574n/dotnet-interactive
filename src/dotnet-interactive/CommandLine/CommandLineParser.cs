@@ -167,7 +167,7 @@ public static class CommandLineParser
         {
             var command = new RootCommand
             {
-                Name = "dotnet-interactive",
+                Name = "dotnet-interactive-i574n",
                 Description = LocalizationResources.Cli_dotnet_interactive_Description()
             };
 

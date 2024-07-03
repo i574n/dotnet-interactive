@@ -14,6 +14,7 @@ The following languages are supported by Polyglot Notebooks:
 |-------------------------------|------------------|
 | C#                            |        ✅       |
 | F#                            |        ✅       |   
+| Spiral                        |        ⛔       |   
 | PowerShell                    |        ✅       |          
 | JavaScript                    |        ✅       |          
 | SQL                           |        ✅       |   
@@ -23,8 +24,7 @@ The following languages are supported by Polyglot Notebooks:
 | HTML                         |        ⛔         |     
 | HTTP                         |        ✅         |
 | [Mermaid](https://mermaid.js.org/intro/)         |        ⛔       |        
-  
-| Spiral                                          |        ⛔                 |
+
 ## Features
 
 - Run and execute code for all featured languages
