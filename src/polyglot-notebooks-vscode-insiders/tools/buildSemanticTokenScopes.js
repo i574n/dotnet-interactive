@@ -75,7 +75,7 @@ const manualScopesToAdd = [
     'punctuation.section.group.end',
 ];
 
-const semanticTokenPrefix = 'polyglot-notebook';
+const semanticTokenPrefix = 'polyglot-notebook-i574n';
 function addScope(scopeName) {
     if (scopeName.indexOf(' ') >= 0) {
         // not dealing with hierarchical scopes right now (separated with spaces)
@@ -113,7 +113,7 @@ for (const manualScope of manualScopesToAdd) {
 
 const themeSubPath = 'Programs/Microsoft VS Code Insiders/resources/app/extensions/theme-defaults/themes/light_vs.json';
 const themePath = path.join(process.env['LOCALAPPDATA'], ...themeSubPath.split('/'));
-processScopesFromThemePath(themePath);
+// processScopesFromThemePath(themePath);
 
 const projectJsonPaths = [
     path.join(__dirname, '..', 'package.json'), // insiders

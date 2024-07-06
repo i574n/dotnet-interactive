@@ -36,7 +36,7 @@ public class PowerShellKernel :
     IKernelCommandHandler<SubmitCode>
 {
     private const string PSTelemetryEnvName = "POWERSHELL_DISTRIBUTION_CHANNEL";
-    private const string PSTelemetryChannel = "dotnet-interactive-powershell";
+    private const string PSTelemetryChannel = "dotnet-interactive-i574n-powershell";
     private const string PSModulePathEnvName = "PSModulePath";
 
     internal const string DefaultKernelName = "pwsh";
@@ -91,7 +91,7 @@ public class PowerShellKernel :
         KernelInfo.LanguageName = LanguageName;
         KernelInfo.LanguageVersion = "7";
         KernelInfo.Description = """
-                                 This Kernel can evaluate Powershell scripts and commands. 
+                                 This Kernel can evaluate Powershell scripts and commands.
                                  It uses Powershell Core and can interop with the operative system and host machine.
                                  """;
 
@@ -335,11 +335,11 @@ public class PowerShellKernel :
         var code = requestDiagnostics.Code;
 
         IsCompleteSubmission(code, out var parseErrors);
-        
+
         var diagnostics = parseErrors.Select(ToDiagnostic).ToArray();
         context.Publish(new DiagnosticsProduced(
-                            diagnostics,   
-                            diagnostics.Select(d => new FormattedValue(PlainTextFormatter.MimeType, d.ToString())).ToArray(), 
+                            diagnostics,
+                            diagnostics.Select(d => new FormattedValue(PlainTextFormatter.MimeType, d.ToString())).ToArray(),
                             requestDiagnostics));
 
         return Task.CompletedTask;

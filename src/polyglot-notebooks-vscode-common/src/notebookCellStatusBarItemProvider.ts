@@ -12,7 +12,7 @@ import * as constants from './constants';
 import * as vscodeUtilities from './vscodeUtilities';
 import { ServiceCollection } from './serviceCollection';
 
-const selectKernelCommandName = 'polyglot-notebook.selectCellKernel';
+const selectKernelCommandName = 'polyglot-notebook-i574n.selectCellKernel';
 
 export function registerNotbookCellStatusBarItemProvider(context: vscode.ExtensionContext, clientMapper: ClientMapper) {
     const cellItemProvider = new DotNetNotebookCellStatusBarItemProvider(clientMapper);
@@ -51,7 +51,7 @@ export function registerNotbookCellStatusBarItemProvider(context: vscode.Extensi
                             ServiceCollection.Instance.LanguageConfigurationManager.ensureLanguageConfigurationForDocument(cell.document);
 
                             // update tokens
-                            await vscode.commands.executeCommand('polyglot-notebook.refreshSemanticTokens');
+                            await vscode.commands.executeCommand('polyglot-notebook-i574n.refreshSemanticTokens');
                         }
                     }
                 }

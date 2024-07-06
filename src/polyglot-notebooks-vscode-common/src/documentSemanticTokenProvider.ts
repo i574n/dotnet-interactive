@@ -82,11 +82,11 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     async init(context: vscode.ExtensionContext): Promise<void> {
         await this._dynamicTokenProvider.init();
 
-        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook.refreshSemanticTokens', () => {
+        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook-i574n.refreshSemanticTokens', () => {
             this.refresh();
         }));
 
-        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook.resetNotebookKernelCollection', async (notebook?: vscode.NotebookDocument | undefined) => {
+        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook-i574n.resetNotebookKernelCollection', async (notebook?: vscode.NotebookDocument | undefined) => {
             if (notebook) {
                 const isIpynb = metadataUtilities.isIpynbNotebook(notebook);
                 const bareMetadata = metadataUtilities.createDefaultNotebookDocumentMetadata();

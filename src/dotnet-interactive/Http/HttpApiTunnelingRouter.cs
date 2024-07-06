@@ -102,9 +102,9 @@ internal class HttpApiTunnelingRouter : IRouter
             context.Handler = async httpContext =>
             {
                 httpContext.Response.ContentType = "text/plain";
-                var response = new 
+                var response = new
                 {
-                    bootstrapperUri = bootstrapperUri.ToString() 
+                    bootstrapperUri = bootstrapperUri.ToString()
                 };
                 await httpContext.Response.WriteAsync(JsonSerializer.Serialize( response));
                 await httpContext.Response.CompleteAsync();
@@ -127,7 +127,7 @@ internal class HttpApiTunnelingRouter : IRouter
             let dotnetInteractiveRequire = require.config({{
                 context: '$HASH$',
                 paths: {{
-                    'dotnet-interactive': '$EXTERNALURI$resources'
+                    'dotnet-interactive-i574n': '$EXTERNALURI$resources'
                 }},
                 urlArgs: 'cacheBuster=$HASH$'
             }}) || require;
@@ -148,11 +148,11 @@ internal class HttpApiTunnelingRouter : IRouter
             }};
 
             dotnetInteractiveRequire([
-                'dotnet-interactive/dotnet-interactive'
+                'dotnet-interactive-i574n/dotnet-interactive-i574n'
             ],
                 function (dotnet) {{
                     dotnet.init(global);
-                    console.log('dotnet-interactive js api initialised');
+                    console.log('dotnet-interactive-i574n js api initialised');
                 }},
                 function (error) {{
                     console.log(error);

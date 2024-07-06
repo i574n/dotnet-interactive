@@ -11,7 +11,7 @@
   ],
   "preview": false,
   "//version": "%description.version%",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "engines": {
     "vscode": "^1.87.0"
   },
@@ -41,18 +41,18 @@
   ],
   "activationEvents": [
     "onUri",
-    "onNotebook:dotnet-interactive",
-    "onNotebook:dotnet-interactive-window",
+    "onNotebook:dotnet-interactive-i574n",
+    "onNotebook:dotnet-interactive-i574n-window",
     "onNotebook:jupyter-notebook",
     "onNotebook:polyglot-notebook",
-    "onNotebook:polyglot-notebook-window",
-    "onNotebook:jupyter-notebook",
+    "onNotebook:polyglot-notebook-i574n",
+    "onNotebook:polyglot-notebook-i574n-window",
     "onCommand:dotnet-interactive-i574n.acquire",
-    "onCommand:polyglot-notebook.fileNew",
-    "onCommand:polyglot-notebook.newNotebook",
-    "onCommand:polyglot-notebook.openNotebook",
-    "onCommand:polyglot-notebook.saveAsNotebook",
-    "onView:polyglot-notebook-panel-values"
+    "onCommand:polyglot-notebook-i574n.fileNew",
+    "onCommand:polyglot-notebook-i574n.newNotebook",
+    "onCommand:polyglot-notebook-i574n.openNotebook",
+    "onCommand:polyglot-notebook-i574n.saveAsNotebook",
+    "onView:polyglot-notebook-i574n-panel-values"
   ],
   "main": "./out/deps/dotnet-interactive/src/polyglot-notebooks-vscode-insiders/src/vscode-common/extension.js",
   "extensionDependencies": [
@@ -70,7 +70,7 @@
   "contributes": {
     "notebooks": [
       {
-        "type": "polyglot-notebook",
+        "type": "polyglot-notebook-i574n",
         "displayName": "Polyglot Notebook",
         "selector": [
           {
@@ -79,7 +79,7 @@
         ]
       },
       {
-        "type": "polyglot-nortebook-window",
+        "type": "polyglot-notebook-i574n-window",
         "displayName": "Polyglot Notebook",
         "selector": []
       }
@@ -87,26 +87,26 @@
     "jupyter.kernels": [
       {
         "title": ".NET Interactive (C#)",
-        "defaultlanguage": "polyglot-notebook"
+        "defaultlanguage": "polyglot-notebook-i574n"
       },
       {
         "title": ".NET Interactive (F#)",
-        "defaultlanguage": "polyglot-notebook"
+        "defaultlanguage": "polyglot-notebook-i574n"
       },
       {
         "title": ".NET Interactive (PowerShell)",
-        "defaultlanguage": "polyglot-notebook"
+        "defaultlanguage": "polyglot-notebook-i574n"
       }
     ],
     "configuration": {
       "title": "Polyglot Notebook",
       "properties": {
-        "polyglot-notebook.suppressPromptToSaveDefaults": {
+        "polyglot-notebook-i574n.suppressPromptToSaveDefaults": {
           "type": "boolean",
           "default": false,
           "description": "%description.suppressPromptToSaveDefaults%"
         },
-        "polyglot-notebook.defaultNotebookExtension": {
+        "polyglot-notebook-i574n.defaultNotebookExtension": {
           "type": [
             "string",
             "null"
@@ -121,7 +121,7 @@
             "%description.configuration.useIpynb%"
           ]
         },
-        "polyglot-notebook.defaultNotebookLanguage": {
+        "polyglot-notebook-i574n.defaultNotebookLanguage": {
           "type": [
             "string",
             "null"
@@ -153,17 +153,17 @@
             "SQL"
           ]
         },
-        "polyglot-notebook.kernelEnvironmentVariables": {
+        "polyglot-notebook-i574n.kernelEnvironmentVariables": {
           "type": "object",
           "default": {},
           "description": "%description.kernelEnvironmentVariables%"
         },
-        "polyglot-notebook.languageServiceDelay": {
+        "polyglot-notebook-i574n.languageServiceDelay": {
           "type": "number",
           "default": 500,
           "description": "%description.languageServiceDelay%"
         },
-        "polyglot-notebook.logLevel": {
+        "polyglot-notebook-i574n.logLevel": {
           "type": "string",
           "default": "Error",
           "enum": [
@@ -179,7 +179,7 @@
             "%description.logLevel.disabled%"
           ]
         },
-        "dotnet-interactive.kernelTransportArgs": {
+        "dotnet-interactive-i574n.kernelTransportArgs": {
           "type": "array",
           "default": [
             "{dotnet_path}",
@@ -194,7 +194,7 @@
           ],
           "description": "%description.kernelTransportArgs%"
         },
-        "dotnet-interactive.notebookParserArgs": {
+        "dotnet-interactive-i574n.notebookParserArgs": {
           "type": "array",
           "default": [
             "{dotnet_path}",
@@ -205,24 +205,24 @@
             "notebook-parser"
           ]
         },
-        "dotnet-interactive.kernelTransportWorkingDirectory": {
+        "dotnet-interactive-i574n.kernelTransportWorkingDirectory": {
           "type": "string",
           "default": "{global_storage_path}",
           "description": "%description.kernelTransportWorkingDirectory%"
         },
-        "dotnet-interactive.interactiveToolSource": {
+        "dotnet-interactive-i574n.interactiveToolSource": {
           "type": "string",
           "default": "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json",
           "description": "%description.interactiveToolSource%"
         },
-        "dotnet-interactive.minimumDotNetSdkVersion": {
+        "dotnet-interactive-i574n.minimumDotNetSdkVersion": {
           "type": "string",
           "default": "8.0",
           "description": "%description.minimumDotNetSdkVersion%"
         },
-        "dotnet-interactive.requiredInteractiveToolVersion": {
+        "dotnet-interactive-i574n.requiredInteractiveToolVersion": {
           "type": "string",
-          "default": "0.1.0",
+          "default": "0.1.1",
           "description": "%description.requiredInteractiveToolVersion%"
         }
       }
@@ -230,17 +230,17 @@
     "viewsContainers": {
       "panel": [
         {
-          "id": "polyglot-notebook-panel",
+          "id": "polyglot-notebook-i574n-panel",
           "title": "Polyglot Notebook",
           "icon": "resources/icons/notebook.svg"
         }
       ]
     },
     "views": {
-      "polyglot-notebook-panel": [
+      "polyglot-notebook-i574n-panel": [
         {
           "type": "webview",
-          "id": "polyglot-notebook-panel-values",
+          "id": "polyglot-notebook-i574n-panel-values",
           "name": "Variables",
           "icon": "resources/icons/notebook.svg"
         }
@@ -252,49 +252,49 @@
         "title": "%command.acquire%"
       },
       {
-        "command": "polyglot-notebook.openNotebook",
+        "command": "polyglot-notebook-i574n.openNotebook",
         "title": "%command.openNotebook%"
       },
       {
-        "command": "polyglot-notebook.saveAsNotebook",
+        "command": "polyglot-notebook-i574n.saveAsNotebook",
         "title": "%command.saveAsNotebook%"
       },
       {
-        "command": "polyglot-notebook.fileNew",
+        "command": "polyglot-notebook-i574n.fileNew",
         "enablement": "false",
         "title": "%command.fileNew%",
         "shortTitle": "Polyglot Notebook"
       },
       {
-        "command": "polyglot-notebook.newNotebook",
+        "command": "polyglot-notebook-i574n.newNotebook",
         "title": "%command.newNotebook%"
       },
       {
-        "command": "polyglot-notebook.newNotebookNoDefaults",
+        "command": "polyglot-notebook-i574n.newNotebookNoDefaults",
         "title": "%command.newNotebookNoDefaults%"
       },
       {
-        "command": "polyglot-notebook.setNewNotebookDefaults",
+        "command": "polyglot-notebook-i574n.setNewNotebookDefaults",
         "title": "%command.setNewNotebookDefaults%"
       },
       {
-        "command": "polyglot-notebook.restartCurrentNotebookKernel",
+        "command": "polyglot-notebook-i574n.restartCurrentNotebookKernel",
         "title": "%command.restartCurrentNotebookKernel%"
       },
       {
-        "command": "polyglot-notebook.stopCurrentNotebookKernel",
+        "command": "polyglot-notebook-i574n.stopCurrentNotebookKernel",
         "title": "%command.stopCurrentNotebookKernel%"
       },
       {
-        "command": "polyglot-notebook.stopAllNotebookKernels",
+        "command": "polyglot-notebook-i574n.stopAllNotebookKernels",
         "title": "%command.stopAllNotebookKernels%"
       },
       {
-        "command": "polyglot-notebook.shareValueWith",
+        "command": "polyglot-notebook-i574n.shareValueWith",
         "title": "%command.shareValueWith%"
       },
       {
-        "command": "polyglot-notebook.notebookEditor.restartKernel",
+        "command": "polyglot-notebook-i574n.notebookEditor.restartKernel",
         "title": "%command.restartKernel%",
         "icon": {
           "light": "resources/light/restart-kernel.svg",
@@ -302,21 +302,21 @@
         }
       },
       {
-        "command": "polyglot-notebook.notebookEditor.openValueViewer",
+        "command": "polyglot-notebook-i574n.notebookEditor.openValueViewer",
         "title": "%command.openValueViewer%",
         "icon": "$(variable-group)"
       }
     ],
     "keybindings": [
       {
-        "command": "polyglot-notebook.newNotebook",
+        "command": "polyglot-notebook-i574n.newNotebook",
         "key": "ctrl+alt+shift+n",
         "mac": "cmd+alt+shift+n"
       }
     ],
     "languages": [
       {
-        "id": "polyglot-notebook",
+        "id": "polyglot-notebook-i574n",
         "aliases": [
           "Code"
         ]
@@ -325,20 +325,20 @@
     "menus": {
       "file/newFile": [
         {
-          "command": "polyglot-notebook.fileNew",
+          "command": "polyglot-notebook-i574n.fileNew",
           "group": "notebook"
         }
       ],
       "notebook/toolbar": [
         {
-          "command": "polyglot-notebook.notebookEditor.restartKernel",
+          "command": "polyglot-notebook-i574n.notebookEditor.restartKernel",
           "group": "navigation/execute@1",
-          "when": "notebookKernel =~ /polyglot-notebook/ && isWorkspaceTrusted"
+          "when": "notebookKernel =~ /polyglot-notebook-i574n/ && isWorkspaceTrusted"
         },
         {
-          "command": "polyglot-notebook.notebookEditor.openValueViewer",
+          "command": "polyglot-notebook-i574n.notebookEditor.openValueViewer",
           "group": "navigation@1",
-          "when": "notebookKernel =~ /polyglot-notebook/ && isWorkspaceTrusted"
+          "when": "notebookKernel =~ /polyglot-notebook-i574n/ && isWorkspaceTrusted"
         }
       ]
     },
@@ -346,442 +346,442 @@
       {
         "comment": "the `scopes` object is generated by a script",
         "scopes": {
-          "polyglot-notebook-entity-name-function": [
+          "polyglot-notebook-i574n-entity-name-function": [
             "entity.name.function"
           ],
-          "polyglot-notebook-entity-name-variable-local": [
+          "polyglot-notebook-i574n-entity-name-variable-local": [
             "entity.name.variable.local"
           ],
-          "polyglot-notebook-entity-name-type": [
+          "polyglot-notebook-i574n-entity-name-type": [
             "entity.name.type"
           ],
-          "polyglot-notebook-entity-name-type-namespace": [
+          "polyglot-notebook-i574n-entity-name-type-namespace": [
             "entity.name.type.namespace"
           ],
-          "polyglot-notebook-punctuation-accessor": [
+          "polyglot-notebook-i574n-punctuation-accessor": [
             "punctuation.accessor"
           ],
-          "polyglot-notebook-punctuation-definition-variable": [
+          "polyglot-notebook-i574n-punctuation-definition-variable": [
             "punctuation.definition.variable"
           ],
-          "polyglot-notebook-punctuation-parenthesis": [
+          "polyglot-notebook-i574n-punctuation-parenthesis": [
             "punctuation.parenthesis"
           ],
-          "polyglot-notebook-punctuation-terminator-statement": [
+          "polyglot-notebook-i574n-punctuation-terminator-statement": [
             "punctuation.terminator.statement"
           ],
-          "polyglot-notebook-variable-other-object": [
+          "polyglot-notebook-i574n-variable-other-object": [
             "variable.other.object"
           ],
-          "polyglot-notebook-variable-other-readwrite": [
+          "polyglot-notebook-i574n-variable-other-readwrite": [
             "variable.other.readwrite"
           ],
-          "polyglot-notebook-variable-other-readwrite-global": [
+          "polyglot-notebook-i574n-variable-other-readwrite-global": [
             "variable.other.readwrite.global"
           ],
-          "polyglot-notebook-meta-bracket": [
+          "polyglot-notebook-i574n-meta-bracket": [
             "meta.bracket"
           ],
-          "polyglot-notebook-meta-attribute": [
+          "polyglot-notebook-i574n-meta-attribute": [
             "meta.attribute"
           ],
-          "polyglot-notebook-meta-function": [
+          "polyglot-notebook-i574n-meta-function": [
             "meta.function"
           ],
-          "polyglot-notebook-meta-function-call-arguments": [
+          "polyglot-notebook-i574n-meta-function-call-arguments": [
             "meta.function-call.arguments"
           ],
-          "polyglot-notebook-meta-function-call-generic": [
+          "polyglot-notebook-i574n-meta-function-call-generic": [
             "meta.function-call.generic"
           ],
-          "polyglot-notebook-meta-indexed-name": [
+          "polyglot-notebook-i574n-meta-indexed-name": [
             "meta.indexed-name"
           ],
-          "polyglot-notebook-meta-item-access-arguments": [
+          "polyglot-notebook-i574n-meta-item-access-arguments": [
             "meta.item-access.arguments"
           ],
-          "polyglot-notebook-punctuation-definition-arguments-begin": [
+          "polyglot-notebook-i574n-punctuation-definition-arguments-begin": [
             "punctuation.definition.arguments.begin"
           ],
-          "polyglot-notebook-punctuation-definition-arguments-end": [
+          "polyglot-notebook-i574n-punctuation-definition-arguments-end": [
             "punctuation.definition.arguments.end"
           ],
-          "polyglot-notebook-punctuation-definition-list-begin": [
+          "polyglot-notebook-i574n-punctuation-definition-list-begin": [
             "punctuation.definition.list.begin"
           ],
-          "polyglot-notebook-punctuation-definition-list-end": [
+          "polyglot-notebook-i574n-punctuation-definition-list-end": [
             "punctuation.definition.list.end"
           ],
-          "polyglot-notebook-punctuation-definition-parameters-begin": [
+          "polyglot-notebook-i574n-punctuation-definition-parameters-begin": [
             "punctuation.definition.parameters.begin"
           ],
-          "polyglot-notebook-punctuation-definition-parameters-end": [
+          "polyglot-notebook-i574n-punctuation-definition-parameters-end": [
             "punctuation.definition.parameters.end"
           ],
-          "polyglot-notebook-punctuation-section-function-begin": [
+          "polyglot-notebook-i574n-punctuation-section-function-begin": [
             "punctuation.section.function.begin"
           ],
-          "polyglot-notebook-punctuation-section-function-end": [
+          "polyglot-notebook-i574n-punctuation-section-function-end": [
             "punctuation.section.function.end"
           ],
-          "polyglot-notebook-punctuation-separator-element": [
+          "polyglot-notebook-i574n-punctuation-separator-element": [
             "punctuation.separator.element"
           ],
-          "polyglot-notebook-punctuation-separator-colon": [
+          "polyglot-notebook-i574n-punctuation-separator-colon": [
             "punctuation.separator.colon"
           ],
-          "polyglot-notebook-punctuation-separator-period": [
+          "polyglot-notebook-i574n-punctuation-separator-period": [
             "punctuation.separator.period"
           ],
-          "polyglot-notebook-punctuation-separator-slice": [
+          "polyglot-notebook-i574n-punctuation-separator-slice": [
             "punctuation.separator.slice"
           ],
-          "polyglot-notebook-variable-parameter-function-call": [
+          "polyglot-notebook-i574n-variable-parameter-function-call": [
             "variable.parameter.function-call"
           ],
-          "polyglot-notebook-punctuation-section-brackets-single-begin": [
+          "polyglot-notebook-i574n-punctuation-section-brackets-single-begin": [
             "punctuation.section.brackets.single.begin"
           ],
-          "polyglot-notebook-punctuation-section-brackets-single-end": [
+          "polyglot-notebook-i574n-punctuation-section-brackets-single-end": [
             "punctuation.section.brackets.single.end"
           ],
-          "polyglot-notebook-punctuation-section-parens-begin": [
+          "polyglot-notebook-i574n-punctuation-section-parens-begin": [
             "punctuation.section.parens.begin"
           ],
-          "polyglot-notebook-punctuation-section-parens-end": [
+          "polyglot-notebook-i574n-punctuation-section-parens-end": [
             "punctuation.section.parens.end"
           ],
-          "polyglot-notebook-punctuation-separator-parameters": [
+          "polyglot-notebook-i574n-punctuation-separator-parameters": [
             "punctuation.separator.parameters"
           ],
-          "polyglot-notebook-support-function": [
+          "polyglot-notebook-i574n-support-function": [
             "support.function"
           ],
-          "polyglot-notebook-variable-other": [
+          "polyglot-notebook-i574n-variable-other": [
             "variable.other"
           ],
-          "polyglot-notebook-variable-function": [
+          "polyglot-notebook-i574n-variable-function": [
             "variable.function"
           ],
-          "polyglot-notebook-variable-parameter": [
+          "polyglot-notebook-i574n-variable-parameter": [
             "variable.parameter"
           ],
-          "polyglot-notebook-meta-group-simple-subexpression": [
+          "polyglot-notebook-i574n-meta-group-simple-subexpression": [
             "meta.group.simple.subexpression"
           ],
-          "polyglot-notebook-punctuation-section-group-begin": [
+          "polyglot-notebook-i574n-punctuation-section-group-begin": [
             "punctuation.section.group.begin"
           ],
-          "polyglot-notebook-punctuation-section-group-end": [
+          "polyglot-notebook-i574n-punctuation-section-group-end": [
             "punctuation.section.group.end"
           ],
-          "polyglot-notebook-meta-embedded": [
+          "polyglot-notebook-i574n-meta-embedded": [
             "meta.embedded"
           ],
-          "polyglot-notebook-source-groovy-embedded": [
+          "polyglot-notebook-i574n-source-groovy-embedded": [
             "source.groovy.embedded"
           ],
-          "polyglot-notebook-variable-legacy-builtin-python": [
+          "polyglot-notebook-i574n-variable-legacy-builtin-python": [
             "variable.legacy.builtin.python"
           ],
-          "polyglot-notebook-emphasis": [
+          "polyglot-notebook-i574n-emphasis": [
             "emphasis"
           ],
-          "polyglot-notebook-strong": [
+          "polyglot-notebook-i574n-strong": [
             "strong"
           ],
-          "polyglot-notebook-meta-diff-header": [
+          "polyglot-notebook-i574n-meta-diff-header": [
             "meta.diff.header"
           ],
-          "polyglot-notebook-comment": [
+          "polyglot-notebook-i574n-comment": [
             "comment"
           ],
-          "polyglot-notebook-constant-language": [
+          "polyglot-notebook-i574n-constant-language": [
             "constant.language"
           ],
-          "polyglot-notebook-constant-numeric": [
+          "polyglot-notebook-i574n-constant-numeric": [
             "constant.numeric"
           ],
-          "polyglot-notebook-variable-other-enummember": [
+          "polyglot-notebook-i574n-variable-other-enummember": [
             "variable.other.enummember"
           ],
-          "polyglot-notebook-keyword-operator-plus-exponent": [
+          "polyglot-notebook-i574n-keyword-operator-plus-exponent": [
             "keyword.operator.plus.exponent"
           ],
-          "polyglot-notebook-keyword-operator-minus-exponent": [
+          "polyglot-notebook-i574n-keyword-operator-minus-exponent": [
             "keyword.operator.minus.exponent"
           ],
-          "polyglot-notebook-constant-regexp": [
+          "polyglot-notebook-i574n-constant-regexp": [
             "constant.regexp"
           ],
-          "polyglot-notebook-entity-name-tag": [
+          "polyglot-notebook-i574n-entity-name-tag": [
             "entity.name.tag"
           ],
-          "polyglot-notebook-entity-name-selector": [
+          "polyglot-notebook-i574n-entity-name-selector": [
             "entity.name.selector"
           ],
-          "polyglot-notebook-entity-other-attribute-name": [
+          "polyglot-notebook-i574n-entity-other-attribute-name": [
             "entity.other.attribute-name"
           ],
-          "polyglot-notebook-entity-other-attribute-name-class-css": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-class-css": [
             "entity.other.attribute-name.class.css"
           ],
-          "polyglot-notebook-entity-other-attribute-name-class-mixin-css": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-class-mixin-css": [
             "entity.other.attribute-name.class.mixin.css"
           ],
-          "polyglot-notebook-entity-other-attribute-name-id-css": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-id-css": [
             "entity.other.attribute-name.id.css"
           ],
-          "polyglot-notebook-entity-other-attribute-name-parent-selector-css": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-parent-selector-css": [
             "entity.other.attribute-name.parent-selector.css"
           ],
-          "polyglot-notebook-entity-other-attribute-name-pseudo-class-css": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-pseudo-class-css": [
             "entity.other.attribute-name.pseudo-class.css"
           ],
-          "polyglot-notebook-entity-other-attribute-name-pseudo-element-css": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-pseudo-element-css": [
             "entity.other.attribute-name.pseudo-element.css"
           ],
-          "polyglot-notebook-entity-other-attribute-name-scss": [
+          "polyglot-notebook-i574n-entity-other-attribute-name-scss": [
             "entity.other.attribute-name.scss"
           ],
-          "polyglot-notebook-invalid": [
+          "polyglot-notebook-i574n-invalid": [
             "invalid"
           ],
-          "polyglot-notebook-markup-underline": [
+          "polyglot-notebook-i574n-markup-underline": [
             "markup.underline"
           ],
-          "polyglot-notebook-markup-bold": [
+          "polyglot-notebook-i574n-markup-bold": [
             "markup.bold"
           ],
-          "polyglot-notebook-markup-heading": [
+          "polyglot-notebook-i574n-markup-heading": [
             "markup.heading"
           ],
-          "polyglot-notebook-markup-italic": [
+          "polyglot-notebook-i574n-markup-italic": [
             "markup.italic"
           ],
-          "polyglot-notebook-markup-strikethrough": [
+          "polyglot-notebook-i574n-markup-strikethrough": [
             "markup.strikethrough"
           ],
-          "polyglot-notebook-markup-inserted": [
+          "polyglot-notebook-i574n-markup-inserted": [
             "markup.inserted"
           ],
-          "polyglot-notebook-markup-deleted": [
+          "polyglot-notebook-i574n-markup-deleted": [
             "markup.deleted"
           ],
-          "polyglot-notebook-markup-changed": [
+          "polyglot-notebook-i574n-markup-changed": [
             "markup.changed"
           ],
-          "polyglot-notebook-punctuation-definition-quote-begin-markdown": [
+          "polyglot-notebook-i574n-punctuation-definition-quote-begin-markdown": [
             "punctuation.definition.quote.begin.markdown"
           ],
-          "polyglot-notebook-punctuation-definition-list-begin-markdown": [
+          "polyglot-notebook-i574n-punctuation-definition-list-begin-markdown": [
             "punctuation.definition.list.begin.markdown"
           ],
-          "polyglot-notebook-markup-inline-raw": [
+          "polyglot-notebook-i574n-markup-inline-raw": [
             "markup.inline.raw"
           ],
-          "polyglot-notebook-punctuation-definition-tag": [
+          "polyglot-notebook-i574n-punctuation-definition-tag": [
             "punctuation.definition.tag"
           ],
-          "polyglot-notebook-meta-preprocessor": [
+          "polyglot-notebook-i574n-meta-preprocessor": [
             "meta.preprocessor"
           ],
-          "polyglot-notebook-entity-name-function-preprocessor": [
+          "polyglot-notebook-i574n-entity-name-function-preprocessor": [
             "entity.name.function.preprocessor"
           ],
-          "polyglot-notebook-meta-preprocessor-string": [
+          "polyglot-notebook-i574n-meta-preprocessor-string": [
             "meta.preprocessor.string"
           ],
-          "polyglot-notebook-meta-preprocessor-numeric": [
+          "polyglot-notebook-i574n-meta-preprocessor-numeric": [
             "meta.preprocessor.numeric"
           ],
-          "polyglot-notebook-meta-structure-dictionary-key-python": [
+          "polyglot-notebook-i574n-meta-structure-dictionary-key-python": [
             "meta.structure.dictionary.key.python"
           ],
-          "polyglot-notebook-storage": [
+          "polyglot-notebook-i574n-storage": [
             "storage"
           ],
-          "polyglot-notebook-storage-type": [
+          "polyglot-notebook-i574n-storage-type": [
             "storage.type"
           ],
-          "polyglot-notebook-storage-modifier": [
+          "polyglot-notebook-i574n-storage-modifier": [
             "storage.modifier"
           ],
-          "polyglot-notebook-keyword-operator-noexcept": [
+          "polyglot-notebook-i574n-keyword-operator-noexcept": [
             "keyword.operator.noexcept"
           ],
-          "polyglot-notebook-string": [
+          "polyglot-notebook-i574n-string": [
             "string"
           ],
-          "polyglot-notebook-meta-embedded-assembly": [
+          "polyglot-notebook-i574n-meta-embedded-assembly": [
             "meta.embedded.assembly"
           ],
-          "polyglot-notebook-string-comment-buffered-block-pug": [
+          "polyglot-notebook-i574n-string-comment-buffered-block-pug": [
             "string.comment.buffered.block.pug"
           ],
-          "polyglot-notebook-string-quoted-pug": [
+          "polyglot-notebook-i574n-string-quoted-pug": [
             "string.quoted.pug"
           ],
-          "polyglot-notebook-string-interpolated-pug": [
+          "polyglot-notebook-i574n-string-interpolated-pug": [
             "string.interpolated.pug"
           ],
-          "polyglot-notebook-string-unquoted-plain-in-yaml": [
+          "polyglot-notebook-i574n-string-unquoted-plain-in-yaml": [
             "string.unquoted.plain.in.yaml"
           ],
-          "polyglot-notebook-string-unquoted-plain-out-yaml": [
+          "polyglot-notebook-i574n-string-unquoted-plain-out-yaml": [
             "string.unquoted.plain.out.yaml"
           ],
-          "polyglot-notebook-string-unquoted-block-yaml": [
+          "polyglot-notebook-i574n-string-unquoted-block-yaml": [
             "string.unquoted.block.yaml"
           ],
-          "polyglot-notebook-string-quoted-single-yaml": [
+          "polyglot-notebook-i574n-string-quoted-single-yaml": [
             "string.quoted.single.yaml"
           ],
-          "polyglot-notebook-string-quoted-double-xml": [
+          "polyglot-notebook-i574n-string-quoted-double-xml": [
             "string.quoted.double.xml"
           ],
-          "polyglot-notebook-string-quoted-single-xml": [
+          "polyglot-notebook-i574n-string-quoted-single-xml": [
             "string.quoted.single.xml"
           ],
-          "polyglot-notebook-string-unquoted-cdata-xml": [
+          "polyglot-notebook-i574n-string-unquoted-cdata-xml": [
             "string.unquoted.cdata.xml"
           ],
-          "polyglot-notebook-string-quoted-double-html": [
+          "polyglot-notebook-i574n-string-quoted-double-html": [
             "string.quoted.double.html"
           ],
-          "polyglot-notebook-string-quoted-single-html": [
+          "polyglot-notebook-i574n-string-quoted-single-html": [
             "string.quoted.single.html"
           ],
-          "polyglot-notebook-string-unquoted-html": [
+          "polyglot-notebook-i574n-string-unquoted-html": [
             "string.unquoted.html"
           ],
-          "polyglot-notebook-string-quoted-single-handlebars": [
+          "polyglot-notebook-i574n-string-quoted-single-handlebars": [
             "string.quoted.single.handlebars"
           ],
-          "polyglot-notebook-string-quoted-double-handlebars": [
+          "polyglot-notebook-i574n-string-quoted-double-handlebars": [
             "string.quoted.double.handlebars"
           ],
-          "polyglot-notebook-string-regexp": [
+          "polyglot-notebook-i574n-string-regexp": [
             "string.regexp"
           ],
-          "polyglot-notebook-punctuation-definition-template-expression-begin": [
+          "polyglot-notebook-i574n-punctuation-definition-template-expression-begin": [
             "punctuation.definition.template-expression.begin"
           ],
-          "polyglot-notebook-punctuation-definition-template-expression-end": [
+          "polyglot-notebook-i574n-punctuation-definition-template-expression-end": [
             "punctuation.definition.template-expression.end"
           ],
-          "polyglot-notebook-punctuation-section-embedded": [
+          "polyglot-notebook-i574n-punctuation-section-embedded": [
             "punctuation.section.embedded"
           ],
-          "polyglot-notebook-meta-template-expression": [
+          "polyglot-notebook-i574n-meta-template-expression": [
             "meta.template.expression"
           ],
-          "polyglot-notebook-support-constant-property-value": [
+          "polyglot-notebook-i574n-support-constant-property-value": [
             "support.constant.property-value"
           ],
-          "polyglot-notebook-support-constant-font-name": [
+          "polyglot-notebook-i574n-support-constant-font-name": [
             "support.constant.font-name"
           ],
-          "polyglot-notebook-support-constant-media-type": [
+          "polyglot-notebook-i574n-support-constant-media-type": [
             "support.constant.media-type"
           ],
-          "polyglot-notebook-support-constant-media": [
+          "polyglot-notebook-i574n-support-constant-media": [
             "support.constant.media"
           ],
-          "polyglot-notebook-constant-other-color-rgb-value": [
+          "polyglot-notebook-i574n-constant-other-color-rgb-value": [
             "constant.other.color.rgb-value"
           ],
-          "polyglot-notebook-constant-other-rgb-value": [
+          "polyglot-notebook-i574n-constant-other-rgb-value": [
             "constant.other.rgb-value"
           ],
-          "polyglot-notebook-support-constant-color": [
+          "polyglot-notebook-i574n-support-constant-color": [
             "support.constant.color"
           ],
-          "polyglot-notebook-support-type-vendored-property-name": [
+          "polyglot-notebook-i574n-support-type-vendored-property-name": [
             "support.type.vendored.property-name"
           ],
-          "polyglot-notebook-support-type-property-name": [
+          "polyglot-notebook-i574n-support-type-property-name": [
             "support.type.property-name"
           ],
-          "polyglot-notebook-variable-css": [
+          "polyglot-notebook-i574n-variable-css": [
             "variable.css"
           ],
-          "polyglot-notebook-variable-scss": [
+          "polyglot-notebook-i574n-variable-scss": [
             "variable.scss"
           ],
-          "polyglot-notebook-variable-other-less": [
+          "polyglot-notebook-i574n-variable-other-less": [
             "variable.other.less"
           ],
-          "polyglot-notebook-source-coffee-embedded": [
+          "polyglot-notebook-i574n-source-coffee-embedded": [
             "source.coffee.embedded"
           ],
-          "polyglot-notebook-support-type-property-name-json": [
+          "polyglot-notebook-i574n-support-type-property-name-json": [
             "support.type.property-name.json"
           ],
-          "polyglot-notebook-keyword": [
+          "polyglot-notebook-i574n-keyword": [
             "keyword"
           ],
-          "polyglot-notebook-keyword-control": [
+          "polyglot-notebook-i574n-keyword-control": [
             "keyword.control"
           ],
-          "polyglot-notebook-keyword-operator": [
+          "polyglot-notebook-i574n-keyword-operator": [
             "keyword.operator"
           ],
-          "polyglot-notebook-keyword-operator-new": [
+          "polyglot-notebook-i574n-keyword-operator-new": [
             "keyword.operator.new"
           ],
-          "polyglot-notebook-keyword-operator-expression": [
+          "polyglot-notebook-i574n-keyword-operator-expression": [
             "keyword.operator.expression"
           ],
-          "polyglot-notebook-keyword-operator-cast": [
+          "polyglot-notebook-i574n-keyword-operator-cast": [
             "keyword.operator.cast"
           ],
-          "polyglot-notebook-keyword-operator-sizeof": [
+          "polyglot-notebook-i574n-keyword-operator-sizeof": [
             "keyword.operator.sizeof"
           ],
-          "polyglot-notebook-keyword-operator-alignof": [
+          "polyglot-notebook-i574n-keyword-operator-alignof": [
             "keyword.operator.alignof"
           ],
-          "polyglot-notebook-keyword-operator-typeid": [
+          "polyglot-notebook-i574n-keyword-operator-typeid": [
             "keyword.operator.typeid"
           ],
-          "polyglot-notebook-keyword-operator-alignas": [
+          "polyglot-notebook-i574n-keyword-operator-alignas": [
             "keyword.operator.alignas"
           ],
-          "polyglot-notebook-keyword-operator-instanceof": [
+          "polyglot-notebook-i574n-keyword-operator-instanceof": [
             "keyword.operator.instanceof"
           ],
-          "polyglot-notebook-keyword-operator-logical-python": [
+          "polyglot-notebook-i574n-keyword-operator-logical-python": [
             "keyword.operator.logical.python"
           ],
-          "polyglot-notebook-keyword-operator-wordlike": [
+          "polyglot-notebook-i574n-keyword-operator-wordlike": [
             "keyword.operator.wordlike"
           ],
-          "polyglot-notebook-keyword-other-unit": [
+          "polyglot-notebook-i574n-keyword-other-unit": [
             "keyword.other.unit"
           ],
-          "polyglot-notebook-punctuation-section-embedded-begin-php": [
+          "polyglot-notebook-i574n-punctuation-section-embedded-begin-php": [
             "punctuation.section.embedded.begin.php"
           ],
-          "polyglot-notebook-punctuation-section-embedded-end-php": [
+          "polyglot-notebook-i574n-punctuation-section-embedded-end-php": [
             "punctuation.section.embedded.end.php"
           ],
-          "polyglot-notebook-support-function-git-rebase": [
+          "polyglot-notebook-i574n-support-function-git-rebase": [
             "support.function.git-rebase"
           ],
-          "polyglot-notebook-constant-sha-git-rebase": [
+          "polyglot-notebook-i574n-constant-sha-git-rebase": [
             "constant.sha.git-rebase"
           ],
-          "polyglot-notebook-storage-modifier-import-java": [
+          "polyglot-notebook-i574n-storage-modifier-import-java": [
             "storage.modifier.import.java"
           ],
-          "polyglot-notebook-variable-language-wildcard-java": [
+          "polyglot-notebook-i574n-variable-language-wildcard-java": [
             "variable.language.wildcard.java"
           ],
-          "polyglot-notebook-storage-modifier-package-java": [
+          "polyglot-notebook-i574n-storage-modifier-package-java": [
             "storage.modifier.package.java"
           ],
-          "polyglot-notebook-variable-language": [
+          "polyglot-notebook-i574n-variable-language": [
             "variable.language"
           ]
         }

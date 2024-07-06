@@ -80,12 +80,12 @@ export async function activate(context: vscode.ExtensionContext) {
     const dotnetConfig = vscode.workspace.getConfiguration(constants.DotnetConfigurationSectionName);
     const polyglotConfig = vscode.workspace.getConfiguration(constants.PolyglotConfigurationSectionName);
     const minDotNetSdkVersion = dotnetConfig.get<string>('minimumDotNetSdkVersion') || '8.0';
-    const diagnosticsChannel = new OutputChannelAdapter(vscode.window.createOutputChannel('Polyglot Notebook : diagnostics'));
-    const loggerChannel = new OutputChannelAdapter(vscode.window.createOutputChannel('Polyglot Notebook : logger'));
+    const diagnosticsChannel = new OutputChannelAdapter(vscode.window.createOutputChannel('Polyglot Notebook : diagnostics (i574n)'));
+    const loggerChannel = new OutputChannelAdapter(vscode.window.createOutputChannel('Polyglot Notebook : logger (i574n)'));
     DotNetPathManager.setOutputChannelAdapter(diagnosticsChannel);
 
     Logger.configure('extension host', logEntry => {
-        const polyglotConfig = vscode.workspace.getConfiguration('polyglot-notebook');
+        const polyglotConfig = vscode.workspace.getConfiguration('polyglot-notebook-i574n');
         const loggerLevelString = polyglotConfig.get<string>('logLevel') || LogLevel[LogLevel.Error];
         const loggerLevelKey = loggerLevelString as keyof typeof LogLevel;
         const logLevel = LogLevel[loggerLevelKey];
@@ -327,8 +327,8 @@ export async function activate(context: vscode.ExtensionContext) {
                     const asType = params.get('as');
                     vscode.commands.executeCommand('dotnet-interactive-i574n.acquire').then(() => {
                         const commandName = asType === 'ipynb'
-                            ? 'polyglot-notebook.newNotebookIpynb'
-                            : 'polyglot-notebook.newNotebookDib';
+                            ? 'polyglot-notebook-i574n.newNotebookIpynb'
+                            : 'polyglot-notebook-i574n.newNotebookDib';
                         vscode.commands.executeCommand(commandName).then(() => { });
                     });
                     break;
@@ -342,7 +342,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     const notebookFormat = params.get('notebookFormat');
                     if (notebookPath) {
                         vscode.commands.executeCommand('dotnet-interactive-i574n.acquire').then(() => {
-                            vscode.commands.executeCommand('polyglot-notebook.openNotebook', vscode.Uri.file(notebookPath)).then(() => { });
+                            vscode.commands.executeCommand('polyglot-notebook-i574n.openNotebook', vscode.Uri.file(notebookPath)).then(() => { });
                         });
                     } else if (url) {
                         openNotebookFromUrl(url, notebookFormat, serializerMap, diagnosticsChannel).then(() => { });

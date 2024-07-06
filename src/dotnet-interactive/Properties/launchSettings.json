@@ -15,7 +15,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "dotnet-interactive": {
+    "dotnet-interactive-i574n": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
@@ -23,11 +23,11 @@
       },
       "applicationUrl": "http://localhost:5004/"
     },
-    "dotnet-interactive-server": {
+    "dotnet-interactive-i574n-server": {
       "commandName": "Project",
       "commandLineArgs": "stdio"
     },
-    "dotnet-interactive-http": {
+    "dotnet-interactive-i574n-http": {
       "commandName": "Project",
       "commandLineArgs": "http"
     }

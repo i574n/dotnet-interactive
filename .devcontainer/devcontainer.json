@@ -14,7 +14,7 @@
   },
   // Set *default* container specific settings.json values on container create.
   "settings": {
-    "dotnet-interactive.kernelTransportArgs": [
+    "dotnet-interactive-i574n.kernelTransportArgs": [
       "{dotnet_path}",
       "/workspaces/interactive/artifacts/bin/dotnet-interactive/Debug/net9.0/Microsoft.DotNet.Interactive.App.dll",
       "[vscode]",
@@ -22,7 +22,7 @@
       "--working-dir",
       "{working_dir}"
     ],
-    "dotnet-interactive.notebookParserArgs": [
+    "dotnet-interactive-i574n.notebookParserArgs": [
       "{dotnet_path}",
       "/workspaces/interactive/artifacts/bin/dotnet-interactive/Debug/net9.0/Microsoft.DotNet.Interactive.App.dll",
       "notebook-parser"

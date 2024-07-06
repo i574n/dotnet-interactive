@@ -13,7 +13,7 @@ internal static class HttpApiBootstrapper
     public static IHtmlContent GetHtmlInjection(Uri[] probingUris, string seed)
     {
         var apiCacheBuster = $"{Process.GetCurrentProcess().Id}.{seed}";
-        var template = 
+        var template =
             $@"
 <div>
     <div id='dotnet-interactive-this-cell-$CACHE_BUSTER$' style='display: none'>
@@ -69,7 +69,7 @@ function loadDotnetInteractiveApi() {{
         context: '$CACHE_BUSTER$',
                 paths:
             {{
-                'dotnet-interactive': `${{root}}resources`
+                'dotnet-interactive-i574n': `${{root}}resources`
                 }}
         }}) || require;
 
@@ -78,7 +78,7 @@ function loadDotnetInteractiveApi() {{
             window.configureRequireFromExtension = function(extensionName, extensionCacheBuster) {{
                 let paths = {{}};
                 paths[extensionName] = `${{root}}extensions/${{extensionName}}/resources/`;
-                
+
                 let internalRequire = require.config({{
                     context: extensionCacheBuster,
                     paths: paths,
@@ -87,9 +87,9 @@ function loadDotnetInteractiveApi() {{
 
                 return internalRequire
             }};
-        
+
             dotnetInteractiveRequire([
-                    'dotnet-interactive/dotnet-interactive'
+                    'dotnet-interactive-i574n/dotnet-interactive-i574n'
                 ],
                 function (dotnet) {{
                     dotnet.init(window);
