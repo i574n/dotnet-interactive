@@ -11,7 +11,7 @@ import * as vsctm from 'vscode-textmate';
 import { Logger } from './polyglot-notebooks/logger';
 import { t } from '@vscode/l10n';
 
-const customScopePrefix = 'polyglot-notebook-i574n';
+const customScopePrefix = 'polyglot-notebook';
 
 export interface GrammarPair {
     grammarContents: string;
@@ -245,7 +245,7 @@ export class DynamicGrammarSemanticTokenProvider {
         const notebookGrammarRegistry = this.createGrammarRegistry(updatedKernelInfos);
         this._documentGrammarRegistries.set(notebookUri, notebookGrammarRegistry);
 
-        console.log(`DynamicGrammarSemanticTokenProvider.rebuildNotebookGrammar / notebookUri: ${JSON.stringify(notebookUri, null, 2)} / kernelInfos: ${JSON.stringify(kernelInfos, null, 2)} / this._documentGrammarRegistries: ${JSON.stringify(this._documentGrammarRegistries, null, 2)} / this._documentKernelInfos: ${JSON.stringify(this._documentKernelInfos, null, 2)}`);
+        // console.log(`DynamicGrammarSemanticTokenProvider.rebuildNotebookGrammar / notebookUri: ${JSON.stringify(notebookUri, null, 2)} / kernelInfos: ${JSON.stringify(kernelInfos, null, 2)} / this._documentGrammarRegistries: ${JSON.stringify(this._documentGrammarRegistries, null, 2)} / this._documentKernelInfos: ${JSON.stringify(this._documentKernelInfos, null, 2)}`);
     }
 
     private buildInstalledLanguageInfosMap(extensionData: VSCodeExtensionLike[]) {
@@ -537,7 +537,7 @@ export class DynamicGrammarSemanticTokenProvider {
         };
 
 
-        console.log(`DynamicGrammarSemanticTokenProvider.createGrammarRegistry / kernelInfos: ${JSON.stringify(kernelInfos, null, 2)} / scopeNameToGrammarMap: ${JSON.stringify(scopeNameToGrammarMap, null, 2)} / allKernelNames: ${JSON.stringify(allKernelNames, null, 2)} / rootGrammar: ${JSON.stringify(rootGrammar, null, 2)}`);
+        // console.log(`DynamicGrammarSemanticTokenProvider.createGrammarRegistry / kernelInfos: ${JSON.stringify(kernelInfos, null, 2)} / scopeNameToGrammarMap: ${JSON.stringify(scopeNameToGrammarMap, null, 2)} / allKernelNames: ${JSON.stringify(allKernelNames, null, 2)} / rootGrammar: ${JSON.stringify(rootGrammar, null, 2)}`);
 
         // prepare grammar scope loader
         const registry = new vsctm.Registry({

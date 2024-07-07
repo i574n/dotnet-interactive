@@ -19,7 +19,7 @@ function debounce(callback: () => void) {
 }
 
 export function registerVariableExplorer(context: vscode.ExtensionContext, clientMapper: ClientMapper) {
-    context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook-i574n.shareValueWith', async (variableInfo: VariableInfo | undefined) => {
+    context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook.shareValueWith', async (variableInfo: VariableInfo | undefined) => {
         const activeNotebookEditor = vscode.window.activeNotebookEditor;
         if (variableInfo && activeNotebookEditor) {
             const notebookDocument = vscodeNotebookManagement.getNotebookDocumentFromEditor(activeNotebookEditor);
@@ -51,7 +51,7 @@ export function registerVariableExplorer(context: vscode.ExtensionContext, clien
     }));
 
     const webViewProvider = new WatchWindowTableViewProvider(clientMapper, context.extensionPath);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider('polyglot-notebook-i574n-panel-values', webViewProvider, { webviewOptions: { retainContextWhenHidden: true } }));
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider('polyglot-notebook-panel-values', webViewProvider, { webviewOptions: { retainContextWhenHidden: true } }));
 
     vscode.window.onDidChangeActiveNotebookEditor(async editor => {
         const notebookUri = editor?.notebook.uri;
@@ -132,7 +132,7 @@ class WatchWindowTableViewProvider implements vscode.WebviewViewProvider {
         this.webview.onDidReceiveMessage(message => {
             const x = message;
             if (message.command === 'shareValueWith') {
-                vscode.commands.executeCommand('polyglot-notebook-i574n.shareValueWith', message.variableInfo);
+                vscode.commands.executeCommand('polyglot-notebook.shareValueWith', message.variableInfo);
             }
         });
 

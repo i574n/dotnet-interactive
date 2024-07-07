@@ -82,11 +82,11 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     async init(context: vscode.ExtensionContext): Promise<void> {
         await this._dynamicTokenProvider.init();
 
-        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook-i574n.refreshSemanticTokens', () => {
+        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook.refreshSemanticTokens', () => {
             this.refresh();
         }));
 
-        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook-i574n.resetNotebookKernelCollection', async (notebook?: vscode.NotebookDocument | undefined) => {
+        context.subscriptions.push(vscode.commands.registerCommand('polyglot-notebook.resetNotebookKernelCollection', async (notebook?: vscode.NotebookDocument | undefined) => {
             if (notebook) {
                 const isIpynb = metadataUtilities.isIpynbNotebook(notebook);
                 const bareMetadata = metadataUtilities.createDefaultNotebookDocumentMetadata();
@@ -121,7 +121,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     const cellKernelName = cellMetadata.kernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
 
                     if (cellKernelName === "spiral") {
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)}`);
+                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)}`);
 
                         const start = Date.now();
                         const getFileTokenRange =
@@ -133,7 +133,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                             // );
                         const tokens = await getFileTokenRange(this._workspaceRoot, text);
                         const diff = Date.now() - start;
-                        console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / diff: ${diff} / tokens.length: ${tokens.length}`);
+                        // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / diff: ${diff} / tokens.length: ${tokens.length}`);
                         return new vscode.SemanticTokens(tokens, "");
                     }
 

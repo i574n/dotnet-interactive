@@ -68,67 +68,67 @@ describe('dynamic grammar tests', async () => {
         expect(tokens).to.deep.equal([
             {
                 tokenText: '#!',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'some-magic-command',
-                tokenType: 'polyglot-notebook-i574n-keyword-control'
+                tokenType: 'polyglot-notebook-keyword-control'
             },
             {
                 tokenText: ' ',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '--option1',
-                tokenType: 'polyglot-notebook-i574n-constant-language'
+                tokenType: 'polyglot-notebook-constant-language'
             },
             {
                 tokenText: ' ',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'value1',
-                tokenType: 'polyglot-notebook-i574n-constant-numeric'
+                tokenType: 'polyglot-notebook-constant-numeric'
             },
             {
                 tokenText: ' ',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '/option2',
-                tokenType: 'polyglot-notebook-i574n-constant-language'
+                tokenType: 'polyglot-notebook-constant-language'
             },
             {
                 tokenText: ' ',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'value2',
-                tokenType: 'polyglot-notebook-i574n-constant-numeric'
+                tokenType: 'polyglot-notebook-constant-numeric'
             },
             {
                 tokenText: ' ',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'argument1',
-                tokenType: 'polyglot-notebook-i574n-constant-numeric'
+                tokenType: 'polyglot-notebook-constant-numeric'
             },
             {
                 tokenText: ' ',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '"',
-                tokenType: 'polyglot-notebook-i574n-string'
+                tokenType: 'polyglot-notebook-string'
             },
             {
                 tokenText: 'some string',
-                tokenType: 'polyglot-notebook-i574n-string'
+                tokenType: 'polyglot-notebook-string'
             },
             {
                 tokenText: '"',
-                tokenType: 'polyglot-notebook-i574n-string'
+                tokenType: 'polyglot-notebook-string'
             }
         ]);
     });
@@ -143,19 +143,19 @@ describe('dynamic grammar tests', async () => {
         expect(tokens).to.deep.equal([
             {
                 tokenText: '// csharp comment 1',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '#!',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'some-magic-command',
-                tokenType: 'polyglot-notebook-i574n-keyword-control'
+                tokenType: 'polyglot-notebook-keyword-control'
             },
             {
                 tokenText: '// csharp comment 2',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
         ]);
     });
@@ -174,19 +174,19 @@ describe('dynamic grammar tests', async () => {
         expect(tokens).to.deep.equal([
             {
                 tokenText: '// C# comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '# C# keyword',
-                tokenType: 'polyglot-notebook-i574n-keyword'
+                tokenType: 'polyglot-notebook-keyword'
             },
             {
                 tokenText: '# Python comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '// Python keyword',
-                tokenType: 'polyglot-notebook-i574n-keyword'
+                tokenType: 'polyglot-notebook-keyword'
             }
         ]);
     });
@@ -201,7 +201,7 @@ describe('dynamic grammar tests', async () => {
         expect(tokens).to.deep.equal([
             {
                 tokenText: '// C# alias comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             }
         ]);
     });
@@ -218,15 +218,15 @@ describe('dynamic grammar tests', async () => {
         expect(initialTokens).to.deep.equal([
             {
                 tokenText: '// C# Comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '#!',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'test-erlang',
-                tokenType: 'polyglot-notebook-i574n-keyword-control'
+                tokenType: 'polyglot-notebook-keyword-control'
             }
         ]);
 
@@ -252,11 +252,11 @@ describe('dynamic grammar tests', async () => {
         expect(realTokens).to.deep.equal([
             {
                 tokenText: '// C# Comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '% Erlang comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             }
         ]);
     });
@@ -273,15 +273,15 @@ describe('dynamic grammar tests', async () => {
         expect(initialTokens).to.deep.equal([
             {
                 tokenText: '// C# Comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '#!',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'test-erlang',
-                tokenType: 'polyglot-notebook-i574n-keyword-control'
+                tokenType: 'polyglot-notebook-keyword-control'
             }
         ]);
 
@@ -304,11 +304,11 @@ describe('dynamic grammar tests', async () => {
         expect(realTokens).to.deep.equal([
             {
                 tokenText: '// C# Comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: '% Erlang comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             }
         ]);
     });
@@ -335,7 +335,7 @@ describe('dynamic grammar tests', async () => {
         expect(tokens).to.deep.equal([
             {
                 tokenText: '// C# comment from an alias',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             }
         ]);
     });
@@ -414,39 +414,39 @@ User-Agent: abc/{{userAgent}}/def`;
         expect(tokens).to.deep.equal([
             {
                 tokenText: '// some comment',
-                tokenType: 'polyglot-notebook-i574n-comment'
+                tokenType: 'polyglot-notebook-comment'
             },
             {
                 tokenText: 'GET',
-                tokenType: 'polyglot-notebook-i574n-keyword'
+                tokenType: 'polyglot-notebook-keyword'
             },
             {
                 tokenText: '{{',
-                tokenType: 'polyglot-notebook-i574n-punctuation-section-brackets-single-begin'
+                tokenType: 'polyglot-notebook-punctuation-section-brackets-single-begin'
             },
             {
                 tokenText: 'subPath',
-                tokenType: 'polyglot-notebook-i574n-variable-language'
+                tokenType: 'polyglot-notebook-variable-language'
             },
             {
                 tokenText: '}}',
-                tokenType: 'polyglot-notebook-i574n-punctuation-section-brackets-single-end'
+                tokenType: 'polyglot-notebook-punctuation-section-brackets-single-end'
             },
             {
                 tokenText: 'User-Agent:',
-                tokenType: 'polyglot-notebook-i574n-keyword-control'
+                tokenType: 'polyglot-notebook-keyword-control'
             },
             {
                 tokenText: '{{',
-                tokenType: 'polyglot-notebook-i574n-punctuation-section-brackets-single-begin'
+                tokenType: 'polyglot-notebook-punctuation-section-brackets-single-begin'
             },
             {
                 tokenText: 'userAgent',
-                tokenType: 'polyglot-notebook-i574n-variable-language'
+                tokenType: 'polyglot-notebook-variable-language'
             },
             {
                 tokenText: '}}',
-                tokenType: 'polyglot-notebook-i574n-punctuation-section-brackets-single-end'
+                tokenType: 'polyglot-notebook-punctuation-section-brackets-single-end'
             }
         ]);
     });
@@ -460,7 +460,7 @@ This is \`markdown\`.
         expect(tokens).to.deep.equal([
             {
                 tokenText: '`markdown`',
-                tokenType: 'polyglot-notebook-i574n-string'
+                tokenType: 'polyglot-notebook-string'
             }
         ]);
     });

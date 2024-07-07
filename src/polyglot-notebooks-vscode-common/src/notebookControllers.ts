@@ -423,15 +423,15 @@ async function updateKernelInfoMetadata(client: InteractiveClient, document: vsc
     if (isIpynb) {
         if (metadataUtilities.useLegacyMetadata()) {
             if (!rawNotebookDocumentMetadata.custom.metadata.language_info) {
-                rawNotebookDocumentMetadata.custom.metadata.language_info = { name: "polyglot-notebook-i574n" };
+                rawNotebookDocumentMetadata.custom.metadata.language_info = { name: "polyglot-notebook" };
             } else {
-                rawNotebookDocumentMetadata.custom.metadata.language_info.name = "polyglot-notebook-i574n";
+                rawNotebookDocumentMetadata.custom.metadata.language_info.name = "polyglot-notebook";
             }
         } else {
             if (!rawNotebookDocumentMetadata.language_info) {
-                rawNotebookDocumentMetadata.language_info = { name: "polyglot-notebook-i574n" };
+                rawNotebookDocumentMetadata.language_info = { name: "polyglot-notebook" };
             } else {
-                rawNotebookDocumentMetadata.language_info.name = "polyglot-notebook-i574n";
+                rawNotebookDocumentMetadata.language_info.name = "polyglot-notebook";
             }
         }
     }

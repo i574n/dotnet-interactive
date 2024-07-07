@@ -36,7 +36,7 @@ public class PowerShellKernel :
     IKernelCommandHandler<SubmitCode>
 {
     private const string PSTelemetryEnvName = "POWERSHELL_DISTRIBUTION_CHANNEL";
-    private const string PSTelemetryChannel = "dotnet-interactive-i574n-powershell";
+    private const string PSTelemetryChannel = "dotnet-interactive-powershell";
     private const string PSModulePathEnvName = "PSModulePath";
 
     internal const string DefaultKernelName = "pwsh";

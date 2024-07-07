@@ -243,6 +243,17 @@ export function getKernelspecMetadataFromIpynbNotebookDocument(notebook: vscodeL
 
 export function getKernelInfosFromNotebookDocument(notebookDocument: vscodeLike.NotebookDocument): commandsAndEvents.KernelInfo[] {
     const notebookDocumentMetadata = getNotebookDocumentMetadataFromNotebookDocument(notebookDocument);
+
+    notebookDocumentMetadata.kernelInfo.items.push({
+        name: 'fsharp',
+        aliases: ['fs'],
+        languageName: 'fsharp'
+    }, {
+        name: 'pwsh',
+        aliases: ['powershell'],
+        languageName: 'powershell'
+    });
+
     const kernelInfos: commandsAndEvents.KernelInfo[] = notebookDocumentMetadata.kernelInfo.items.map(item => ({
         // these are the only important ones
         localName: item.name,

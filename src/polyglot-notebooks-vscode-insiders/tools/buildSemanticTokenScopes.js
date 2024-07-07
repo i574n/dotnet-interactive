@@ -75,7 +75,7 @@ const manualScopesToAdd = [
     'punctuation.section.group.end',
 ];
 
-const semanticTokenPrefix = 'polyglot-notebook-i574n';
+const semanticTokenPrefix = 'polyglot-notebook';
 function addScope(scopeName) {
     if (scopeName.indexOf(' ') >= 0) {
         // not dealing with hierarchical scopes right now (separated with spaces)
