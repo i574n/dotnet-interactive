@@ -1,18 +1,21 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #nullable enable
 
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.DotNet.Interactive.Http.Parsing.Parsing;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.DotNet.Interactive.Parsing;
 
 namespace Microsoft.DotNet.Interactive.Http.Parsing;
 
+using Diagnostic = CodeAnalysis.Diagnostic;
+
 internal class HttpRootSyntaxNode : HttpSyntaxNode
 {
-    internal HttpRootSyntaxNode(SourceText sourceText, HttpSyntaxTree? tree) : base(sourceText, tree)
+    internal HttpRootSyntaxNode(SourceText sourceText, HttpSyntaxTree tree) : base(sourceText, tree)
     {
     }
 
@@ -36,10 +39,11 @@ internal class HttpRootSyntaxNode : HttpSyntaxNode
         AddInternal(separatorNode);
     }
 
-    public Dictionary<string, DeclaredVariable> GetDeclaredVariables()
+    public (Dictionary<string, DeclaredVariable> declaredVariables, List<Diagnostic>? diagnostics) TryGetDeclaredVariables(HttpBindingDelegate? bind = null)
     {
-
         var variableAndDeclarationNodes = ChildNodes.OfType<HttpVariableDeclarationAndAssignmentNode>();
+
+        List<Diagnostic>? diagnostics = null;
 
         var foundVariableValues = new Dictionary<string, string>();
         var declaredVariables = new Dictionary<string, DeclaredVariable>();
@@ -58,9 +62,13 @@ internal class HttpRootSyntaxNode : HttpSyntaxNode
                 {
                     var value = node.ValueNode.TryGetValue(node =>
                     {
-                        if (foundVariableValues.TryGetValue(node.Text, out string? strinValue))
+                        if (foundVariableValues.TryGetValue(node.Text, out string? stringValue))
                         {
-                            return node.CreateBindingSuccess(strinValue);
+                            return node.CreateBindingSuccess(stringValue);
+                        }
+                        else if (bind != null)
+                        {
+                            return bind(node);
                         }
                         else
                         {
@@ -69,14 +77,29 @@ internal class HttpRootSyntaxNode : HttpSyntaxNode
 
                     });
 
-                    if (value is not null && value.Value is not null)
+                    if (value?.Value != null)
                     {
                         declaredVariables[node.DeclarationNode.VariableName] = new DeclaredVariable(node.DeclarationNode.VariableName, value.Value, value);
+                    } 
+                    else 
+                    {
+                        if(diagnostics is null)
+                        {
+                            diagnostics = value?.Diagnostics;
+                        } 
+                        else
+                        {
+                            if (value is not null)
+                            {
+                                diagnostics.AddRange(value.Diagnostics);
+                            }
+                            
+                        }       
                     }
                 }
             }
         }
 
-        return declaredVariables;
+        return (declaredVariables, diagnostics);
     }
 }

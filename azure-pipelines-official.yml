@@ -112,7 +112,7 @@ extends:
               name: $(DncEngInternalBuildPool)
               demands: ImageOverride -equals 1es-windows-2022
               os: windows
-            timeoutInMinutes: 90
+            timeoutInMinutes: 180
             variables:
               - group: DotNet-Symbol-Server-Pats
               - name: _SignType
@@ -256,7 +256,7 @@ extends:
               name: $(DncEngInternalBuildPool)
               os: linux
               demands: ImageOverride -equals 1es-ubuntu-2204
-            
+            timeoutInMinutes: 120
             templateContext:
               outputs:
                 - output: pipelineArtifact

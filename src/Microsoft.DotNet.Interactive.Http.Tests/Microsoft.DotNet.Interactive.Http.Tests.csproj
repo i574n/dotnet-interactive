@@ -20,6 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Microsoft.DotNet.Interactive.Parsing.Tests\Utility\ISyntaxSpec.cs" Link="Utility\ISyntaxSpec.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Parsing.Tests\Utility\SyntaxSpecBase{T}.cs" Link="Utility\SyntaxSpecBase{T}.cs" />
+    <Compile Include="..\Microsoft.DotNet.Interactive.Parsing.Tests\Utility\SyntaxAssertionExtensions.cs" Link="Utility\SyntaxAssertionExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisCommonVersion)" />
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Pocket.Disposable" Version="1.2.0">
       <PrivateAssets>all</PrivateAssets>

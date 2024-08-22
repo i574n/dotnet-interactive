@@ -517,13 +517,14 @@ public static class CommandLineParser
             .UseDefaultMagicCommands()
             .UseAboutMagicCommand()
             .UseImportMagicCommand()
+            .UseSecretManager()
             .UseNuGetExtensions(telemetrySender);
 
-        kernel.AddKernelConnector(new ConnectSignalRCommand());
-        kernel.AddKernelConnector(new ConnectStdIoCommand(startupOptions.KernelHost));
+        kernel.AddKernelConnector(new ConnectSignalRDirective());
+        kernel.AddKernelConnector(new ConnectStdIoDirective(startupOptions.KernelHost));
 
         kernel.AddKernelConnector(
-            new ConnectJupyterKernelCommand()
+            new ConnectJupyterKernelDirective()
             .AddConnectionOptions(new JupyterHttpKernelConnectionOptions())
             .AddConnectionOptions(new JupyterLocalKernelConnectionOptions()));
 

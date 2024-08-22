@@ -232,7 +232,6 @@ export class DynamicGrammarSemanticTokenProvider {
                 languageName: 'markdown',
                 aliases: ['md'],
                 supportedKernelCommands: [],
-                supportedDirectives: [],
                 uri: 'unused',
             });
         }

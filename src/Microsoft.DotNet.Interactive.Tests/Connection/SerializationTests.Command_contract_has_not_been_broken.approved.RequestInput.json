@@ -4,8 +4,8 @@
   "command": {
     "prompt": "provide answer",
     "isPassword": true,
-    "inputTypeHint": "password",
-    "valueName": "yourPassword",
+    "type": "password",
+    "saveAs": null,
     "targetKernelName": "vscode",
     "originUri": null,
     "destinationUri": null

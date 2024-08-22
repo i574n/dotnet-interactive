@@ -12,13 +12,15 @@ internal class HttpCommentNode : HttpSyntaxNode
 {
     internal HttpCommentNode(
         SourceText sourceText,
-        HttpSyntaxTree? syntaxTree) : base(sourceText, syntaxTree)
+        HttpSyntaxTree syntaxTree) : base(sourceText, syntaxTree)
     {
     }
 
     public HttpCommentStartNode? CommentStartNode { get; private set; }
 
     public HttpCommentBodyNode? CommentBodyNode { get; private set; }
+
+    public HttpNamedRequestNode? NamedRequestNode { get; private set; }
 
     public override bool IsSignificant => false;
 
@@ -41,6 +43,17 @@ internal class HttpCommentNode : HttpSyntaxNode
         }
 
         CommentBodyNode = node;
+        AddInternal(node);
+    }
+
+    public void Add(HttpNamedRequestNode node)
+    {
+        if (NamedRequestNode is not null)
+        {
+            throw new InvalidOperationException($"{nameof(NamedRequestNode)} was already added.");
+        }
+
+        NamedRequestNode = node;
         AddInternal(node);
     }
 }

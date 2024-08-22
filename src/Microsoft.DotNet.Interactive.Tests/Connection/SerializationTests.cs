@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -10,11 +10,13 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Assent;
 using FluentAssertions;
+using FluentAssertions.Equivalency;
 using Microsoft.AspNetCore.Html;
 using Microsoft.CodeAnalysis;
 using Microsoft.DotNet.Interactive.Commands;
 using Microsoft.DotNet.Interactive.Connection;
 using Microsoft.DotNet.Interactive.CSharp;
+using Microsoft.DotNet.Interactive.Directives;
 using Microsoft.DotNet.Interactive.Events;
 using Microsoft.DotNet.Interactive.Formatting;
 using Microsoft.DotNet.Interactive.FSharp;
@@ -28,6 +30,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.DotNet.Interactive.Tests.Connection;
 
+[Trait("Category", "Contracts and serialization")]
 public class SerializationTests
 {
     private readonly ITestOutputHelper _output;
@@ -49,18 +52,12 @@ public class SerializationTests
 
         var deserializedEnvelope = KernelCommandEnvelope.Deserialize(json);
 
-        // ignore these specific properties because they're not serialized
-        var ignoredProperties = new HashSet<string>
-        {
-            $"{nameof(SendValue)}.{nameof(SendValue.Value)}"
-        };
-
         deserializedEnvelope
             .Should()
             .BeEquivalentToRespectingRuntimeTypes(
                 originalEnvelope,
                 o => o.Excluding(e => e.Command.Handler)
-                      .Excluding(info => ignoredProperties.Contains($"{info.DeclaringType.Name}.{info.Name}")));
+                      .Excluding(info => IsPropertyJsonIgnored(info)));
     }
 
     [Theory]
@@ -75,20 +72,28 @@ public class SerializationTests
 
         var deserializedEnvelope = KernelEventEnvelope.Deserialize(json);
 
-        // ignore these specific properties because they're not serialized
-        var ignoredProperties = new HashSet<string>
-        {
-            $"{nameof(CommandFailed)}.{nameof(CommandFailed.Exception)}",
-            $"{nameof(DisplayEvent)}.{nameof(DisplayEvent.Value)}",
-            $"{nameof(ValueProduced)}.{nameof(ValueProduced.Value)}",
-            $"{nameof(KernelValueInfo)}.{nameof(KernelValueInfo.Type)}",
-        };
-
         deserializedEnvelope
             .Should()
             .BeEquivalentToRespectingRuntimeTypes(
                 originalEnvelope,
-                o => o.Excluding(info => ignoredProperties.Contains($"{info.DeclaringType.Name}.{info.Name}")));
+                o => o.Excluding(info => IsPropertyJsonIgnored(info)));
+    }
+
+    private static bool IsPropertyJsonIgnored(IMemberInfo info)
+    {
+        var property = info.DeclaringType.GetProperty(info.Name);
+
+        if (property is not null)
+        {
+            var jsonIgnore = property.GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonIgnoreAttribute), true);
+            if (jsonIgnore.Length> 0)
+            {
+                return true;
+            }
+
+        }
+
+        return false;
     }
 
     [Theory]
@@ -176,6 +181,10 @@ public class SerializationTests
 
         IEnumerable<KernelCommand> commands()
         {
+            yield return new AddPackage("Microsoft.DotNet.Interactive", "*-*");
+
+            yield return new AddPackageSource("https://api.nuget.org/v3/index.json");
+
             yield return new ClearValues();
 
             yield return new DisplayError("oops!");
@@ -183,6 +192,8 @@ public class SerializationTests
             yield return new DisplayValue(
                 new FormattedValue("text/html", "<b>hi!</b>")
             );
+
+            yield return new ImportDocument(@"c:\temp\some.ipynb");
 
             yield return new RequestCompletions("Cons", new LinePosition(0, 4), "csharp");
 
@@ -194,7 +205,13 @@ public class SerializationTests
 
             yield return new SendEditableCode("someKernelName", "code");
 
-            yield return new SubmitCode("123", "csharp");
+            yield return new SubmitCode("123", "csharp")
+            {
+                Parameters =
+                {
+                    ["SomeValue"] = "123"
+                }
+            };
 
             yield return new UpdateDisplayedValue(
                 new FormattedValue("text/html", "<b>hi!</b>"),
@@ -213,7 +230,7 @@ public class SerializationTests
 
             yield return new RequestValue("a", mimeType: HtmlFormatter.MimeType, targetKernelName: "csharp");
 
-            yield return new RequestInput(prompt: "provide answer", valueName: "yourPassword", inputTypeHint: "password", targetKernelName: "vscode");
+            yield return new RequestInput(prompt: "provide answer", inputTypeHint: "password", targetKernelName: "vscode");
 
             yield return new SendValue(
                 "name",
@@ -242,7 +259,6 @@ public class SerializationTests
 
         IEnumerable<KernelEvent> events()
         {
-
             yield return new CodeSubmissionReceived(
                 new SubmitCode("123"));
 
@@ -323,9 +339,24 @@ public class SerializationTests
                 {
                     LanguageName = "JavaScript",
                     Uri = new Uri("kernel://vscode/javascript"),
-                    SupportedKernelCommands = new[]
+                    SupportedKernelCommands =
                     {
                         new KernelCommandInfo(nameof(SubmitCode))
+                    },
+                    SupportedDirectives =
+                    {
+                        new KernelActionDirective("#!example")
+                        {
+                            Parameters =
+                            {
+                                new("--opt")
+                                {
+                                    Required = true,
+                                    TypeHint = "file",
+                                    MaxOccurrences = 123
+                                }
+                            }
+                        }
                     }
                 },
                 new RequestKernelInfo(new Uri("kernel://webview/javascript"))
@@ -339,7 +370,7 @@ public class SerializationTests
                 {
                     LanguageName = "JavaScript",
                     Uri = new Uri("kernel://vscode/javascript"),
-                    SupportedKernelCommands = new[]
+                    SupportedKernelCommands =
                     {
                         new KernelCommandInfo(nameof(SubmitCode))
                     }
@@ -349,11 +380,11 @@ public class SerializationTests
                     LanguageName = "CSharp",
                     Uri = new Uri("kernel://pid/csharp"),
                     Description = "executes C# code",
-                    SupportedDirectives = new[]
+                    SupportedDirectives =
                     {
-                        new KernelDirectiveInfo("#r"),
+                        new KernelActionDirective("#r")
                     },
-                    SupportedKernelCommands = new[]
+                    SupportedKernelCommands =
                     {
                         new KernelCommandInfo(nameof(SubmitCode))
                     }
@@ -423,7 +454,7 @@ public class SerializationTests
                     "<span>raw value</span>"),
                 new RequestValue("a", mimeType: HtmlFormatter.MimeType, targetKernelName: "csharp"));
 
-            yield return new InputProduced("user input", new RequestInput(valueName: "logfile", prompt: "What is the path to the log file?", inputTypeHint: "file", targetKernelName: "vscode"));
+            yield return new InputProduced("user input", new RequestInput(prompt: "What is the path to the log file?", inputTypeHint: "file", targetKernelName: "vscode"));
         }
     }
 
