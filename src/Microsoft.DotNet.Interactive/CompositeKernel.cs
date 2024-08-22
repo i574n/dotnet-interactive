@@ -103,14 +103,11 @@ public sealed class CompositeKernel :
 
     private void AddDirective(KernelSpecifierDirective directive)
     {
-        if (KernelInfo.SupportedDirectives.Any(d => d.Name == directive.Name))
+        if (!KernelInfo.SupportedDirectives.Any(d => d.Name == directive.Name))
         {
-            throw new ArgumentException($"The kernel name or alias '{directive.Name}' is already in use.");
+            KernelInfo.SupportedDirectives.Add(directive);
+            SubmissionParser.ResetParser();
         }
-
-        KernelInfo.SupportedDirectives.Add(directive);
-
-        SubmissionParser.ResetParser();
     }
 
     public void SetDefaultTargetKernelNameForCommand(

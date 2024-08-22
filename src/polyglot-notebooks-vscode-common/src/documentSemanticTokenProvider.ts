@@ -123,7 +123,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                     if (cellKernelName === "spiral") {
                         // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / cellIndex: ${cell.index} / notebookUri: ${notebookDocument.uri.toString()} / cellKernelName: ${cellKernelName} / cellMetadata: ${JSON.stringify(cellMetadata, null, 2)} / cellDocument: ${JSON.stringify(cell.document, null, 2)}`);
 
-                        const start = Date.now();
+                        // const start = Date.now();
                         const getFileTokenRange =
                             supervisor.getFileTokenRange;
                             // this.throttledGetFileTokenRange[cell.index]
@@ -132,7 +132,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                             //         supervisor.throttle(supervisor.getFileTokenRange, 2000)
                             // );
                         const tokens = await getFileTokenRange(this._workspaceRoot, text);
-                        const diff = Date.now() - start;
+                        // const diff = Date.now() - start;
                         // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / diff: ${diff} / tokens.length: ${tokens.length}`);
                         return new vscode.SemanticTokens(tokens, "");
                     }
