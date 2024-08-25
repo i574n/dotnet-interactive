@@ -540,6 +540,29 @@ type SpiralKernel () as this =
         // | _ ->
         //     false
 
+    member this.AddAssemblyReferencesAndPackageRoots(assemblyReferences: IEnumerable<string>, packageRoots: IEnumerable<string>) =
+        let sb = StringBuilder()
+        let hashset = HashSet()
+
+        for packageRoot in packageRoots do
+            match packageRoot with
+            | null -> ()
+            | root ->
+                if hashset.Add(root) then
+                    if File.Exists root then
+                        sb.AppendFormat("#I @\"{0}\"", root) |> ignore
+                        sb.Append(Environment.NewLine) |> ignore
+
+        for assemblyReference in assemblyReferences do
+            if hashset.Add(assemblyReference) then
+                if File.Exists assemblyReference then
+                    sb.AppendFormat("#r @\"{0}\"", assemblyReference) |> ignore
+                    sb.Append(Environment.NewLine) |> ignore
+
+        let command = new SubmitCode(sb.ToString(), this.Name)
+
+        this.DeferCommand(command)
+
     // member _.RestoreSources with get () = _packageRestoreContext.Value.RestoreSources
 
     // member _.RequestedPackageReferences with get () = _packageRestoreContext.Value.RequestedPackageReferences;
