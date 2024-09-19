@@ -11,12 +11,12 @@
   ],
   "preview": false,
   "//version": "%description.version%",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "engines": {
     "vscode": "^1.87.0"
   },
   "bugs": {
-    "url": "https://github.com/dotnet/interactive/issues"
+    "url": "https://github.com/i574n/dotnet-interactive/issues"
   },
   "repository": {
     "url": "https://github.com/i574n/dotnet-interactive"
@@ -221,7 +221,7 @@
         },
         "dotnet-interactive.requiredInteractiveToolVersion": {
           "type": "string",
-          "default": "0.1.1",
+          "default": "0.1.2",
           "description": "%description.requiredInteractiveToolVersion%"
         }
       }

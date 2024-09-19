@@ -1,5 +1,5 @@
 {
-  "description.package": "Polyglot Notebooks for VS Code. Use multiple languages in one notebook with full language server support for each language and share variables between them.",
+  "description.package": "[Fork for the Spiral language] Polyglot Notebooks for VS Code. Use multiple languages in one notebook with full language server support for each language and share variables between them.",
   "_description.package.comment": "{Locked='Polyglot Notebooks'}",
   "description.version": "The version '42.42.42' is auto-set during CI package creation.",
   "description.untrustedWorkspaces": "Execution of cells in Interactive Window and Notebooks is not supported in untrusted workspaces.",
