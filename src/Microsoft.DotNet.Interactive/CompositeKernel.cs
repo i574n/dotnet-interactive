@@ -214,7 +214,7 @@ public sealed class CompositeKernel :
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public void AddKernelConnector<T>(ConnectKernelDirective<T> connectDirective)
+    public void AddConnectDirective<T>(ConnectKernelDirective<T> connectDirective)
         where T : ConnectKernelCommand
     {
         if (_rootConnectDirective is null)
@@ -244,7 +244,7 @@ public sealed class CompositeKernel :
     private async Task ConnectKernel<TCommand>(
         TCommand command,
         ConnectKernelDirective<TCommand> connectDirective,
-        KernelInvocationContext context) 
+        KernelInvocationContext context)
         where TCommand : ConnectKernelCommand
     {
         var connectedKernels = await connectDirective.ConnectKernelsAsync(
@@ -255,16 +255,16 @@ public sealed class CompositeKernel :
         {
             Add(connectedKernel);
 
-            var chooseKernelDirective =
+            var kernelSpecifierDirective =
                 KernelInfo.SupportedDirectives.OfType<KernelSpecifierDirective>()
                           .Single(d => d.KernelName == connectedKernel.Name);
 
             if (!string.IsNullOrWhiteSpace(connectDirective.ConnectedKernelDescription))
             {
-                chooseKernelDirective.Description = connectDirective.ConnectedKernelDescription;
+                kernelSpecifierDirective.Description = connectDirective.ConnectedKernelDescription;
             }
 
-            chooseKernelDirective.Description += " (Connected kernel)";
+            kernelSpecifierDirective.Description += " (Connected kernel)";
 
             context.Display($"Kernel added: #!{connectedKernel.Name}");
         }
