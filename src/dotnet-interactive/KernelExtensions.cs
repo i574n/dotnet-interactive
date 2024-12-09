@@ -26,7 +26,7 @@ namespace Microsoft.DotNet.Interactive.App;
 public static class KernelExtensions
 {
     public static TKernel UseFormsForMultipleInputs<TKernel>(
-        this TKernel kernel, 
+        this TKernel kernel,
         SecretManager secretManager = null)
         where TKernel : Kernel
     {
@@ -56,11 +56,11 @@ public static class KernelExtensions
 
                 var value = "";
 
-                if (inputDescription.SaveAs is not null && 
+                if (inputDescription.SaveAs is not null &&
                     secretManager is not null)
                 {
                     secretManager.TryGetSecret(inputDescription.SaveAs, out value);
-                }  
+                }
 
                 return div(
                     label[@for: inputName](inputDescription.Prompt),
@@ -112,7 +112,7 @@ public static class KernelExtensions
         {
             receivedValues[sendValue.Name] = sendValue.FormattedValue;
 
-            // don't wait on the barrier if the form hasn't been displayed 
+            // don't wait on the barrier if the form hasn't been displayed
             if (barrier.ParticipantsRemaining == 1)
             {
                 barrier.SignalAndWait(context.CancellationToken);
@@ -129,7 +129,7 @@ public static class KernelExtensions
     {
         kernel.UseNugetDirective((k, resolvedPackageReference) =>
         {
-            
+
             k.AddAssemblyReferences(resolvedPackageReference
                 .SelectMany(r => r.AssemblyPaths));
             return Task.CompletedTask;
@@ -202,7 +202,7 @@ public static class KernelExtensions
                 if (resourceStream is not null)
                 {
                     var png = new byte[resourceStream.Length];
-                    resourceStream.Read(png, 0, png.Length);
+                    resourceStream.ReadExactly(png);
                     encodedImage = $"data:image/png;base64, {Convert.ToBase64String(png)}";
                 }
             }
@@ -254,7 +254,7 @@ public static class KernelExtensions
                 var message =
                     $"""
                      Using previously saved value for `{requestInput.SaveAs}`.
-                     
+
                      {MoreInfoMessage()}
                      """;
                 context.Publish(new DisplayedValueProduced(
@@ -266,15 +266,15 @@ public static class KernelExtensions
             {
                 using var _ = context.KernelEvents.Subscribe(@event =>
                 {
-                    if (@event is InputProduced inputProduced && 
+                    if (@event is InputProduced inputProduced &&
                         inputProduced.Command.GetOrCreateToken() == requestInput.GetOrCreateToken())
                     {
                         secretManager.SetSecret(requestInput.SaveAs, inputProduced.Value);
 
                         var message =
                             $"""
-                             Your response for value `{saveAs}` has been saved and will be reused without a prompt in the future. 
-                             
+                             Your response for value `{saveAs}` has been saved and will be reused without a prompt in the future.
+
                              {MoreInfoMessage()}
                              """;
                         context.Publish(new DisplayedValueProduced(
@@ -290,7 +290,7 @@ public static class KernelExtensions
             string MoreInfoMessage() =>
                 $"""
                  > 💡 To remove this value from your [SecretStore](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.secretstore/?view=ps-modules), run the following command in a PowerShell cell:
-                 > 
+                 >
                  > ```powershell
                  >     Remove-Secret -Name "{requestInput.SaveAs}" -Vault {secretManager.VaultName}
                  > ```
@@ -349,7 +349,7 @@ public static class KernelExtensions
             }
 
         }
-        
+
         Dictionary<string, string> GetStandardPropertiesFromEvent(KernelEvent kernelEvent)
         {
             return GetStandardPropertiesFromCommand(kernelEvent.Command);
