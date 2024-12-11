@@ -70,13 +70,6 @@ const disposables: (() => void)[] = [];
 let surveryBanner: SurveyBanner;
 
 export async function activate(context: vscode.ExtensionContext) {
-    // Wait for ipynb extension to be ready, temporary.
-    const ipynbExtension = vscode.extensions.getExtension('vscode.ipynb');
-    if (ipynbExtension && !ipynbExtension.isActive) {
-        await ipynbExtension.activate();
-    }
-    metadataUtilities.setUseLegacyMetadata(ipynbExtension && !ipynbExtension.exports.dropCustomMetadata ? true : false);
-
     const dotnetConfig = vscode.workspace.getConfiguration(constants.DotnetConfigurationSectionName);
     const polyglotConfig = vscode.workspace.getConfiguration(constants.PolyglotConfigurationSectionName);
     const minDotNetSdkVersion = dotnetConfig.get<string>('minimumDotNetSdkVersion') || '8.0';
@@ -170,8 +163,7 @@ export async function activate(context: vscode.ExtensionContext) {
     function configureKernel(compositeKernel: CompositeKernel, notebookUri: vscodeLike.Uri) {
         compositeKernel.setDefaultTargetKernelNameForCommand(commandsAndEvents.RequestInputType, compositeKernel.name);
         compositeKernel.setDefaultTargetKernelNameForCommand(commandsAndEvents.SendEditableCodeType, compositeKernel.name);
-        compositeKernel.kernelInfo.description = `This Kernel is provided by the .NET Interactive Extension.
-        This allows adding new cells to the notebook and prompting user for input.`;
+        compositeKernel.kernelInfo.description = `Composes a group of subkernels`;
 
         compositeKernel.registerCommandHandler({
             commandType: commandsAndEvents.RequestInputType,
@@ -219,15 +211,17 @@ export async function activate(context: vscode.ExtensionContext) {
         compositeKernel.registerCommandHandler({
             commandType: commandsAndEvents.SendEditableCodeType,
             handle: async commandInvocation => {
-                const addCell = <commandsAndEvents.SendEditableCode>commandInvocation.commandEnvelope.command;
-                const kernelName = addCell.kernelName;
-                const contents = addCell.code;
+                const sendEditableCode = <commandsAndEvents.SendEditableCode>commandInvocation.commandEnvelope.command;
+                const kernelName = sendEditableCode.kernelName;
+                const contents = sendEditableCode.code;
                 const notebookDocument = vscode.workspace.notebookDocuments.find(notebook => notebook.uri.toString() === notebookUri.toString());
 
                 if (!notebookDocument) {
                     throw new Error(`Unable to get notebook document for URI '${notebookUri.toString()}'.`);
                 }
-                const range = new vscode.NotebookRange(notebookDocument!.cellCount, notebookDocument!.cellCount);
+
+                const insertAtIndex = sendEditableCode.insertAtPosition || notebookDocument!.cellCount;
+                const range = new vscode.NotebookRange(insertAtIndex, insertAtIndex);
                 const kernel = compositeKernel.findKernelByName(kernelName);
                 let newCell: vscode.NotebookCellData;
                 if (kernelName.toLowerCase() === 'markdown') {
@@ -254,7 +248,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
 
                 // when new cells are added, the previous cell's kernel name is copied forward, but in this case we want to force it back
-                const addedCell = notebookDocument.cellAt(notebookDocument.cellCount - 1); // the newly added cell is always the last one
+                const addedCell = notebookDocument.cellAt(insertAtIndex); // the newly added cell is always the last one
                 await vscodeUtilities.setCellKernelName(addedCell, kernelName);
             }
         });

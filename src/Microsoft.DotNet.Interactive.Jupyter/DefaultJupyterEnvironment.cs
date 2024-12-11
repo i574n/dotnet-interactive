@@ -8,7 +8,7 @@ namespace Microsoft.DotNet.Interactive.Jupyter;
 
 internal class DefaultJupyterEnvironment : IJupyterEnvironment
 {
-    public async Task<CommandLineResult> Execute(string command, string args, DirectoryInfo workingDir = null, TimeSpan? timeout = null)
+    public async Task<CommandLineResult> ExecuteAsync(string command, string args, DirectoryInfo workingDir = null, TimeSpan? timeout = null)
     {
         return await CommandLine.Execute(command, args, workingDir, timeout);
     }

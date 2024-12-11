@@ -208,13 +208,19 @@ export class DotNetNotebookKernel {
                     diagnosticCollection.set(cell.document.uri, diags.filter(d => d.severity !== commandsAndEvents.DiagnosticSeverity.Hidden).map(vscodeUtilities.toVsCodeDiagnostic));
                 }
 
-                return client.execute(source, vscodeUtilities.getCellKernelName(cell), outputObserver, diagnosticObserver, { id: cell.document.uri.toString() }).then(async (success) => {
+                return client.execute(
+                    source,
+                    { kernelName: vscodeUtilities.getCellKernelName(cell), index: cell.index },
+                    outputObserver,
+                    diagnosticObserver,
+                    { id: cell.document.uri.toString() })
+                    .then(async (success) => {
                     await outputUpdatePromise;
 
                     const isIpynb = metadataUtilities.isIpynbNotebook(cell.notebook);
                     const notebookDocumentMetadata = metadataUtilities.getNotebookDocumentMetadataFromNotebookDocument(cell.notebook);
-                    const kernelNotebokMetadata = metadataUtilities.getNotebookDocumentMetadataFromCompositeKernel(client.kernel);
-                    const mergedMetadata = metadataUtilities.mergeNotebookDocumentMetadata(notebookDocumentMetadata, kernelNotebokMetadata);
+                        const kernelNotebookMetadata = metadataUtilities.getNotebookDocumentMetadataFromCompositeKernel(client.kernel);
+                        const mergedMetadata = metadataUtilities.mergeNotebookDocumentMetadata(notebookDocumentMetadata, kernelNotebookMetadata);
                     const rawNotebookDocumentMetadata = metadataUtilities.getMergedRawNotebookDocumentMetadataFromNotebookDocumentMetadata(mergedMetadata, cell.notebook.metadata, isIpynb);
 
                     await vscodeNotebookManagement.replaceNotebookMetadata(cell.notebook.uri, rawNotebookDocumentMetadata);
@@ -307,14 +313,8 @@ async function ensureCellKernelMetadata(cell: vscode.NotebookCell, options: { pr
         const existingCellMetadata = metadataUtilities.getCellMetadata(cell);
         if (existingCellMetadata?.polyglot_notebook || existingCellMetadata?.dotnet_interactive) {
             const updatedCellMetadata = { ...cell.metadata };
-            if (metadataUtilities.useLegacyMetadata()) {
-                delete updatedCellMetadata.custom.metadata.dotnet_interactive;
-                delete updatedCellMetadata.custom.metadata.polyglot_notebook;
-            }
-            else {
                 delete updatedCellMetadata.dotnet_interactive;
                 delete updatedCellMetadata.polyglot_notebook;
-            }
             await vscodeNotebookManagement.replaceNotebookCellMetadata(cell.notebook.uri, cell.index, updatedCellMetadata);
         }
         return;
@@ -421,20 +421,12 @@ async function updateKernelInfoMetadata(client: InteractiveClient, document: vsc
     const rawNotebookDocumentMetadata = metadataUtilities.getMergedRawNotebookDocumentMetadataFromNotebookDocumentMetadata(mergedMetadata, document.metadata, isIpynb);
 
     if (isIpynb) {
-        if (metadataUtilities.useLegacyMetadata()) {
-            if (!rawNotebookDocumentMetadata.custom.metadata.language_info) {
-                rawNotebookDocumentMetadata.custom.metadata.language_info = { name: "polyglot-notebook" };
-            } else {
-                rawNotebookDocumentMetadata.custom.metadata.language_info.name = "polyglot-notebook";
-            }
-        } else {
             if (!rawNotebookDocumentMetadata.language_info) {
                 rawNotebookDocumentMetadata.language_info = { name: "polyglot-notebook" };
             } else {
                 rawNotebookDocumentMetadata.language_info.name = "polyglot-notebook";
             }
         }
-    }
     await vscodeNotebookManagement.replaceNotebookMetadata(document.uri, rawNotebookDocumentMetadata);
 }
 

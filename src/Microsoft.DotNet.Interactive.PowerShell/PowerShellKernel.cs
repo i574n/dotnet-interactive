@@ -90,8 +90,7 @@ public class PowerShellKernel :
         KernelInfo.LanguageName = LanguageName;
         KernelInfo.LanguageVersion = "7";
         KernelInfo.Description = """
-                                 This Kernel can evaluate Powershell scripts and commands.
-                                 It uses Powershell Core and can interop with the operative system and host machine.
+                                 Run PowerShell scripts and commands
                                  """;
 
         _psHost = new PSKernelHost(this);
@@ -334,11 +333,11 @@ public class PowerShellKernel :
         var code = requestDiagnostics.Code;
 
         IsCompleteSubmission(code, out var parseErrors);
-
+        
         var diagnostics = parseErrors.Select(ToDiagnostic).ToArray();
         context.Publish(new DiagnosticsProduced(
-                            diagnostics,
-                            diagnostics.Select(d => new FormattedValue(PlainTextFormatter.MimeType, d.ToString())).ToArray(),
+                            diagnostics,   
+                            diagnostics.Select(d => new FormattedValue(PlainTextFormatter.MimeType, d.ToString())).ToArray(), 
                             requestDiagnostics));
 
         return Task.CompletedTask;

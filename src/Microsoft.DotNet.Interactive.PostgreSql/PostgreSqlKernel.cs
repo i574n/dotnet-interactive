@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
@@ -25,8 +25,7 @@ public class PostgreSqlKernel :
     {
         KernelInfo.LanguageName = "PostgreSQL";
         KernelInfo.Description = """
-            This kernel is backed by a PostgreSQL database.
-            It can execute SQL statements against the database and display the results as tables.
+            Query a PostgreSQL database
             """;
 
         _connectionString = connectionString;
@@ -110,27 +109,20 @@ public class PostgreSqlKernel :
         }
     }
 
-    public static void AddPostgreSqlKernelConnectorTo(CompositeKernel kernel)
-    {
-        kernel.AddConnectDirective(new ConnectPostgreSqlDirective());
-
-        KernelInvocationContext.Current?.Display(
-            new HtmlString(@"<details><summary>Query PostgreSql databases.</summary>
-    <p>This extension adds support for connecting to PostgreSql databases using the <code>#!connect sqlite</code> magic command. For more information, run a cell using the <code>#!sql</code> magic command.</p>
-    </details>"),
-            "text/html");
-    }
-
     public static void AddPostgreSqlKernelConnectorToCurrentRoot()
     {
         if (KernelInvocationContext.Current is { } context &&
             context.HandlingKernel.RootKernel is CompositeKernel root)
         {
-            PostgreSqlKernel.AddPostgreSqlKernelConnectorTo(root);
+            root.AddConnectDirective(new ConnectPostgreSqlDirective());
+
+            context.Display(
+                new HtmlString("""
+                               <details><summary>Query PostgreSQL databases.</summary>
+                                   <p>This extension adds support for connecting to PostgreSql databases using the <code>#!connect postgres</code> magic command.</p>
+                                   </details>
+                               """),
+                "text/html");
         }
     }
-}
-
-public class SqlRow : Dictionary<string, object>
-{
 }

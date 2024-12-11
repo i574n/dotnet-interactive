@@ -525,6 +525,7 @@ Console.Write(""hello"");
     }
 
     [Fact]
+    [Trait("Category", "Contracts and serialization")]
     public async Task dib_file_can_be_round_tripped_through_read_and_write_without_the_content_changing()
     {
         var path = GetNotebookFilePath();
@@ -582,7 +583,7 @@ Console.Write(""hello"");
 
         var document = CodeSubmission.Parse(dib);
 
-        document.GetInputFields()
+        document.GetInputFields(ParseDirectiveLine)
                 .Should()
                 .ContainSingle()
                 .Which
@@ -594,11 +595,13 @@ Console.Write(""hello"");
     [Fact]
     public void Password_tokens_are_parsed_from_dib_files()
     {
-        var dib = "#!do-stuff --password @password:TOPSECRET";
+        var dib = """
+                  #!do-stuff --password @password:"TOPSECRET"
+                  """;
 
         var document = CodeSubmission.Parse(dib);
 
-        document.GetInputFields()
+        document.GetInputFields(ParseDirectiveLine)
                 .Should()
                 .ContainSingle()
                 .Which
@@ -609,14 +612,16 @@ Console.Write(""hello"");
     [Fact]
     public void When_an_input_field_name_is_repeated_then_only_one_is_created_in_the_document()
     {
-        var dib = @"
-#!do-stuff @password:the-password
-#!do-more-stuff @password:the-password
-";
+        var dib = """
+
+                  #!do-stuff @password:the-password
+                  #!do-more-stuff @password:the-password
+
+                  """;
 
         var document = CodeSubmission.Parse(dib);
 
-        document.GetInputFields()
+        document.GetInputFields(ParseDirectiveLine)
                 .Should()
                 .ContainSingle()
                 .Which
@@ -633,7 +638,7 @@ Console.Write(""hello"");
 
         var document = CodeSubmission.Parse(dib);
 
-        document.GetInputFields()
+        document.GetInputFields(ParseDirectiveLine)
                 .Should()
                 .ContainSingle()
                 .Which
@@ -650,7 +655,7 @@ Console.Write(""hello"");
 
         var document = CodeSubmission.Parse(dib);
 
-        document.GetInputFields()
+        document.GetInputFields(ParseDirectiveLine)
                 .Should()
                 .ContainSingle()
                 .Which

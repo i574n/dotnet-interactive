@@ -35,6 +35,7 @@ public class KeyValueStoreKernel :
     {
         _httpClient = httpClient;
         KernelInfo.DisplayName = $"{KernelInfo.LocalName} - Raw Value Storage";
+        KernelInfo.Description = "Store raw text for sharing between subkernels";
     }
 
     Task IKernelCommandHandler<RequestValueInfos>.HandleAsync(RequestValueInfos command, KernelInvocationContext context)
@@ -105,7 +106,7 @@ public class KeyValueStoreKernel :
                 }
 
                 var parameterValues = directiveNode
-                                      .GetParameterValues(directive, expressionBindingResult.BoundValues)
+                                      .GetParameterValues(expressionBindingResult.BoundValues)
                                       .ToDictionary(t => t.Name, t => (t.Value, t.ParameterNode));
 
                 string name = null;

@@ -28,7 +28,6 @@ public class JupyterKernelSpecInstaller : IJupyterKernelSpecInstaller
         _kernelSpecModule = jupyterKernelSpecModule;
     }
 
-
     public async Task<bool> TryInstallKernelAsync(DirectoryInfo sourceDirectory, DirectoryInfo destination = null)
     {
         var kernelDisplayName = GetKernelDisplayName(sourceDirectory);
@@ -40,7 +39,7 @@ public class JupyterKernelSpecInstaller : IJupyterKernelSpecInstaller
 
         try
         {
-            var result = await _kernelSpecModule.InstallKernel(sourceDirectory);
+            var result = await _kernelSpecModule.InstallKernelAsync(sourceDirectory);
             if (result.ExitCode == 0)
             {
                 _console.Out.WriteLine("Installing using jupyter kernelspec module.");

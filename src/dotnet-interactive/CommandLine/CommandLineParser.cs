@@ -232,7 +232,7 @@ public static class CommandLineParser
 
             Task<int> JupyterInstallHandler(HttpPortRange httpPortRange, DirectoryInfo path, InvocationContext context)
             {
-                var jupyterInstallCommand = new JupyterInstallCommand(context.Console, new JupyterKernelSpecInstaller(context.Console), httpPortRange, path);
+                var jupyterInstallCommand = new JupyterInstallCommand(new JupyterKernelSpecInstaller(context.Console), httpPortRange, path);
                 return jupyterInstallCommand.InvokeAsync();
             }
         }

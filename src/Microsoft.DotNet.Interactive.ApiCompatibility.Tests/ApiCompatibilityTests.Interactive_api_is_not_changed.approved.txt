@@ -253,8 +253,6 @@ Microsoft.DotNet.Interactive
     .ctor(System.String name = value, System.Net.Http.HttpClient httpClient = null)
     public Microsoft.DotNet.Interactive.Directives.KernelSpecifierDirective KernelSpecifierDirective { get;}
     public System.Collections.Generic.IReadOnlyDictionary<System.String,FormattedValue> Values { get;}
-  public class KqlDiscoverabilityKernel : Kernel, IKernelCommandHandler<Microsoft.DotNet.Interactive.Commands.RequestKernelInfo>, IKernelCommandHandler<Microsoft.DotNet.Interactive.Commands.SubmitCode>, System.IDisposable
-    .ctor()
   public class LinePosition, System.IEquatable<LinePosition>
     public static LinePosition FromCodeAnalysisLinePosition(Microsoft.CodeAnalysis.Text.LinePosition linePosition)
     public static System.Boolean op_Equality(LinePosition left, LinePosition right)
@@ -338,8 +336,6 @@ Microsoft.DotNet.Interactive
     public FormattedValue Documentation { get;}
     public System.String Label { get;}
     public System.Collections.Generic.IReadOnlyList<ParameterInformation> Parameters { get;}
-  public class SqlDiscoverabilityKernel : Kernel, IKernelCommandHandler<Microsoft.DotNet.Interactive.Commands.RequestKernelInfo>, IKernelCommandHandler<Microsoft.DotNet.Interactive.Commands.SubmitCode>, System.IDisposable
-    .ctor()
   public class TabularDataResourceSummaryExplorer : DataExplorer<Microsoft.DotNet.Interactive.Formatting.TabularData.TabularDataResource>
     .ctor(Microsoft.DotNet.Interactive.Formatting.TabularData.TabularDataResource data)
     protected Microsoft.AspNetCore.Html.IHtmlContent ToHtml()
@@ -429,6 +425,7 @@ Microsoft.DotNet.Interactive.Commands
   public class SendEditableCode : KernelCommand, System.IEquatable<KernelCommand>
     .ctor(System.String kernelName, System.String code, System.String targetKernelName = null)
     public System.String Code { get;}
+    public System.Nullable<System.Int32> InsertAtPosition { get; set;}
     public System.String KernelName { get;}
   public class SendValue : KernelCommand, System.IEquatable<KernelCommand>
     .ctor(System.String name, System.Object value, Microsoft.DotNet.Interactive.FormattedValue formattedValue = null, System.String targetKernelName = null)
@@ -692,6 +689,7 @@ Microsoft.DotNet.Interactive.Http
 Microsoft.DotNet.Interactive.Parsing
   public class SubmissionParser
     .ctor(Microsoft.DotNet.Interactive.Kernel kernel)
+    public Microsoft.DotNet.Interactive.Documents.DirectiveParseResult ParseDirectiveLine(System.String directiveLine)
     public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Microsoft.DotNet.Interactive.Commands.KernelCommand>> SplitSubmission(Microsoft.DotNet.Interactive.Commands.SubmitCode submitCode)
     public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Microsoft.DotNet.Interactive.Commands.KernelCommand>> SplitSubmission(Microsoft.DotNet.Interactive.Commands.RequestDiagnostics requestDiagnostics)
 Microsoft.DotNet.Interactive.Utility

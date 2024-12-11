@@ -95,8 +95,7 @@ public static class KernelExtensions
                     Description = LocalizationResources.Magics_import_file_Description(),
                     TypeHint = "file"
                 }
-            },
-            TryGetKernelCommandAsync = ImportDocument.TryParseImportDirectiveAsync
+            }
         };
 
         kernel.AddDirective<ImportDocument>(
@@ -276,8 +275,7 @@ public static class KernelExtensions
                                .SelectMany(events => events.SelectMany(e => e.ValueInfos))
                                .Select(vi => vi.Name)
                                .OrderBy(x => x)
-                               .Select(n => new CompletionItem(n, WellKnownTags.Parameter))
-                               .ToArray();
+                               .Select(n => new CompletionItem(n, WellKnownTags.Parameter));
 
                         foreach (var item in completionItems)
                         {

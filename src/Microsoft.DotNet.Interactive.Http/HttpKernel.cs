@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -37,7 +38,7 @@ public class HttpKernel :
     private readonly int _responseDelayThresholdInMilliseconds;
     private readonly long _contentByteLengthThreshold;
 
-    private readonly Dictionary<string, object> _variables = new(StringComparer.InvariantCultureIgnoreCase);
+    private readonly ConcurrentDictionary<string, object> _variables = new(StringComparer.InvariantCultureIgnoreCase);
 
     /// <summary>
     /// Gets or sets a timeout for HTTP requests that are issued using this <see cref="HttpKernel"/>.
@@ -76,7 +77,7 @@ public class HttpKernel :
         KernelInfo.LanguageName = "HTTP";
         KernelInfo.DisplayName = $"{KernelInfo.LocalName} - HTTP Request";
         KernelInfo.Description = """
-                                 This Kernel is able to execute http requests and display the results.
+                                 Send HTTP requests
                                  """;
 
         _client = client ?? new HttpClient() { Timeout = Timeout.InfiniteTimeSpan };
