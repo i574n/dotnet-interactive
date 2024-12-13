@@ -20,7 +20,7 @@ public class CodeMergeTransformerTests
     }
 
     [Fact]
-    public async void Files_are_merged_in_order()
+    public async Task Files_are_merged_in_order()
     {
         var processor = new CodeMergeTransformer();
         var workspace = new Workspace(
@@ -54,7 +54,7 @@ first line;".EnforceLF());
     }
 
     [Fact]
-    public async void buffers_are_merged_in_order()
+    public async Task buffers_are_merged_in_order()
     {
         var processor = new CodeMergeTransformer();
         var workspace = new Workspace(

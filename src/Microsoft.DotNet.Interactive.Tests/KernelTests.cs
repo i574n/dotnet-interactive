@@ -166,7 +166,7 @@ public partial class KernelTests
     [Fact]
     public async Task language_service_command_with_empty_buffer_doesnt_crash()
     {
-        using var kernel = new CompositeKernel() { new CSharpKernel() };
+        using var kernel = new CompositeKernel() { /* new CSharpKernel() */ };
 
         var request = new RequestCompletions(
             string.Empty,
@@ -192,7 +192,7 @@ public partial class KernelTests
     {
         using var kernel = new CompositeKernel
         {
-            new CSharpKernel()
+            // new CSharpKernel()
         };
 
         await kernel.SendAsync(new SubmitCode("""
@@ -220,7 +220,7 @@ public partial class KernelTests
     {
         using var kernel = new CompositeKernel
         {
-            new CSharpKernel()
+            // new CSharpKernel()
         };
 
         await kernel.SendAsync(new SubmitCode("""

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
     <LangVersion>Latest</LangVersion>
 
@@ -21,7 +21,7 @@
     <Compile Include="..\Microsoft.DotNet.Interactive\KernelInfo.cs" Link="KernelInfo.cs" LinkBase="Parsing" />
     <Compile Include="..\Microsoft.DotNet.Interactive\LinePosition.cs" Link="LinePosition.cs" LinkBase="Parsing" />
     <Compile Include="..\Microsoft.DotNet.Interactive\LinePositionSpan.cs" Link="LinePositionSpan.cs" LinkBase="Parsing" />
-    
+
     <Compile Include="..\Microsoft.DotNet.Interactive\Utility\SourceUtilities.cs" Link="Utility\SourceUtilities.cs" LinkBase="Parsing" />
 
     <Compile Include="..\Microsoft.DotNet.Interactive\Directives\KernelActionDirective.cs" Link="KernelActionDirective.cs" LinkBase="Parsing" />
@@ -40,7 +40,7 @@
     <Compile Include="..\Microsoft.DotNet.Interactive.Http.Parsing\Parsing\SyntaxToken.cs" Link="Parsing\SyntaxToken.cs" LinkBase="Parsing" />
     <Compile Include="..\Microsoft.DotNet.Interactive.Http.Parsing\Parsing\SyntaxTree.cs" Link="Parsing\SyntaxTree.cs" LinkBase="Parsing" />
     <Compile Include="..\Microsoft.DotNet.Interactive.Http.Parsing\Parsing\TokenKind.cs" Link="Parsing\TokenKind.cs" LinkBase="Parsing" />
-    
+
     <Compile Include="..\Microsoft.DotNet.Interactive\Parsing\DirectiveBindingDelegate.cs" Link="DirectiveBindingDelegate.cs" LinkBase="Parsing" />
     <Compile Include="..\Microsoft.DotNet.Interactive\Parsing\DirectiveBindingResult{T}.cs" Link="DirectiveBindingResult{T}.cs" LinkBase="Parsing" />
     <Compile Include="..\Microsoft.DotNet.Interactive\Parsing\DirectiveExpressionNode.cs" Link="Parsing\DirectiveExpressionNode.cs" LinkBase="Parsing" />

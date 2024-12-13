@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <AssetTargetFallback>portable-net45+win8+wp8+wpa81</AssetTargetFallback>
     <NoWarn>$(NoWarn);8002</NoWarn><!-- Assent isn't strongly signed -->
     <NoWarn>$(NoWarn);CS8524</NoWarn><!-- The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value. -->

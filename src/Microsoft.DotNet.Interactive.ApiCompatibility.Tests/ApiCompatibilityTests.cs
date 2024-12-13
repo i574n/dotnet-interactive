@@ -9,6 +9,7 @@ using Microsoft.DotNet.Interactive.Documents;
 using Microsoft.DotNet.Interactive.DuckDB;
 using Microsoft.DotNet.Interactive.Formatting;
 using Microsoft.DotNet.Interactive.FSharp;
+using Microsoft.DotNet.Interactive.Spiral;
 using Microsoft.DotNet.Interactive.Http;
 using Microsoft.DotNet.Interactive.Journey;
 using Microsoft.DotNet.Interactive.Jupyter;

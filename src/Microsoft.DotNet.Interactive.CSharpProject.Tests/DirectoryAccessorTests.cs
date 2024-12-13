@@ -228,7 +228,7 @@ public abstract class DirectoryAccessorTests
     public void Path_separators_are_uniform()
     {
         var directory = GetDirectory(TestAssets.SampleConsole);
-        var unexpectedPathSeparator = OperatingSystemPlatform == Platform.Windows
+        var unexpectedPathSeparator = OperatingSystemPlatform == Microsoft.DotNet.PlatformAbstractions.Platform.Windows
             ? "/"
             : "\\";
 

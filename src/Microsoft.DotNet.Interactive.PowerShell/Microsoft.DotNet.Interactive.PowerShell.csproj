@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <NoWarn>$(NoWarn);2003;CS8002;NU1608;</NoWarn> <!-- AssemblyInformationalVersionAttribute contains a non-standard value -->
     <NoWarn>$(NoWarn);NU5100</NoWarn><!-- dll outside of lib/ folder; expected since it's under contentFiles/any/any/Modules/ -->
     <Deterministic Condition="'$(NCrunch)' == '1'">false</Deterministic>
@@ -17,7 +17,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>$(NoWarn);NU5104;NU5100;2003;8002</NoWarn>
   </PropertyGroup>
-  
+
   <!-- The dependencies for this project -->
   <ItemGroup>
     <ProjectReference Include="..\Microsoft.DotNet.Interactive.Formatting\Microsoft.DotNet.Interactive.Formatting.csproj" />
@@ -26,10 +26,10 @@
 
   <ItemGroup>
     <PackageReference Include="JsonSchema.Net" Version="7.2.3" />
-    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.5" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.0-rc.1" />
   </ItemGroup>
 
   <!-- PowerShell Module Package References -->
@@ -44,60 +44,60 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)Modules\**" 
-             Link="Modules\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules" 
-             PackageCopyToOutput="true" 
+    <Content Include="$(MSBuildThisFileDirectory)Modules\**"
+             Link="Modules\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules"
+             PackageCopyToOutput="true"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(NCrunch)' != '1'">
-    <Content Include="$(PkgPackageManagement)\**" 
-             Exclude="$(PkgPackageManagement)\**\*.nupkg;$(PkgPackageManagement)\**\*.nuspec;$(PkgPackageManagement)\**\*.sha512;$(PkgPackageManagement)\**\fullclr\**" 
-             Link="Modules\PackageManagement\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules/PackageManagement" 
-             PackageCopyToOutput="true" 
-             CopyToOutputDirectory="PreserveNewest" 
+    <Content Include="$(PkgPackageManagement)\**"
+             Exclude="$(PkgPackageManagement)\**\*.nupkg;$(PkgPackageManagement)\**\*.nuspec;$(PkgPackageManagement)\**\*.sha512;$(PkgPackageManagement)\**\fullclr\**"
+             Link="Modules\PackageManagement\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules/PackageManagement"
+             PackageCopyToOutput="true"
+             CopyToOutputDirectory="PreserveNewest"
              Condition="'$(PkgPackageManagement)' != ''" />
 
-    <Content Include="$(PkgPowerShellGet)\**" 
-             Exclude="$(PkgPowerShellGet)\**\*.nupkg;$(PkgPowerShellGet)\**\*.nuspec;$(PkgPowerShellGet)\**\*.sha512" 
-             Link="Modules\PowerShellGet\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules/PowerShellGet" 
-             PackageCopyToOutput="true" 
-             CopyToOutputDirectory="PreserveNewest" 
+    <Content Include="$(PkgPowerShellGet)\**"
+             Exclude="$(PkgPowerShellGet)\**\*.nupkg;$(PkgPowerShellGet)\**\*.nuspec;$(PkgPowerShellGet)\**\*.sha512"
+             Link="Modules\PowerShellGet\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules/PowerShellGet"
+             PackageCopyToOutput="true"
+             CopyToOutputDirectory="PreserveNewest"
              Condition="'$(PkgPowerShellGet)' != ''" />
 
-    <Content Include="$(PkgMicrosoft_PowerShell_Archive)\**" 
-             Exclude="$(PkgMicrosoft_PowerShell_Archive)\**\*.nupkg;$(PkgMicrosoft_PowerShell_Archive)\**\*.nuspec;$(PkgMicrosoft_PowerShell_Archive)\**\*.sha512" 
-             Link="Modules\Microsoft.PowerShell.Archive\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules/Microsoft.PowerShell.Archive" 
-             PackageCopyToOutput="true" 
+    <Content Include="$(PkgMicrosoft_PowerShell_Archive)\**"
+             Exclude="$(PkgMicrosoft_PowerShell_Archive)\**\*.nupkg;$(PkgMicrosoft_PowerShell_Archive)\**\*.nuspec;$(PkgMicrosoft_PowerShell_Archive)\**\*.sha512"
+             Link="Modules\Microsoft.PowerShell.Archive\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules/Microsoft.PowerShell.Archive"
+             PackageCopyToOutput="true"
              CopyToOutputDirectory="PreserveNewest"
              Condition="'$(PkgMicrosoft_PowerShell_Archive)' != ''" />
 
-    <Content Include="$(PkgMicrosoft_PowerShell_SecretManagement)\**" 
-             Exclude="$(PkgMicrosoft_PowerShell_SecretManagement)\**\*.nupkg;$(PkgMicrosoft_PowerShell_SecretManagement)\**\*.nuspec;$(PkgMicrosoft_PowerShell_SecretManagement)\**\*.sha512" 
-             Link="Modules\Microsoft.PowerShell.SecretManagement\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules/Microsoft.PowerShell.SecretManagement" 
+    <Content Include="$(PkgMicrosoft_PowerShell_SecretManagement)\**"
+             Exclude="$(PkgMicrosoft_PowerShell_SecretManagement)\**\*.nupkg;$(PkgMicrosoft_PowerShell_SecretManagement)\**\*.nuspec;$(PkgMicrosoft_PowerShell_SecretManagement)\**\*.sha512"
+             Link="Modules\Microsoft.PowerShell.SecretManagement\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules/Microsoft.PowerShell.SecretManagement"
              PackageCopyToOutput="true"
-             CopyToOutputDirectory="PreserveNewest" 
+             CopyToOutputDirectory="PreserveNewest"
              Condition="'$(PkgMicrosoft_PowerShell_SecretManagement)' != ''" />
 
-    <Content Include="$(PkgMicrosoft_PowerShell_SecretStore)\**" 
-             Exclude="$(PkgMicrosoft_PowerShell_SecretStore)\**\*.nupkg;$(PkgMicrosoft_PowerShell_SecretStore)\**\*.nuspec;$(PkgMicrosoft_PowerShell_SecretStore)\**\*.sha512" 
-             Link="Modules\Microsoft.PowerShell.SecretStore\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules/M.P.S" 
+    <Content Include="$(PkgMicrosoft_PowerShell_SecretStore)\**"
+             Exclude="$(PkgMicrosoft_PowerShell_SecretStore)\**\*.nupkg;$(PkgMicrosoft_PowerShell_SecretStore)\**\*.nuspec;$(PkgMicrosoft_PowerShell_SecretStore)\**\*.sha512"
+             Link="Modules\Microsoft.PowerShell.SecretStore\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules/M.P.S"
              PackageCopyToOutput="true"
-             CopyToOutputDirectory="PreserveNewest" 
+             CopyToOutputDirectory="PreserveNewest"
              Condition="'$(PkgMicrosoft_PowerShell_SecretStore)' != ''" />
 
-    <Content Include="$(PkgThreadJob)\**" 
-             Exclude="$(PkgThreadJob)\**\*.nupkg;$(PkgThreadJob)\**\*.nuspec;$(PkgThreadJob)\**\*.sha512" 
-             Link="Modules\ThreadJob\%(RecursiveDir)%(FileName)%(Extension)" 
-             PackagePath="contentFiles/any/any/Modules/ThreadJob" 
-             PackageCopyToOutput="true" 
-             CopyToOutputDirectory="PreserveNewest" 
+    <Content Include="$(PkgThreadJob)\**"
+             Exclude="$(PkgThreadJob)\**\*.nupkg;$(PkgThreadJob)\**\*.nuspec;$(PkgThreadJob)\**\*.sha512"
+             Link="Modules\ThreadJob\%(RecursiveDir)%(FileName)%(Extension)"
+             PackagePath="contentFiles/any/any/Modules/ThreadJob"
+             PackageCopyToOutput="true"
+             CopyToOutputDirectory="PreserveNewest"
              Condition="'$(PkgThreadJob)' != ''" />
   </ItemGroup>
 
