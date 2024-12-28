@@ -18,7 +18,7 @@ type LangVersion =
     | V50
     | Preview
 
-type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVersion) =
+type SpiralScript (?additionalArgs: string [], ?quiet: bool, ?langVersion: LangVersion) =
     let additionalArgs = defaultArg additionalArgs [||]
     let quiet = defaultArg quiet true
     let langVersion = defaultArg langVersion LangVersion.Preview
@@ -48,7 +48,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
 
     member _.Fsi = fsi
 
-    member _.Eval(code: string, ?cancellationToken: CancellationToken) =
+    member _.Eval (code: string, ?cancellationToken: CancellationToken) =
         let fsi_eval code cancellationToken =
             let ch, errors = fsi.EvalInteractionNonThrowing (code, cancellationToken)
             let errors =
@@ -95,7 +95,7 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
     /// <param name="text">The input text on which completions will be calculated</param>
     /// <param name="line">The 1-based line index</param>
     /// <param name="column">The 0-based column index</param>
-    member _.GetCompletionItems(text: string, line: int, column: int) =
+    member _.GetCompletionItems (text: string, line: int, column: int) =
 
         task {
             let parseResults, checkResults, _projectResults = fsi.ParseAndCheckInteraction(text)
@@ -106,5 +106,5 @@ type SpiralScript(?additionalArgs: string[], ?quiet: bool, ?langVersion: LangVer
         }
 
     interface IDisposable with
-        member _.Dispose() =
-            (fsi :> IDisposable).Dispose()
+        member _.Dispose () =
+            (fsi :> IDisposable).Dispose ()
