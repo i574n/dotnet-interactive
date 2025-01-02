@@ -356,13 +356,16 @@ type SpiralKernel () as this =
             | None -> requestHoverText.LinePosition.Character, requestHoverText.LinePosition.Line
             | _ -> requestHoverText.LinePosition.Character + 4, requestHoverText.LinePosition.Line + 2
 
-        let newAllCode = $"{allCodeHover}\n\n{cellCode}"
-        let newLine = line + allCodeHover.Split('\n').Length - 1 + 2
+        let allCode = $"{Eval.allCode}\n\n{allCodeHover}"
+        let allCodeCellHover = $"{allCode}\n\n{cellCode}"
+        let newLine = line + allCode.Split('\n').Length - 1 + 2
 
-        let! hover = Supervisor.getCodeHoverAt None newAllCode {| character = character; line = newLine |}
+        let! hover =
+            Supervisor.getCodeHoverAt None allCodeCellHover {| character = character; line = newLine |}
         let hover = $"""```{'\n'}{hover |> Option.defaultValue "???"}{'\n'}```"""
 
-        allCodeHover <- newAllCode
+        let newAllCodeHover = $"{allCodeHover}\n\n{cellCode}"
+        allCodeHover <- newAllCodeHover
 
         let sp = LinePosition (line, character)
         let ep = LinePosition (line, character)
