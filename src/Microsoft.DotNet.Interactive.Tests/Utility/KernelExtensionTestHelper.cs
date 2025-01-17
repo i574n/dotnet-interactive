@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -57,14 +57,16 @@ public static class KernelExtensionTestHelper
         var packageVersion = "2.0.0-" + Guid.NewGuid().ToString("N");
 
         var extensionScriptPath = new FileInfo(Path.Combine(projectDir.FullName, "extension.dib"));
-        var extensionScriptContent = @"
+        var extensionScriptContent = """
+
 #!markdown
 
 # This is an extension!
 
 #!csharp
-""ScriptExtension""
-";
+                                     "ScriptExtension"
+
+                                     """;
         File.WriteAllText(extensionScriptPath.FullName, extensionScriptContent);
 
         return await CreateExtensionNupkg(
@@ -108,11 +110,13 @@ public static class KernelExtensionTestHelper
 
         projectDir.Populate(
             extensionCode,
-            ("Extension.csproj", $@"
-<Project Sdk=""Microsoft.NET.Sdk"">
+            ("Extension.csproj",
+                $"""
 
+                 <Project Sdk="Microsoft.NET.Sdk">
+                 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+                     <TargetFramework>net9.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>{packageName}</PackageId>
     <PackageVersion>{packageVersion}</PackageVersion>
@@ -133,22 +137,25 @@ public static class KernelExtensionTestHelper
   {embeddedResourcesXml}
 
   <ItemGroup>
-    <Reference Include=""Microsoft.DotNet.Interactive"">
+                     <Reference Include="Microsoft.DotNet.Interactive">
       <HintPath>{_microsoftDotNetInteractiveDllPath}</HintPath>
     </Reference>
   </ItemGroup>
 
 </Project>
 
-"),
-            ("global.json", @"{
-  ""sdk"": {
-    ""version"": ""8.0.100-alpha.1.23061.8"",
-    ""allowPrerelease"": true,
-    ""rollForward"": ""latestMinor""
+
+                 """),
+            ("global.json",
+                """
+                {
+                  "sdk": {
+                    "version": "9.0.100",
+                    "allowPrerelease": true,
+                    "rollForward": "latestMinor"
   }
 }
-"));
+                """));
 
         var dotnet = new Dotnet(projectDir);
 
@@ -172,14 +179,14 @@ public static class KernelExtensionTestHelper
 
         var builder = new StringBuilder();
 
-        builder.AppendLine(@"   <ItemGroup>");
+        builder.AppendLine("   <ItemGroup>");
 
         foreach (var @ref in packageReferences)
         {
-            builder.AppendLine($@"    <PackageReference Include=""{@ref.PackageName}"" Version=""{@ref.PackageVersion}"" />");
+            builder.AppendLine($"""    <PackageReference Include="{@ref.PackageName}" Version="{@ref.PackageVersion}" />""");
         }
 
-        builder.AppendLine(@"   </ItemGroup>");
+        builder.AppendLine("   </ItemGroup>");
 
         return builder.ToString();
     }
@@ -191,13 +198,13 @@ public static class KernelExtensionTestHelper
             return string.Empty;
         }
 
-        var builder = new StringBuilder();
-        builder.AppendLine(@"   <ItemGroup>");
-        builder.AppendLine($@"      <FilesToEmbed Include=""{filesToEmbed.FullName}"" />");
-        builder.AppendLine(@"      <EmbeddedResource Include=""@(FilesToEmbed)"" LogicalName=""$(AssemblyName).resources.%(FileName)%(Extension)""  />");
-        builder.AppendLine(@"   </ItemGroup>");
-
-        return builder.ToString();
+        return
+            $"""   
+            <ItemGroup>
+                <FilesToEmbed Include="{filesToEmbed.FullName}" />
+                <EmbeddedResource Include="@(FilesToEmbed)" LogicalName="$(AssemblyName).resources.%(FileName)%(Extension)"  />
+            </ItemGroup>
+            """;
     }
 
     public static async Task<FileInfo> CreateExtensionAssembly(
@@ -265,7 +272,7 @@ public static class KernelExtensionTestHelper
 "),
             ("global.json", @"{
   ""sdk"": {
-    ""version"": ""8.0.100-alpha.1.23061.8"",
+    ""version"": ""9.0.100"",
     ""allowPrerelease"": true,
     ""rollForward"": ""latestMinor""
   }
