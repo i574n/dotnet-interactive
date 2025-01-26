@@ -60,7 +60,7 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
     private _onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     private _semanticTokensLegend: vscode.SemanticTokensLegend;
 
-    private _workspaceRoot = file_system.get_workspace_root();
+    private _workspaceRoot = null;
 
     private _spiralTokenLegend = ['variable','symbol','string','number','operator','unary_operator','comment','keyword','parenthesis','type_variable','escaped_char','unescaped_char','number_suffix'];
 
@@ -131,6 +131,11 @@ export class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTo
                             //     this.throttledGetFileTokenRange[cell.index] =
                             //         supervisor.throttle(supervisor.getFileTokenRange, 2000)
                             // );
+
+                        if (!this._workspaceRoot) {
+                            this._workspaceRoot = file_system.get_workspace_root();
+                        }
+
                         const tokens = await getFileTokenRange(this._workspaceRoot, text);
                         // const diff = Date.now() - start;
                         // console.log(`DocumentSemanticTokensProvider.provideDocumentSemanticTokens / diff: ${diff} / tokens.length: ${tokens.length}`);

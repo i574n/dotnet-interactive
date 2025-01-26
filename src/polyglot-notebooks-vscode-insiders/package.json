@@ -11,7 +11,7 @@
   ],
   "preview": false,
   "//version": "%description.version%",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "engines": {
     "vscode": "^1.87.0"
   },
@@ -801,7 +801,7 @@
     "ciTest": "npm test -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
     "testDebug": "mocha out/tests/**/*.test.js",
     "tdd": "npm test -- --watch",
-    "package": "@vscode/vsce package --pre-release",
+    "package": "~/.bun/bin/bunx --bun @vscode/vsce package --pre-release",
     "clearUserData": "del-cli \"./userData/**/*\" \"!.gitignore\""
   },
   "mocha": {},
@@ -819,7 +819,7 @@
     "@types/uuid": "8.3.0",
     "@typescript-eslint/eslint-plugin": "5.3.0",
     "@typescript-eslint/parser": "5.3.0",
-    "@vscode/vsce": "2.32.0",
+    "@vscode/vsce": "~3.2",
     "@vscode/l10n-dev": "0.0.35",
     "chai": "4.2.0",
     "chai-as-promised": "7.1.1",
@@ -843,7 +843,7 @@
   "dependencies": {
     "compare-versions": "3.6.0",
     "node-fetch": "2.6.7",
-    "rxjs": "7.5.6",
+    "rxjs": "8.0.0-alpha.14",
     "uuid": "8.3.2",
     "vscode-oniguruma": "1.6.1",
     "vscode-textmate": "6.0.0",
