@@ -114,9 +114,9 @@ public static class KernelExtensionTestHelper
                 $"""
 
                  <Project Sdk="Microsoft.NET.Sdk">
-                 
+
   <PropertyGroup>
-                     <TargetFramework>net9.0</TargetFramework>
+                     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>{packageName}</PackageId>
     <PackageVersion>{packageVersion}</PackageVersion>
@@ -199,7 +199,7 @@ public static class KernelExtensionTestHelper
         }
 
         return
-            $"""   
+            $"""
             <ItemGroup>
                 <FilesToEmbed Include="{filesToEmbed.FullName}" />
                 <EmbeddedResource Include="@(FilesToEmbed)" LogicalName="$(AssemblyName).resources.%(FileName)%(Extension)"  />
@@ -258,7 +258,7 @@ public static class KernelExtensionTestHelper
 <Project Sdk=""Microsoft.NET.Sdk"">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>{extensionName}</AssemblyName>
   </PropertyGroup>
 
