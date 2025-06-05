@@ -25,8 +25,13 @@ internal class MermaidMarkdownFormatter : ITypeFormatterSource
 
     internal static IHtmlContent GenerateHtml(MermaidMarkdown markdown, Uri libraryUri)
     {
-       
-        var divId = Guid.NewGuid().ToString("N");
+        var divId =
+            Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(
+                    Encoding.UTF8.GetBytes(markdown.ToString())
+                )
+            ).ToLowerInvariant();
+
         var code = new StringBuilder();
         code.AppendLine($"<div class=\"mermaidMarkdownContainer\" style=\"background-color:{markdown.Background}\">");
         code.AppendLine(@"<link rel=""stylesheet"" href=""https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"">");
