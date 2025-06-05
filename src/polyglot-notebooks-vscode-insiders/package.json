@@ -133,11 +133,9 @@
             "spiral",
             "html",
             "javascript",
-            "kql",
             "markdown",
             "mermaid",
-            "pwsh",
-            "sql"
+            "pwsh"
           ],
           "enumDescriptions": [
             "C#",
@@ -145,11 +143,9 @@
             "Spiral",
             "HTML",
             "JavaScript",
-            "KQL",
             "Markdown",
             "Mermaid",
-            "PowerShell",
-            "SQL"
+            "PowerShell"
           ]
         },
         "polyglot-notebook.kernelEnvironmentVariables": {
@@ -213,11 +209,6 @@
           "type": "string",
           "default": "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json",
           "description": "%description.interactiveToolSource%"
-        },
-        "dotnet-interactive.minimumDotNetSdkVersion": {
-          "type": "string",
-          "default": "9.0",
-          "description": "%description.minimumDotNetSdkVersion%"
         },
         "dotnet-interactive.requiredInteractiveToolVersion": {
           "type": "string",
@@ -304,6 +295,11 @@
         "command": "polyglot-notebook.notebookEditor.openValueViewer",
         "title": "%command.openValueViewer%",
         "icon": "$(variable-group)"
+      },
+      {
+        "command": "polyglot-notebook.notebookEditor.connectSubkernel",
+        "title": "%command.connectSubkernel%",
+        "icon": "$(plug)"
       }
     ],
     "keybindings": [
@@ -798,7 +794,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "mocha out/tests/**/*.test.js",
-    "ciTest": "npm test -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
+    "ciTest": "node ../ensure-testresults-directory.js && npm test -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
     "testDebug": "mocha out/tests/**/*.test.js",
     "tdd": "npm test -- --watch",
     "package": "~/.bun/bin/bunx --bun @vscode/vsce package --pre-release",

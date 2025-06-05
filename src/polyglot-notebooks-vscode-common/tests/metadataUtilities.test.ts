@@ -76,16 +76,16 @@ describe(`metadata utility tests`, async () => {
 
     it("cell metadata can be extracted from an interactive document element with old metadata", () => {
         const interactiveDocumentElement: commandsAndEvents.InteractiveDocumentElement =
-            {
-                contents: "",
-                outputs: [],
-                executionOrder: 0,
-                metadata: {
-                    dotnet_interactive: {
-                        language: "fsharp",
-                    },
+        {
+            contents: "",
+            outputs: [],
+            executionOrder: 0,
+            metadata: {
+                dotnet_interactive: {
+                    language: "fsharp",
                 },
-            };
+            },
+        };
         const notebookCellMetadata =
             metadataUtilities.getNotebookCellMetadataFromInteractiveDocumentElement(
                 interactiveDocumentElement
@@ -97,16 +97,16 @@ describe(`metadata utility tests`, async () => {
 
     it("cell metadata can be extracted from an interactive document element", () => {
         const interactiveDocumentElement: commandsAndEvents.InteractiveDocumentElement =
-            {
-                contents: "",
-                outputs: [],
-                executionOrder: 0,
-                metadata: {
-                    polyglot_notebook: {
-                        kernelName: "fsharp",
-                    },
+        {
+            contents: "",
+            outputs: [],
+            executionOrder: 0,
+            metadata: {
+                polyglot_notebook: {
+                    kernelName: "fsharp",
                 },
-            };
+            },
+        };
         const notebookCellMetadata =
             metadataUtilities.getNotebookCellMetadataFromInteractiveDocumentElement(
                 interactiveDocumentElement
@@ -156,15 +156,10 @@ describe(`metadata utility tests`, async () => {
         });
     });
 
-    it("cell metadata can be extracted from a notebook cell", () => {});
-
     it("notebook metadata can be extracted from an interactive document", () => {
         const interactiveDocument: commandsAndEvents.InteractiveDocument = {
             elements: [],
             metadata: {
-                custom: {
-                    name: "some value",
-                },
                 kernelInfo: {
                     defaultKernelName: "fsharp",
                     items: [
@@ -202,9 +197,6 @@ describe(`metadata utility tests`, async () => {
                 scheme: "file",
             },
             metadata: {
-                custom: {
-                    name: "some value",
-                },
                 polyglot_notebook: {
                     kernelInfo: {
                         defaultKernelName: "fsharp",
@@ -382,12 +374,12 @@ describe(`metadata utility tests`, async () => {
 
     it("kernelspec metadata can be created from notebook document metadata (C#)", () => {
         const notebookDocumentMetadata: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName: "csharp",
-                    items: [],
-                },
-            };
+        {
+            kernelInfo: {
+                defaultKernelName: "csharp",
+                items: [],
+            },
+        };
         const kernelspecMetadata =
             metadataUtilities.getKernelspecMetadataFromNotebookDocumentMetadata(
                 notebookDocumentMetadata
@@ -401,12 +393,12 @@ describe(`metadata utility tests`, async () => {
 
     it("kernelspec metadata can be created from notebook document metadata (F#)", () => {
         const notebookDocumentMetadata: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName: "fsharp",
-                    items: [],
-                },
-            };
+        {
+            kernelInfo: {
+                defaultKernelName: "fsharp",
+                items: [],
+            },
+        };
         const kernelspecMetadata =
             metadataUtilities.getKernelspecMetadataFromNotebookDocumentMetadata(
                 notebookDocumentMetadata
@@ -420,12 +412,12 @@ describe(`metadata utility tests`, async () => {
 
     it("kernelspec metadata can be created from notebook document metadata (PowerShell)", () => {
         const notebookDocumentMetadata: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName: "pwsh",
-                    items: [],
-                },
-            };
+        {
+            kernelInfo: {
+                defaultKernelName: "pwsh",
+                items: [],
+            },
+        };
         const kernelspecMetadata =
             metadataUtilities.getKernelspecMetadataFromNotebookDocumentMetadata(
                 notebookDocumentMetadata
@@ -434,59 +426,6 @@ describe(`metadata utility tests`, async () => {
             display_name: ".NET (PowerShell)",
             language: "PowerShell",
             name: ".net-pwsh",
-        });
-    });
-
-    it("new ipynb metadata can be created from existing data", () => {
-        const notebookMetadata: metadataUtilities.NotebookDocumentMetadata = {
-            kernelInfo: {
-                defaultKernelName: "csharp",
-                items: [
-                    {
-                        name: "csharp",
-                        aliases: ["cs"],
-                        languageName: "csharp",
-                    },
-                ],
-            },
-        };
-        const existingMetadata: { [key: string]: any } = {
-            metadata: {
-                kernelspec: "this gets replaced",
-                someKey: "some value",
-            },
-            metadata2: "electric boogaloo",
-            notCustom: "not custom",
-        };
-        const newRawMetadata =
-            metadataUtilities.createNewIpynbMetadataWithNotebookDocumentMetadata(
-                existingMetadata,
-                notebookMetadata
-            );
-
-        expect(newRawMetadata).to.deep.equal({
-            metadata: {
-                kernelspec: {
-                    display_name: ".NET (C#)",
-                    language: "C#",
-                    name: ".net-csharp",
-                },
-                polyglot_notebook: {
-                    kernelInfo: {
-                        defaultKernelName: "csharp",
-                        items: [
-                            {
-                                aliases: ["cs"],
-                                languageName: "csharp",
-                                name: "csharp",
-                            },
-                        ],
-                    },
-                },
-                someKey: "some value",
-            },
-            metadata2: "electric boogaloo",
-            notCustom: "not custom",
         });
     });
 
@@ -536,11 +475,8 @@ describe(`metadata utility tests`, async () => {
         const notebookCellMetadata: metadataUtilities.NotebookCellMetadata = {
             kernelName: "fsharp",
         };
-        const interactiveDocumentElementMetadata =
-            metadataUtilities.getRawInteractiveDocumentElementMetadataFromNotebookCellMetadata(
-                notebookCellMetadata
-            );
-        expect(interactiveDocumentElementMetadata).to.deep.equal({
+
+        expect(notebookCellMetadata).to.deep.equal({
             kernelName: "fsharp",
         });
     });
@@ -555,40 +491,35 @@ describe(`metadata utility tests`, async () => {
             );
         expect(rawNotebookDocumentElementMetadata).to.deep.equal({
             metadata: {
-                dotnet_interactive: {
-                    language: "fsharp",
-                },
                 polyglot_notebook: {
                     kernelName: "fsharp",
                 },
+                language_info: { name: "polyglot-notebook" }
             },
         });
     });
 
     it("interactive document metadata can be created from notebook metadata", () => {
         const notebookDocumentMetadata: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName: "fsharp",
-                    items: [
-                        {
-                            name: "fsharp",
-                            aliases: ["fs"],
-                            languageName: "fsharp",
-                        },
-                        {
-                            name: "csharp",
-                            aliases: ["cs"],
-                            languageName: "csharp",
-                        },
-                    ],
-                },
-            };
-        const interactiveDocumentMetadata =
-            metadataUtilities.getRawInteractiveDocumentMetadataFromNotebookDocumentMetadata(
-                notebookDocumentMetadata
-            );
-        expect(interactiveDocumentMetadata).to.deep.equal({
+        {
+            kernelInfo: {
+                defaultKernelName: "fsharp",
+                items: [
+                    {
+                        name: "fsharp",
+                        aliases: ["fs"],
+                        languageName: "fsharp",
+                    },
+                    {
+                        name: "csharp",
+                        aliases: ["cs"],
+                        languageName: "csharp",
+                    },
+                ],
+            },
+        };
+
+        expect(notebookDocumentMetadata).to.deep.equal({
             kernelInfo: {
                 defaultKernelName: "fsharp",
                 items: [
@@ -601,23 +532,23 @@ describe(`metadata utility tests`, async () => {
 
     it("notebook document metadata can be created from notebook metadata for ipynb", () => {
         const notebookDocumentMetadata: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName: "fsharp",
-                    items: [
-                        {
-                            name: "csharp",
-                            aliases: ["cs"],
-                            languageName: "csharp",
-                        },
-                        {
-                            name: "fsharp",
-                            aliases: ["fs"],
-                            languageName: "fsharp",
-                        },
-                    ],
-                },
-            };
+        {
+            kernelInfo: {
+                defaultKernelName: "fsharp",
+                items: [
+                    {
+                        name: "csharp",
+                        aliases: ["cs"],
+                        languageName: "csharp",
+                    },
+                    {
+                        name: "fsharp",
+                        aliases: ["fs"],
+                        languageName: "fsharp",
+                    },
+                ],
+            },
+        };
         const rawNotebookDocumentMetadata =
             metadataUtilities.getMergedRawNotebookDocumentMetadataFromNotebookDocumentMetadata(
                 notebookDocumentMetadata,
@@ -631,6 +562,9 @@ describe(`metadata utility tests`, async () => {
                     display_name: ".NET (F#)",
                     language: "F#",
                     name: ".net-fsharp",
+                },
+                "language_info": {
+                    name: "polyglot-notebook"
                 },
                 polyglot_notebook: {
                     kernelInfo: {
@@ -655,23 +589,23 @@ describe(`metadata utility tests`, async () => {
 
     it("notebook document metadata can be created from notebook metadata for dib", () => {
         const notebookDocumentMetadata: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName: "fsharp",
-                    items: [
-                        {
-                            name: "csharp",
-                            aliases: ["cs"],
-                            languageName: "csharp",
-                        },
-                        {
-                            name: "fsharp",
-                            aliases: ["fs"],
-                            languageName: "fsharp",
-                        },
-                    ],
-                },
-            };
+        {
+            kernelInfo: {
+                defaultKernelName: "fsharp",
+                items: [
+                    {
+                        name: "csharp",
+                        aliases: ["cs"],
+                        languageName: "csharp",
+                    },
+                    {
+                        name: "fsharp",
+                        aliases: ["fs"],
+                        languageName: "fsharp",
+                    },
+                ],
+            },
+        };
         const rawNotebookDocumentMetadata =
             metadataUtilities.getMergedRawNotebookDocumentMetadataFromNotebookDocumentMetadata(
                 notebookDocumentMetadata,
@@ -733,19 +667,19 @@ describe(`metadata utility tests`, async () => {
             },
         };
         const metadataWithNewValues: metadataUtilities.NotebookDocumentMetadata =
-            {
-                kernelInfo: {
-                    defaultKernelName:
-                        "original default kernel name will be retained",
-                    items: [
-                        {
-                            name: "csharp",
-                            aliases: ["cs"],
-                            languageName: "csharp",
-                        },
-                    ],
-                },
-            };
+        {
+            kernelInfo: {
+                defaultKernelName:
+                    "original default kernel name will be retained",
+                items: [
+                    {
+                        name: "csharp",
+                        aliases: ["cs"],
+                        languageName: "csharp",
+                    },
+                ],
+            },
+        };
         const resultMetadata = metadataUtilities.mergeNotebookDocumentMetadata(
             baseMetadata,
             metadataWithNewValues

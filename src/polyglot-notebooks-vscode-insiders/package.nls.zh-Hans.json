@@ -15,7 +15,6 @@
   "description.kernelTransportArgs": "用于启动笔记本会话的命令和参数。",
   "description.kernelTransportWorkingDirectory": "启动内核传输过程的工作目录。",
   "description.interactiveToolSource": "获取 .NET Interactive 工具时要使用的 NuGet 源。",
-  "description.minimumDotNetSdkVersion": ".NET SDK 所需的最低版本。",
   "description.requiredInteractiveToolVersion": ".NET 交互工具的所需版本。",
   "command.acquire": "安装 .NET Interactive",
   "command.openNotebook": "Polyglot Notebook:打开笔记本",
@@ -29,5 +28,6 @@
   "command.stopAllNotebookKernels": "Polyglot Notebook: 停止所有笔记本内核",
   "command.shareValueWith": "将数值共享给...",
   "command.restartKernel": "重新启动",
-  "command.openValueViewer": "变量"
+  "command.openValueViewer": "变量",
+  "command.connectSubkernel": "Polyglot Notebook: 连接到新的单元格内核"
 }

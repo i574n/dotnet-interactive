@@ -26,25 +26,21 @@ public class CSharpProjectKernel :
     IKernelCommandHandler<RequestSignatureHelp>,
     IKernelCommandHandler<SubmitCode>
 {
-    private readonly IPrebuildFinder _prebuildFinder;
-    private WorkspaceServer _workspaceServer;
-    private Workspace _workspace;
-    private Buffer _buffer;
-
-    public static void RegisterEventsAndCommands()
+    static CSharpProjectKernel()
     {
         // register commands and event with serialization
-
-        var commandTypes = typeof(CSharpProjectKernel).Assembly.ExportedTypes
-                                                      .Where(t => t is { IsAbstract: false, IsInterface: false })
-                                                      .Where(t => typeof(KernelCommand).IsAssignableFrom(t))
-                                                      .OrderBy(t => t.Name)
-                                                      .ToList();
-        var eventTypes = typeof(CSharpProjectKernel).Assembly.ExportedTypes
-                                                    .Where(t => t is { IsAbstract: false, IsInterface: false })
-                                                    .Where(t => typeof(KernelEvent).IsAssignableFrom(t))
-                                                    .OrderBy(t => t.Name)
-                                                    .ToList();
+        var commandTypes = typeof(CSharpProjectKernel)
+                           .Assembly.ExportedTypes
+                           .Where(t => t is { IsAbstract: false, IsInterface: false })
+                           .Where(t => typeof(KernelCommand).IsAssignableFrom(t))
+                           .OrderBy(t => t.Name)
+                           .ToList();
+        var eventTypes = typeof(CSharpProjectKernel)
+                         .Assembly.ExportedTypes
+                         .Where(t => t is { IsAbstract: false, IsInterface: false })
+                         .Where(t => typeof(KernelEvent).IsAssignableFrom(t))
+                         .OrderBy(t => t.Name)
+                         .ToList();
 
         foreach (var commandType in commandTypes)
         {
@@ -57,11 +53,19 @@ public class CSharpProjectKernel :
         }
     }
 
+    private readonly IPrebuildFinder _prebuildFinder;
+
+    private WorkspaceServer _workspaceServer;
+
+    private Workspace _workspace;
+
+    private Buffer _buffer;
+
     public CSharpProjectKernel(string name = "csharp", IPrebuildFinder prebuildFinder = null) : base(name)
     {
         _prebuildFinder = prebuildFinder;
         KernelInfo.LanguageName = "C#";
-        KernelInfo.LanguageVersion = "11.0";
+        KernelInfo.LanguageVersion = "13.0";
     }
 
     async Task IKernelCommandHandler<OpenProject>.HandleAsync(OpenProject command, KernelInvocationContext context)

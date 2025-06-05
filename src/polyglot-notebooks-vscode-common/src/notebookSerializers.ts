@@ -14,18 +14,22 @@ import * as constants from './constants';
 
 function toInteractiveDocumentElement(cell: vscode.NotebookCellData): commandsAndEvents.InteractiveDocumentElement {
     // just need to match the shape
-    const fakeCell: vscodeLike.NotebookCell = {
+    const tempCell: vscodeLike.NotebookCell = {
         kind: vscodeLike.NotebookCellKind.Code,
         metadata: cell.metadata ?? {}
     };
-    const notebookCellMetadata = metadataUtilities.getNotebookCellMetadataFromNotebookCellElement(fakeCell);
+    const notebookCellMetadata = metadataUtilities.getNotebookCellMetadataFromNotebookCellElement(tempCell);
     const outputs = cell.outputs || [];
-    return {
+    const kernelName = cell.languageId === 'markdown' ? 'markdown' : notebookCellMetadata.kernelName ?? 'csharp';
+
+    const interactiveDocumentElement: commandsAndEvents.InteractiveDocumentElement = {
         executionOrder: cell.executionSummary?.executionOrder ?? 0,
-        kernelName: cell.languageId === 'markdown' ? 'markdown' : notebookCellMetadata.kernelName ?? 'spiral',
+        kernelName: kernelName,
         contents: cell.value,
         outputs: outputs.map(vscodeUtilities.vsCodeCellOutputToContractCellOutput)
     };
+
+    return interactiveDocumentElement;
 }
 
 async function deserializeNotebookByType(parserServer: NotebookParserServer, serializationType: commandsAndEvents.DocumentSerializationType, rawData: Uint8Array): Promise<vscode.NotebookData> {
@@ -50,10 +54,9 @@ async function serializeNotebookByType(parserServer: NotebookParserServer, seria
         metadata: data.metadata ?? {}
     };
     const notebookMetadata = metadataUtilities.getNotebookDocumentMetadataFromNotebookDocument(fakeNotebookDocument);
-    const rawInteractiveDocumentNotebookMetadata = metadataUtilities.getRawInteractiveDocumentMetadataFromNotebookDocumentMetadata(notebookMetadata);
     const interactiveDocument: commandsAndEvents.InteractiveDocument = {
         elements: data.cells.map(toInteractiveDocumentElement),
-        metadata: rawInteractiveDocumentNotebookMetadata
+        metadata: notebookMetadata
     };
     const rawData = await parserServer.serializeNotebook(serializationType, eol, interactiveDocument);
     return rawData;
@@ -72,7 +75,14 @@ export function createAndRegisterNotebookSerializers(context: vscode.ExtensionCo
         };
 
         const notebookoptions: vscode.NotebookDocumentContentOptions = notebookType === commandsAndEvents.DocumentSerializationType.Dib
-            ? { transientOutputs: true, transientDocumentMetadata: { custom: true }, transientCellMetadata: { custom: true } }
+            // This is intended to prevent .dib files from being marked dirty when cells are run, since outputs aren't preserved.
+            // FIX: This doesn't prevent the notebook from being marked dirty when the cell is run.
+            ? {
+                transientOutputs: true,
+                transientDocumentMetadata: { custom: true },
+                transientCellMetadata: { custom: true }
+            }
+            // .ipynb is handled directly by VS Code
             : {};
 
         const notebookSerializer = vscode.workspace.registerNotebookSerializer(notebookType, serializer, notebookoptions);
@@ -100,7 +110,7 @@ function toVsCodeNotebookCellData(cell: commandsAndEvents.InteractiveDocumentEle
     return cellData;
 }
 
-function outputElementToVsCodeCellOutput(output: commandsAndEvents.InteractiveDocumentOutputElement): vscode.NotebookCellOutput {
+export function outputElementToVsCodeCellOutput(output: commandsAndEvents.InteractiveDocumentOutputElement): vscode.NotebookCellOutput {
     const outputItems: Array<vscode.NotebookCellOutputItem> = [];
     if (utilities.isDisplayOutput(output)) {
         for (const mimeKey in output.data) {

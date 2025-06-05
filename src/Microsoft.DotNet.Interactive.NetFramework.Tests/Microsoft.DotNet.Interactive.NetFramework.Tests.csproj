@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\dotnet-interactive\Pocket\Format.CustomizeLogString.cs" Link="Pocket\Format.CustomizeLogString.cs" />
+    <Compile Include="..\dotnet-interactive\(Pocket)\Logger\Format.CustomizeLogString.cs" Link="Pocket\Format.CustomizeLogString.cs" />
     <Compile Include="..\Microsoft.DotNet.Interactive.Tests\ProxyKernelConnectionTestsBase.cs" Link="ProxyKernelConnectionTestsBase.cs" />
     <Compile Include="..\Microsoft.DotNet.Interactive.Tests\StdIoKernelConnectorTests.cs" Link="StdIoKernelConnectorTests.cs" />
     <Compile Include="..\Microsoft.DotNet.Interactive.Tests\Utility\ConnectHost.cs" Link="Utility\ConnectHost.cs" />
@@ -39,22 +39,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="6.12.0" />
-    <PackageReference Include="Pocket.Disposable" Version="1.2.0">
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Pocket.Disposable">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PocketLogger" Version="0.9.1">
+    <PackageReference Include="PocketLogger">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="PocketLogger.For.Xunit" Version="0.9.0">
+    <PackageReference Include="PocketLogger.For.Xunit">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="PocketLogger.Subscribe" Version="0.9.0">
+    <PackageReference Include="PocketLogger.Subscribe">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Update="xunit.runner.visualstudio" Version="$(xunitrunnervisualstudioVersion)">
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Update="xunit.runner.visualstudio" >
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

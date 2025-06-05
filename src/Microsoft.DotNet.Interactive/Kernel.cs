@@ -338,11 +338,11 @@ public abstract partial class Kernel :
     public void RegisterCommandType<TCommand>()
         where TCommand : KernelCommand
     {
-        // FIX: (RegisterCommandType) consider always automatically calling KernelCommandEnvelope.RegisterCommand<TCommand>();
-        // FIX: (RegisterCommandType) why is this a separate gesture from RegisterCommand? Does it even need to be public?
+        KernelCommandEnvelope.RegisterCommand<TCommand>();
+        
         if (_supportedCommandTypes.Add(typeof(TCommand)))
         {
-            var defaultHandler = CreateDefaultHandlerForCommandType<TCommand>() ?? throw new InvalidOperationException("CreateDefaultHandlerForCommandType should not return null");
+            var defaultHandler = CreateDefaultHandlerForCommandType<TCommand>();
 
             _dynamicHandlers[typeof(TCommand)] = (command, context) => defaultHandler((TCommand)command, context);
 
@@ -399,6 +399,7 @@ public abstract partial class Kernel :
 
             foreach (var c in commands)
             {
+              
                 switch (c)
                 {
                     case Quit quit:
@@ -947,15 +948,12 @@ public abstract partial class Kernel :
 
                 default:
                     // for command types defined outside this assembly, we can dynamically assign the handler
-                    if (command.GetType().IsPublic)
+                    try
                     {
-                        try
-                        {
-                            SetHandler((dynamic)command, (dynamic)this);
-                        }
-                        catch (RuntimeBinderException)
-                        {
-                        }
+                        SetHandler((dynamic)command, (dynamic)this);
+                    }
+                    catch (RuntimeBinderException)
+                    {
                     }
 
                     break;
@@ -991,7 +989,6 @@ public abstract partial class Kernel :
             return true;
         }
 
-
         return false;
     }
 
@@ -1002,7 +999,15 @@ public abstract partial class Kernel :
 
     protected virtual void SetHandlingKernel(
         KernelCommand command,
-        KernelInvocationContext context) => context.HandlingKernel = this;
+        KernelInvocationContext context)
+    {
+        if (command.TargetKernelName is null)
+        {
+            command.TargetKernelName = Name;
+        }
+
+        context.HandlingKernel = this;
+    }
 
     public void Dispose() => _disposables.Dispose();
 

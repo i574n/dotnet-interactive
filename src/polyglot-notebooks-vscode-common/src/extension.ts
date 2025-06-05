@@ -72,7 +72,7 @@ let surveryBanner: SurveyBanner;
 export async function activate(context: vscode.ExtensionContext) {
     const dotnetConfig = vscode.workspace.getConfiguration(constants.DotnetConfigurationSectionName);
     const polyglotConfig = vscode.workspace.getConfiguration(constants.PolyglotConfigurationSectionName);
-    const minDotNetSdkVersion = dotnetConfig.get<string>('minimumDotNetSdkVersion') || '9.0';
+    const minDotNetSdkVersion = '9.0';
     const diagnosticsChannel = new OutputChannelAdapter(vscode.window.createOutputChannel('Polyglot Notebook : diagnostics (i574n)'));
     const loggerChannel = new OutputChannelAdapter(vscode.window.createOutputChannel('Polyglot Notebook : logger (i574n)'));
     DotNetPathManager.setOutputChannelAdapter(diagnosticsChannel);
@@ -127,7 +127,6 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         // prepare kernel transport launch arguments and working directory using a fresh config item so we don't get cached values
-
         const kernelTransportArgs = dotnetConfig.get<Array<string>>('kernelTransportArgs')!;
         const argsTemplate = {
             args: kernelTransportArgs,
@@ -239,6 +238,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 const notebookCellMetadata: metadataUtilities.NotebookCellMetadata = {
                     kernelName
                 };
+
+                // Ensure previous cell language is repeated
                 const rawCellMetadata = metadataUtilities.getRawNotebookCellMetadataFromNotebookCellMetadata(notebookCellMetadata);
                 newCell.metadata = rawCellMetadata;
                 const succeeded = await vscodeNotebookManagement.replaceNotebookCells(notebookDocument.uri, range, [newCell]);
@@ -250,6 +251,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 // when new cells are added, the previous cell's kernel name is copied forward, but in this case we want to force it back
                 const addedCell = notebookDocument.cellAt(insertAtIndex); // the newly added cell is always the last one
                 await vscodeUtilities.setCellKernelName(addedCell, kernelName);
+
+                vscode.window.activeNotebookEditor?.revealRange(range);
+
+                // FIX focus the new cell. https://github.com/dotnet/interactive/issues/3877
+                vscode.commands.executeCommand('notebook.cell.edit');
             }
         });
     }

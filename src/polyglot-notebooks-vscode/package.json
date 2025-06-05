@@ -216,7 +216,7 @@
         },
         "dotnet-interactive.minimumDotNetSdkVersion": {
           "type": "string",
-          "default": "8.0",
+          "default": "9.0",
           "description": "%description.minimumDotNetSdkVersion%"
         },
         "dotnet-interactive.requiredInteractiveToolVersion": {
@@ -798,7 +798,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "mocha out/tests/**/*.test.js",
-    "ciTest": "npm test -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
+    "ciTest": "node ../ensure-testresults-directory.js && npm test -- --reporter mocha-multi-reporters --reporter-options configFile=testConfig.json",
     "testDebug": "mocha out/tests/**/*.test.js",
     "tdd": "npm test -- --watch",
     "package": "npx @vscode/vsce package",

@@ -38,8 +38,6 @@ public class InteractiveDocument : IEnumerable
         };
     }
 
-    private IDictionary<string, object>? _metadata;
-
     public InteractiveDocument(IList<InteractiveDocumentElement>? elements = null)
     {
         Elements = elements ?? new List<InteractiveDocumentElement>();
@@ -47,8 +45,9 @@ public class InteractiveDocument : IEnumerable
 
     public IList<InteractiveDocumentElement> Elements { get; }
 
+    [field: AllowNull, MaybeNull]
     public IDictionary<string, object> Metadata =>
-        _metadata ??= new Dictionary<string, object>();
+        field ??= new Dictionary<string, object>();
 
     public async IAsyncEnumerable<InteractiveDocument> GetImportsAsync(
         Func<string, DirectiveParseResult> parseDirective,
@@ -181,19 +180,24 @@ public class InteractiveDocument : IEnumerable
         return kernelInfos.DefaultKernelName;
     }
 
-    internal static void MergeKernelInfos(InteractiveDocument document, KernelInfoCollection kernelInfos)
+    internal static void MergeKernelInfos(
+        InteractiveDocument document, 
+        KernelInfoCollection commonKernelInfos)
     {
-        if (TryGetKernelInfosFromMetadata(document.Metadata, out var kernelInfoCollection))
+        if (TryGetKernelInfosFromMetadata(document.Metadata, out var documentMetadataKernelInfos))
         {
-            MergeKernelInfos(kernelInfoCollection, kernelInfos);
+            MergeKernelInfos(documentMetadataKernelInfos, commonKernelInfos);
+            document.Metadata["kernelInfo"] = documentMetadataKernelInfos;
         }
         else
         {
-            document.Metadata["kernelInfo"] = kernelInfos;
+            document.Metadata["kernelInfo"] = commonKernelInfos;
         }
     }
 
-    internal static void MergeKernelInfos(KernelInfoCollection destination, KernelInfoCollection source)
+    internal static void MergeKernelInfos(
+        KernelInfoCollection destination, 
+        KernelInfoCollection source)
     {
         var added = new HashSet<string>();
         foreach (var kernelInfo in destination)
@@ -204,6 +208,16 @@ public class InteractiveDocument : IEnumerable
         destination.AddRange(source.Where(ki => added.Add(ki.Name)));
     }
 
+    public KernelInfoCollection? GetKernelInfo()
+    {
+        if (TryGetKernelInfosFromMetadata(Metadata, out var kernelInfos))
+        {
+            return kernelInfos;
+        }
+
+        return null;
+    }
+
     internal static bool TryGetKernelInfosFromMetadata(
         IDictionary<string, object>? metadata,
         [NotNullWhen(true)] out KernelInfoCollection? kernelInfos)
@@ -212,57 +226,19 @@ public class InteractiveDocument : IEnumerable
         {
             if (metadata.TryGetValue("kernelInfo", out var kernelInfoObj))
             {
+                if (kernelInfoObj is IDictionary<string, object>)
+                {
+                    var json = JsonSerializer.Serialize(kernelInfoObj, JsonSerializerOptions);
+                    kernelInfos = JsonSerializer.Deserialize<KernelInfoCollection>(json, JsonSerializerOptions)!;
+                    return true;
+                }
+
                 if (kernelInfoObj is JsonElement kernelInfoJson &&
                     kernelInfoJson.Deserialize<KernelInfoCollection>(JsonSerializerOptions) is
                         { } kernelInfoDeserialized)
                 {
                     kernelInfos = kernelInfoDeserialized;
                     return true;
-                }
-
-                // todo: the kernelInfo should not deserialize as a dictionary
-                if (kernelInfoObj is Dictionary<string, object> kernelInfoAsDictionary)
-                {
-                    var deserializedKernelInfo = new KernelInfoCollection();
-                    if (kernelInfoAsDictionary.TryGetValue("defaultKernelName", out var defaultKernelNameObj) &&
-                       defaultKernelNameObj is string defaultKernelName)
-                    {
-                        deserializedKernelInfo.DefaultKernelName = defaultKernelName;
-                    }
-
-                    if (kernelInfoAsDictionary.TryGetValue("items",
-                                                           out var items))
-                    {
-                        if (items is IEnumerable<object> itemList)
-                        {
-                            foreach (var item in itemList.Cast<IDictionary<string, object>>())
-                            {
-                                if (item.TryGetValue("name", out var nameObj) &&
-                                    nameObj is string name)
-                                {
-                                    string? language = null;
-                                    if (
-                                    item.TryGetValue("language", out var languageObj) &&
-                                        languageObj is string deserializedLanguage)
-                                    {
-                                        language = deserializedLanguage;
-                                    }
-
-                                    IReadOnlyCollection<string>? aliases = null;
-                                    if (
-                                        item.TryGetValue("aliases", out var aliasesObj) &&
-                                        aliasesObj is object[] deserializedAliases)
-                                    {
-                                        aliases = deserializedAliases.Select(a => a.ToString()).ToArray();
-                                    }
-
-                                    deserializedKernelInfo.Add(new KernelInfo(name, language, aliases));
-                                }
-                            }
-                            kernelInfos = deserializedKernelInfo;
-                            return true;
-                        }
-                    }
                 }
 
                 if (kernelInfoObj is KernelInfoCollection kernelInfoCollection)
@@ -272,8 +248,32 @@ public class InteractiveDocument : IEnumerable
                 }
             }
 
+            if (metadata.TryGetValue("polyglot_notebook", out var polyglotNotebookObj))
+            {
+                switch (polyglotNotebookObj)
+                {
+                    case KernelInfoCollection kernelInfoCollection:
+                        kernelInfos = kernelInfoCollection;
+                        return true;
+
+                    case IDictionary<string, object> polyglotNotebookDictionary:
+                    {
+                        kernelInfos = new();
+
+                        if (polyglotNotebookDictionary.TryGetValue("defaultKernelName", out var nameObj) &&
+                            nameObj is string name)
+                        {
+                            kernelInfos.DefaultKernelName = name;
+                        }
+
+                        return true;
+                    }
+                }
+            }
+
             if (metadata.TryGetValue("dotnet_interactive", out var dotnetInteractiveObj))
             {
+                // This is for backwards compatibility. Some older notebooks contain this metadata.
                 switch (dotnetInteractiveObj)
                 {
                     case KernelInfoCollection kernelInfoCollection:
@@ -282,17 +282,17 @@ public class InteractiveDocument : IEnumerable
                         return true;
 
                     case IDictionary<string, object> dotnetInteractiveDict:
+                    {
+                        kernelInfos = new();
+
+                        if (dotnetInteractiveDict.TryGetValue("defaultKernelName", out var nameObj) &&
+                            nameObj is string name)
                         {
-                            kernelInfos = new();
-
-                            if (dotnetInteractiveDict.TryGetValue("defaultKernelName", out var nameObj) &&
-                                nameObj is string name)
-                            {
-                                kernelInfos.DefaultKernelName = name;
-                            }
-
-                            return true;
+                            kernelInfos.DefaultKernelName = name;
                         }
+
+                        return true;
+                    }
                 }
             }
 

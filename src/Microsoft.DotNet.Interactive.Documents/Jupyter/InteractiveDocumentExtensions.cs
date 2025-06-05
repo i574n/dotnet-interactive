@@ -16,11 +16,11 @@ internal static class InteractiveDocumentExtensions
         var (kernelName, canonicalLanguageName, langVersion, fileExtension) =
             language.ToLowerInvariant() switch
             {
-                "c#" or "csharp" => ("csharp","C#", "10.0", ".cs"),
+                "c#" or "csharp" => ("csharp","C#", "13.0", ".cs"),
                 "spiral" => ("spiral", "Spiral", "2.0", ".spi"),
-                "f#" or "fsharp" => ("fsharp","F#", "6.0", ".fs"),
-                "powershell" or "pwsh" => ("powershell", "PowerShell", "7.0", ".ps1"),
-                _ => throw new ArgumentException($"Unrecognized language: {language}")
+                "f#" or "fsharp" => ("fsharp","F#", "7.0", ".fs"),
+                "powershell" or "pwsh" => ("powershell", "PowerShell", "7.5", ".ps1"),
+                _ => throw new ArgumentException($"Unrecognized language: {language}") 
             };
 
         document.Metadata.GetOrAdd("kernelspec", _ => new Dictionary<string, object>())
@@ -41,9 +41,7 @@ internal static class InteractiveDocumentExtensions
                     ["version"] = langVersion
                 });
 
-        // `polyglot_notebook` is the canonical metadata key name, but we're still writing `dotnet_interactive` for backwards compatibility
         var kernelInfos = document.Metadata.GetOrAdd("polyglot_notebook", _ => new KernelInfoCollection());
-        document.Metadata["dotnet_interactive"] = kernelInfos;
 
         kernelInfos.DefaultKernelName = kernelName;
         kernelInfos.Add(new(kernelName));

@@ -5,7 +5,6 @@ using System;
 using System.CommandLine.Parsing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -16,6 +15,7 @@ using Microsoft.DotNet.Interactive.App.CommandLine;
 using Microsoft.DotNet.Interactive.Documents;
 using Microsoft.DotNet.Interactive.Http;
 using Microsoft.DotNet.Interactive.Jupyter;
+using Microsoft.DotNet.Interactive.PowerShell;
 using Microsoft.Extensions.DependencyInjection;
 using Pocket;
 using Serilog.Sinks.RollingFileAlternate;
@@ -57,6 +57,7 @@ public class Program
         typeof(Startup).Assembly, // dotnet-interactive.dll
         typeof(Kernel).Assembly, // Microsoft.DotNet.Interactive.dll
         typeof(JupyterRequestContext).Assembly, // Microsoft.DotNet.Interactive.Jupyter.dll
+        typeof(PowerShellKernel).Assembly, // Microsoft.DotNet.Interactive.PowerShell.dll
         typeof(InteractiveDocument).Assembly, // Microsoft.DotNet.Interactive.Documents.dll
     };
 
@@ -106,7 +107,7 @@ public class Program
         {
             var httpPort = GetFreePort(options);
             options.HttpPort = httpPort;
-            probingSettings = HttpProbingSettings.Create(httpPort.PortNumber);
+            probingSettings = HttpProbingSettings.Create(httpPort.PortNumber, options.GetAllNetworkInterfaces);
         }
 
         var webHost = new WebHostBuilder()
@@ -116,7 +117,7 @@ public class Program
 
         if (options.EnableHttpApi && probingSettings is not null)
         {
-            webHost = webHost.UseUrls(probingSettings.AddressList.Select(a => a.AbsoluteUri).ToArray());
+            webHost = webHost.UseUrls(string.Join(';', probingSettings.AddressList));
         }
 
         return webHost;

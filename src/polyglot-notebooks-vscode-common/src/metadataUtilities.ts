@@ -39,7 +39,7 @@ export function isDotNetNotebook(notebook: vscodeLike.NotebookDocument): boolean
 }
 
 export function getNotebookCellMetadataFromInteractiveDocumentElement(interactiveDocumentElement: commandsAndEvents.InteractiveDocumentElement): NotebookCellMetadata {
-    const cellMetadata = createDefaultNotebookCellMetadata();
+    const cellMetadata: NotebookCellMetadata = {};
 
     // first try to get the old `dotnet_interactive` value...
     const dotnet_interactive = interactiveDocumentElement.metadata?.dotnet_interactive;
@@ -64,7 +64,7 @@ export function getNotebookCellMetadataFromInteractiveDocumentElement(interactiv
 }
 
 export function getNotebookCellMetadataFromNotebookCellElement(notebookCell: vscodeLike.NotebookCell): NotebookCellMetadata {
-    const cellMetadata = createDefaultNotebookCellMetadata();
+    const cellMetadata: NotebookCellMetadata = {};
 
     const metadata = getCellMetadata(notebookCell);
 
@@ -107,7 +107,7 @@ export function getNotebookDocumentMetadataFromInteractiveDocument(interactiveDo
     }
 
     notebookMetadata.kernelInfo.items = notebookMetadata.kernelInfo.items.map(item => ensureProperShapeForDocumentKernelInfo(item));
-    cleanupMedata(notebookMetadata);
+    cleanUpMetadata(notebookMetadata);
     return notebookMetadata;
 }
 
@@ -117,9 +117,9 @@ export function getCellMetadata(cell: vscodeLike.NotebookCell) {
 
 export function getDocumentMetadata(document: vscodeLike.NotebookDocument) {
     const ipynbMetadata = document.metadata?.metadata?.polyglot_notebook ?? {};
-    const metadata = document.metadata.polyglot_notebook ?? {};
+    const polyglot_notebook = document.metadata.polyglot_notebook ?? {};
 
-    const merged = { ...ipynbMetadata, ...metadata };
+    const merged = { ...ipynbMetadata, ...polyglot_notebook };
 
     return merged;
 }
@@ -128,7 +128,6 @@ export function getNotebookDocumentMetadataFromNotebookDocument(document: vscode
     const notebookMetadata = createDefaultNotebookDocumentMetadata();
     let setDefaultKernel = false;
     let setItems = false;
-
 
     // .dib files will have their metadata at the root; .ipynb files will have their metadata a little deeper
     const polyglot_notebook = getDocumentMetadata(document);
@@ -172,7 +171,7 @@ export function getNotebookDocumentMetadataFromNotebookDocument(document: vscode
     }
 
     notebookMetadata.kernelInfo.items = notebookMetadata.kernelInfo.items.map(item => ensureProperShapeForDocumentKernelInfo(item));
-    cleanupMedata(notebookMetadata);
+    cleanUpMetadata(notebookMetadata);
     return notebookMetadata;
 }
 
@@ -180,7 +179,7 @@ export function getNotebookDocumentMetadataFromCompositeKernel(kernel: Composite
     const notebookMetadata = createDefaultNotebookDocumentMetadata();
     notebookMetadata.kernelInfo.defaultKernelName = kernel.defaultKernelName ?? notebookMetadata.kernelInfo.defaultKernelName;
     notebookMetadata.kernelInfo.items = kernel.childKernels.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).filter(k => k.supportsCommand(commandsAndEvents.SubmitCodeType)).map(k => ({ name: k.name, aliases: k.kernelInfo.aliases, languageName: k.kernelInfo.languageName }));
-    cleanupMedata(notebookMetadata);
+    cleanUpMetadata(notebookMetadata);
     return notebookMetadata;
 }
 
@@ -295,38 +294,13 @@ export function getKernelspecMetadataFromNotebookDocumentMetadata(notebookDocume
     }
 }
 
-export function createNewIpynbMetadataWithNotebookDocumentMetadata(existingMetadata: { [key: string]: any }, notebookDocumentMetadata: NotebookDocumentMetadata): { [key: string]: any } {
-    const resultMetadata: { [key: string]: any } = { ...existingMetadata };
-
-    // FIX: "custom" actually means just the bucket of things we don't persist, and therefore should not cause the document dirty state to be set
-
-    // kernelspec
-    const kernelspec = getKernelspecMetadataFromNotebookDocumentMetadata(notebookDocumentMetadata);
-    resultMetadata.metadata = resultMetadata.metadata ?? {};
-    resultMetadata.metadata.kernelspec = kernelspec;
-    resultMetadata.metadata.polyglot_notebook = notebookDocumentMetadata;
-    return resultMetadata;
-}
-
-export function getRawInteractiveDocumentElementMetadataFromNotebookCellMetadata(notebookCellMetadata: NotebookCellMetadata): { [key: string]: any } {
-    return notebookCellMetadata;
-}
-
 export function getRawNotebookCellMetadataFromNotebookCellMetadata(notebookCellMetadata: NotebookCellMetadata): { [key: string]: any } {
     return {
         metadata: {
-            // this is the canonical metadata
             polyglot_notebook: notebookCellMetadata,
-            // this is to maintain backwards compatibility for a while
-            dotnet_interactive: {
-                language: notebookCellMetadata.kernelName
-            }
+            language_info: { name: "polyglot-notebook" }
         }
     };
-}
-
-export function getRawInteractiveDocumentMetadataFromNotebookDocumentMetadata(notebookDocumentMetadata: NotebookDocumentMetadata): { [key: string]: any } {
-    return notebookDocumentMetadata;
 }
 
 export function getMergedRawNotebookDocumentMetadataFromNotebookDocumentMetadata(notebookDocumentMetadata: NotebookDocumentMetadata, documentRawMetadata: { [key: string]: any }, createForIpynb: boolean): { [key: string]: any } {
@@ -337,7 +311,8 @@ export function getMergedRawNotebookDocumentMetadataFromNotebookDocumentMetadata
 
         rawMetadata.metadata = {
             kernelspec,
-            polyglot_notebook: notebookDocumentMetadata
+            polyglot_notebook: notebookDocumentMetadata,
+            language_info: { name: "polyglot-notebook" }
         };
     } else {
         rawMetadata.polyglot_notebook = notebookDocumentMetadata;
@@ -487,7 +462,7 @@ export function mergeNotebookDocumentMetadata(baseMetadata: NotebookDocumentMeta
     }
 
     resultMetadata.kernelInfo.items = [...kernelInfoItems.values()];
-    cleanupMedata(resultMetadata);
+    cleanUpMetadata(resultMetadata);
     return sortInPlace(resultMetadata);
 }
 
@@ -512,10 +487,6 @@ export function createDefaultNotebookDocumentMetadata(): NotebookDocumentMetadat
             ],
         }
     };
-}
-
-function createDefaultNotebookCellMetadata(): NotebookCellMetadata {
-    return {};
 }
 
 export function areEquivalentObjects(object1: { [key: string]: any }, object2: { [key: string]: any }, keysToIgnore?: Set<string>): boolean {
@@ -562,7 +533,7 @@ export function areEquivalentObjects(object1: { [key: string]: any }, object2: {
     return true;
 }
 
-function cleanupMedata(notebookMetadata: NotebookDocumentMetadata) {
+function cleanUpMetadata(notebookMetadata: NotebookDocumentMetadata) {
     notebookMetadata.kernelInfo.items.forEach(ki => {
         if (ki.languageName === undefined || ki.languageName === null) {
             delete ki.languageName;

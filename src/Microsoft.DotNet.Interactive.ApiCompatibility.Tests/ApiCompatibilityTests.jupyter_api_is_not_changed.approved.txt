@@ -3,6 +3,12 @@ Microsoft.DotNet.Interactive.Jupyter
     .ctor(Microsoft.DotNet.Interactive.Kernel kernel, System.Reactive.Concurrency.IScheduler scheduler = null)
     public System.Threading.Tasks.Task Handle(JupyterRequestContext context)
     protected System.Void OnKernelEventReceived(Microsoft.DotNet.Interactive.Events.KernelEvent event, JupyterRequestContext context)
+  public class CondaEnvironment, IJupyterEnvironment
+    public static System.String CondaPath { get;}
+    public static System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyCollection<System.String>> GetEnvironmentNamesAsync()
+    public System.String Name { get; set;}
+    public System.Threading.Tasks.Task<Microsoft.DotNet.Interactive.Utility.CommandLineResult> ExecuteAsync(System.String command, System.String args, System.IO.DirectoryInfo workingDir = null, System.Nullable<System.TimeSpan> timeout = null)
+    public System.Diagnostics.Process StartProcess(System.String command, System.String args, System.IO.DirectoryInfo workingDir, System.Action<System.String> output = null, System.Action<System.String> error = null)
   public class ConnectionInformation
     public static ConnectionInformation Load(System.IO.FileInfo file)
     .ctor()
@@ -234,7 +240,7 @@ Microsoft.DotNet.Interactive.Jupyter.Protocol
     public System.String Text { get;}
     public System.String Type { get;}
   public class CSharpLanguageInfo : LanguageInfo
-    .ctor(System.String version = 12.0)
+    .ctor(System.String version = 13.0)
   public class DisplayData : PubSubMessage
     .ctor(System.String source = null, System.Collections.Generic.IReadOnlyDictionary<System.String,System.Object> data = null, System.Collections.Generic.IReadOnlyDictionary<System.String,System.Object> metaData = null, System.Collections.Generic.IReadOnlyDictionary<System.String,System.Object> transient = null)
     public System.Collections.Generic.IReadOnlyDictionary<System.String,System.Object> Data { get;}
@@ -281,7 +287,7 @@ Microsoft.DotNet.Interactive.Jupyter.Protocol
     public System.Collections.Generic.IReadOnlyDictionary<System.String,System.Object> Transient { get;}
   public static class ExecutionStateValues
   public class FSharpLanguageInfo : LanguageInfo
-    .ctor(System.String version = 8.0)
+    .ctor(System.String version = 9.0)
   public abstract class HistoryElement
     public System.Int32 LineNumber { get;}
     public System.Int32 Session { get;}
@@ -372,7 +378,7 @@ Microsoft.DotNet.Interactive.Jupyter.Protocol
     public static Message TryFromJsonString(System.String jsonString, System.String messageType)
     public System.String MessageType { get;}
   public class PowerShellLanguageInfo : LanguageInfo
-    .ctor(System.String version = 7.0)
+    .ctor(System.String version = 7.5)
   public abstract class PubSubMessage : Message
   public abstract class ReplyMessage : Message
   public abstract class RequestMessage : Message

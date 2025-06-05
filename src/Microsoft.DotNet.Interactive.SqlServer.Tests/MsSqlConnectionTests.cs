@@ -4,12 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.DotNet.Interactive.App;
-using Microsoft.DotNet.Interactive.App.Connection;
 using Microsoft.DotNet.Interactive.Commands;
 using Microsoft.DotNet.Interactive.CSharp;
 using Microsoft.DotNet.Interactive.Events;
@@ -30,7 +30,6 @@ public class MsSqlConnectionTests : IDisposable
 
         var kernel = new CompositeKernel
         {
-            new SqlDiscoverabilityKernel(),
             csharpKernel,
             new KeyValueStoreKernel()
         };
@@ -162,35 +161,6 @@ select top 10 AddressLine1, AddressLine2 from Person.Address
               .SelectMany(row => row.Where(r => r.Key == "AddressLine2").Select(r => r.Value))
               .Should()
               .AllBeEquivalentTo((object)null);
-    }
-
-    [MsSqlFact]
-    public async Task sending_query_to_sql_will_generate_suggestions()
-    {
-        var connectionString = MsSqlFactAttribute.GetConnectionStringForTests();
-        using var kernel = await CreateKernelAsync();
-        var result = await kernel.SubmitCodeAsync(
-            $"#!connect mssql --kernel-name adventureworks \"{connectionString}\"");
-
-        result.Events
-              .Should()
-              .NotContainErrors();
-
-        result = await kernel.SubmitCodeAsync(@"
-#!sql
-SELECT TOP 100 * FROM Person.Person
-");
-
-        result.Events
-              .Should()
-              .ContainSingle<DisplayedValueProduced>(e =>
-                                                         e.FormattedValues.Any(f => f.MimeType == HtmlFormatter.MimeType))
-              .Which.FormattedValues.Single(f => f.MimeType == HtmlFormatter.MimeType)
-              .Value
-              .Should()
-              .Contain("#!sql-adventureworks")
-              .And
-              .Contain("SELECT TOP 100 * FROM Person.Person");
     }
 
     [MsSqlFact]
@@ -579,6 +549,24 @@ select TOP(@testVar) * from sys.databases";
         await kernel.SendAsync(new SubmitCode("#!connect mssql @input:connectionString --kernel-name abc"));
 
         requestInput.InputTypeHint.Should().Be("connectionstring-mssql");
+    }
+
+    [Fact]
+    public void DependencyVersions_are_correctly_scaffolded_from_build()
+    {
+        var dependencyVersionsType = typeof(ConnectMsSqlKernel)
+                                     .Assembly
+                                     .GetTypes()
+                                     .Single(t => t.Name == "DependencyVersions");
+
+        dependencyVersionsType
+            .GetMembers()
+            .Where(m => m.MemberType == MemberTypes.Field)
+            .Cast<FieldInfo>()
+            .Select(f => f.GetValue(null))
+            .Cast<string>()
+            .Should()
+            .AllSatisfy(value => value.Should().NotBeNullOrEmpty());
     }
 
     public void Dispose()

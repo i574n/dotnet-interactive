@@ -59,7 +59,7 @@ public class CSharpKernel :
     public CSharpKernel(string name) : base(name)
     {
         KernelInfo.LanguageName = "C#";
-        KernelInfo.LanguageVersion = "12.0";
+        KernelInfo.LanguageVersion = "13.0";
         KernelInfo.DisplayName = $"{KernelInfo.LocalName} - C# Script";
         KernelInfo.Description = """
                                  Compile and run C# Script
@@ -70,7 +70,7 @@ public class CSharpKernel :
         //...so we wait for RunAsync to read Directory.GetCurrentDirectory() the first time.
 
         _scriptOptions = ScriptOptions.Default
-            .WithLanguageVersion(LanguageVersion.CSharp12)
+            .WithLanguageVersion(LanguageVersion.CSharp13)
             .AddImports(
                 "System",
                 "System.Text",
@@ -120,7 +120,7 @@ public class CSharpKernel :
                                g.Last().Type);
                        })
                        .ToArray() ??
-            Array.Empty<KernelValueInfo>();
+            [];
 
         context.Publish(new ValueInfosProduced(valueInfos, command));
 
@@ -131,7 +131,13 @@ public class CSharpKernel :
     {
         if (TryGetValue<object>(command.Name, out var value))
         {
-            context.PublishValueProduced(command, value);
+            context.Publish(new ValueProduced(
+                                value,
+                                command.Name,
+                                new FormattedValue(
+                                    command.MimeType,
+                                    value.ToDisplayString(command.MimeType)),
+                                command));
         }
         else
         {

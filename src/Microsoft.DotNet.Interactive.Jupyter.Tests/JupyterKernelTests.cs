@@ -16,12 +16,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Tags;
 using Xunit;
+using Xunit.Abstractions;
 using Message = Microsoft.DotNet.Interactive.Jupyter.Messaging.Message;
 
 namespace Microsoft.DotNet.Interactive.Jupyter.Tests;
 
+[Collection("Do not parallelize")]
 public class JupyterKernelTests : JupyterKernelTestBase
 {
+    public JupyterKernelTests(ITestOutputHelper output) : base(output)
+    {
+    }
+
     [Fact]
     public async Task can_setup_kernel_using_script()
     {
@@ -546,7 +552,7 @@ public class JupyterKernelTests : JupyterKernelTestBase
             .Which
             .Completions
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[] {
+                .BeEquivalentToPreferringRuntimeMemberTypes(new[] {
                         new CompletionItem("TEST1TEST", "Method", "test1-test", "test1-test", "test1-test"),
                         new CompletionItem("test2-test", "Class", "test2-test", "test2-test", "test2-test")
                     });

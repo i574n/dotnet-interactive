@@ -15,15 +15,21 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 using Message = Microsoft.DotNet.Interactive.Jupyter.Messaging.Message;
 
 namespace Microsoft.DotNet.Interactive.Jupyter.Tests;
 
 // FIX: (JupyterKernelVariableSharingTests) re-enable these tests
 [Trait("Category", "Skip")]
+[Collection("Do not parallelize")]
 [LogToPocketLogger(FileNameEnvironmentVariable = "POCKETLOGGER_LOG_PATH")]
 public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
 {
+    public JupyterKernelVariableSharingTests(ITestOutputHelper output) : base(output)
+    {
+    }
+
     [Fact]
     public async Task variable_sharing_not_enabled_for_unsupported_languages()
     {
@@ -79,7 +85,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData(KernelSpecName = RKernelName)]
     public async Task can_share_primitives_to_and_from_kernel(JupyterConnectionTestData connectionData)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -124,7 +130,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData("identical(df_in_kernel, df_roundtrip)", "[1] TRUE", KernelSpecName = RKernelName)]
     public async Task can_share_dataframe_to_from_kernel(JupyterConnectionTestData connectionData, string assertIdentical, string expectedAssertionResult)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -253,7 +259,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData(KernelSpecName = RKernelName)]
     public async Task can_handle_setting_multiple_df_on_kernel(JupyterConnectionTestData connectionData)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -377,7 +383,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData(KernelSpecName = RKernelName)]
     public async Task can_handle_setting_single_df_in_enumerable_on_kernel(JupyterConnectionTestData connectionData)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -448,7 +454,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData(KernelSpecName = RKernelName)]
     public async Task can_handle_setting_single_df_on_kernel(JupyterConnectionTestData connectionData)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -515,7 +521,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData("_ab", KernelSpecName = RKernelName)]
     public async Task can_handle_errors_for_send_value_from_kernel(JupyterConnectionTestData connectionData, string invalidId)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -543,7 +549,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
     [JupyterTestData(KernelSpecName = RKernelName)]
     public async Task can_handle_errors_for_request_value_from_kernel(JupyterConnectionTestData connectionData)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -588,7 +594,7 @@ public class JupyterKernelVariableSharingTests : JupyterKernelTestBase
         string[] formattedValues,
         string[] typeNames)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 

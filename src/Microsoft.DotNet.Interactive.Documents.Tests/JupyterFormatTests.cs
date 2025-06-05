@@ -24,7 +24,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 {
     private readonly Configuration _assentConfiguration =
         new Configuration()
-            .UsingExtension("json")
+            .UsingExtension("ipynb")
             .SetInteractive(Debugger.IsAttached);
 
     public InteractiveDocument SerializeAndParse(object jupyter)
@@ -75,17 +75,16 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("// this is the code", language)
-                });
+                ]);
     }
 
     [Theory]
     [InlineData("C#", "csharp")]
     [InlineData("F#", "fsharp")]
     [InlineData("f#", "fsharp")]
-    [InlineData("PowerShell", "powershell")]
+    [InlineData("PowerShell", "pwsh")]
     public void Metadata_default_kernel_name_is_based_on_specified_language(string languageName, string kernelName)
     {
         var document = Notebook.Parse(new InteractiveDocument().ToJupyterJson(languageName));
@@ -99,7 +98,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
     [InlineData("C#", "csharp")]
     [InlineData("F#", "fsharp")]
     [InlineData("f#", "fsharp")]
-    [InlineData("PowerShell", "powershell")]
+    [InlineData("PowerShell", "pwsh")]
     public void Metadata_default_kernel_name_is_based_on_specified_language_when_serialized_and_deserialized(string languageName, string kernelName)
     {
         var originalDoc = Notebook.Parse(new InteractiveDocument().ToJupyterJson(languageName));
@@ -139,11 +138,10 @@ public class JupyterFormatTests : DocumentFormatTestsBase
         var notebook = SerializeAndParse(jupyter);
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("// this is assumed to be csharp", "csharp"),
                     new InteractiveDocumentElement("#!csharp\n// this is still assumed to be csharp", "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -355,10 +353,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new object[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("#!csharp\n// this is the code", "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -457,14 +454,13 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("#!c#\n// this is csharp 1", "csharp"),
                     new InteractiveDocumentElement("#!C#\n// this is csharp 2", "csharp"),
                     new InteractiveDocumentElement("#!f#\n// this is fsharp 1", "fsharp"),
                     new InteractiveDocumentElement("#!F#\n// this is fsharp 2", "fsharp"),
                     new InteractiveDocumentElement("#!powershell\n# this is pwsh", "pwsh")
-                });
+                ]);
     }
 
     [Fact]
@@ -506,10 +502,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("#!fsharp\n// this is the code", "fsharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -551,10 +546,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("// this is csharp\n#!fsharp\n// and this is fsharp", "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -596,10 +590,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("#!probably-a-magic-command\n// but this is csharp", "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -619,10 +612,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
         var notebook = SerializeAndParse(jupyter);
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("This is `markdown`.", "markdown")
-                });
+                ]);
     }
 
     [Fact]
@@ -646,10 +638,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
         var notebook = SerializeAndParse(jupyter);
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("This is `markdown`.\nSo is this.", "markdown")
-                });
+                ]);
     }
 
     [Fact]
@@ -698,10 +689,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("line 1\nline 2\nline 3\nline 4", "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -723,10 +713,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("line 1\nline 2\nline 3\n", "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -758,8 +747,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("// this is not really fsharp", "csharp")
                     {
                         Metadata = new Dictionary<string, object>
@@ -770,7 +758,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                             }
                         }
                     }
-                });
+                ]);
     }
 
     [Fact]
@@ -802,8 +790,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
 
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement("// this is not really fsharp", "csharp")
                     {
                         Metadata = new Dictionary<string, object>
@@ -814,7 +801,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                             }
                         }
                     }
-                });
+                ]);
     }
 
     [Fact]
@@ -837,10 +824,9 @@ public class JupyterFormatTests : DocumentFormatTestsBase
         var notebook = SerializeAndParse(jupyter);
         notebook.Elements
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes([
                     new InteractiveDocumentElement(kernelName: "csharp")
-                });
+                ]);
     }
 
     [Fact]
@@ -888,7 +874,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .ContainKey("text/html")
                 .WhoseValue
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(
+                .BeEquivalentToPreferringRuntimeMemberTypes(
                     new object[]
                     {
                         "line 1",
@@ -921,7 +907,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                             output_type = "display_data",
                             not_data = new Dictionary<string, string[]>
                             {
-                                { "text/html", new[]{"<div>this is html</div>"} }
+                                { "text/html", ["<div>this is html</div>"] }
                             },
                             execution_count = 1,
                             metadata = new { }
@@ -967,7 +953,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                             output_type = "execute_result",
                             not_data = new Dictionary<string, string[]>
                             {
-                                { "text/html", new[]{"<div>this is html</div>"} }
+                                { "text/html", ["<div>this is html</div>"] }
                             },
                             execution_count = 1,
                             metadata = new { }
@@ -1080,7 +1066,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .BeOfType<ErrorElement>()
                 .Which
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new ErrorElement(null, null));
+                .BeEquivalentToPreferringRuntimeMemberTypes(new ErrorElement(null, null));
     }
 
     [Fact]
@@ -1103,7 +1089,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .ContainSingle()
                 .Which
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new InteractiveDocumentElement(kernelName: "markdown"));
+                .BeEquivalentToPreferringRuntimeMemberTypes(new InteractiveDocumentElement(kernelName: "markdown"));
     }
 
     [Fact]
@@ -1130,15 +1116,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                     mimetype = "text/x-csharp",
                     name = "C#",
                     pygments_lexer = "csharp",
-                    version = "10.0"
-                },
-                dotnet_interactive = new
-                {
-                    defaultKernelName = "csharp",
-                    items = new object[]
-                    {
-                        new { name = "csharp" }
-                    }
+                    version = "13.0"
                 },
                 polyglot_notebook = new
                 {
@@ -1156,7 +1134,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
         jupyter["nbformat_minor"]
             .ToObject<int>()
             .Should()
-            .BeGreaterOrEqualTo(4);
+            .BeGreaterThanOrEqualTo(4);
     }
 
     [Fact]
@@ -1366,7 +1344,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .ContainSingle()
                 .Which
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new TextElement("this is text", "stdout"));
+                .BeEquivalentToPreferringRuntimeMemberTypes(new TextElement("this is text", "stdout"));
     }
 
     [Fact]
@@ -1410,7 +1388,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .ContainSingle()
                 .Which
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new TextElement("this is text\nso is this", "stdout"));
+                .BeEquivalentToPreferringRuntimeMemberTypes(new TextElement("this is text\nso is this", "stdout"));
     }
 
     [Fact]
@@ -1443,7 +1421,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                                                  output_type = "display_data",
                                                  data = new Dictionary<string, string[]>
                                                  {
-                                                     { "text/html", new[] { "<div>this is html</div>" } }
+                                                     { "text/html", ["<div>this is html</div>"] }
                                                  },
                                                  metadata = new { }
                                              }
@@ -1470,7 +1448,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                             output_type = "display_data",
                             data = new Dictionary<string, string[]>
                             {
-                                { "text/html", new[] { "<div>this is html</div>" } }
+                                { "text/html", ["<div>this is html</div>"] }
                             },
                         }
                     }
@@ -1487,7 +1465,7 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .ContainSingle()
                 .Which
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new DisplayElement(new Dictionary<string, object>
+                .BeEquivalentToPreferringRuntimeMemberTypes(new DisplayElement(new Dictionary<string, object>
                 {
                     { "text/html", new[]{"<div>this is html</div>"} }
                 }));
@@ -1500,11 +1478,11 @@ public class JupyterFormatTests : DocumentFormatTestsBase
         {
             new("//", "csharp", new[]
             {
-                new ErrorElement("e-value", "e-name", new[] { "at func1()", "at func2()" })
+                new ErrorElement("e-value", "e-name", ["at func1()", "at func2()"])
             })
         };
         var notebook = new InteractiveDocument(cells);
-        var serialized = (string)notebook.ToJupyterJson();
+        var serialized = notebook.ToJupyterJson();
         var jupyter = JToken.Parse(serialized);
         jupyter["cells"]
             .Should()
@@ -1569,11 +1547,10 @@ public class JupyterFormatTests : DocumentFormatTestsBase
                 .ContainSingle()
                 .Which
                 .Should()
-                .BeEquivalentToRespectingRuntimeTypes(new ErrorElement("e-value", "e-name", new[]
-                {
+                .BeEquivalentToPreferringRuntimeMemberTypes(new ErrorElement("e-value", "e-name", [
                     "at func1()",
                     "at func2()"
-                }));
+                ]));
     }
 
     [Theory]
@@ -1652,5 +1629,5 @@ public class JupyterFormatTests : DocumentFormatTestsBase
     private string GetNotebookFilePath([CallerMemberName] string testName = null) =>
         Path.Combine(
             Path.GetDirectoryName(PathToCurrentSourceFile()),
-            $"{GetType().Name}.{testName}.approved.json");
+            $"{GetType().Name}.{testName}.approved.ipynb");
 }

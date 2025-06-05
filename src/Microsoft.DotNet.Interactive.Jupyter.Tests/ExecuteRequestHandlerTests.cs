@@ -14,8 +14,8 @@ using Microsoft.DotNet.Interactive.Documents.Jupyter;
 using Microsoft.DotNet.Interactive.Formatting.Tests.Utility;
 using Microsoft.DotNet.Interactive.Jupyter.Protocol;
 using Microsoft.DotNet.Interactive.Tests;
+using Microsoft.DotNet.Interactive.Tests.Utility;
 using Pocket;
-using Recipes;
 using Xunit;
 using Xunit.Abstractions;
 using static Microsoft.DotNet.Interactive.Formatting.Tests.Tags;
@@ -403,9 +403,9 @@ f();"));
 
         JupyterMessageSender.RequestMessages.Should().Contain(r => r.Prompt == prompt && r.Password == true);
         JupyterMessageSender.PubSubMessages
-            .OfType<Protocol.Stream>()
+            .OfType<Protocol.DisplayData>()
             .Should()
-            .Contain(s => s.Name == Protocol.Stream.StandardOutput && s.Text == $"System.Security.SecureString{Environment.NewLine}");
+            .Contain(s => s.Data.ContainsKey("text/html") && s.Data["text/html"].ToString().Contains("System.Security.SecureString"));
     }
 
     [Fact]

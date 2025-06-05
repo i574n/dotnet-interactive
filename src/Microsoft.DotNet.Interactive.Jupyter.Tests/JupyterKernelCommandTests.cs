@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using FluentAssertions;
@@ -12,12 +12,18 @@ using Pocket.For.Xunit;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.DotNet.Interactive.Jupyter.Tests;
 
+[Collection("Do not parallelize")]
 [LogToPocketLogger(FileNameEnvironmentVariable = "POCKETLOGGER_LOG_PATH")]
 public class JupyterKernelCommandTests : JupyterKernelTestBase
 {
+    public JupyterKernelCommandTests(ITestOutputHelper output) : base(output)
+    {
+    }
+
     [Theory]
     [JupyterHttpTestData("python", KernelSpecName = PythonKernelName, AllowPlayback = RECORD_FOR_PLAYBACK)]
     [JupyterHttpTestData("R", KernelSpecName = RKernelName, AllowPlayback = RECORD_FOR_PLAYBACK)]
@@ -27,7 +33,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("R", KernelSpecName = RKernelName)]
     public async Task can_connect_to_and_setup_kernel(JupyterConnectionTestData connectionData, string languageName)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -107,11 +113,15 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterHttpTestData("1+1", PlainTextFormatter.MimeType, "2", KernelSpecName = PythonKernelName, AllowPlayback = RECORD_FOR_PLAYBACK)]
     [JupyterZMQTestData("1+1", PlainTextFormatter.MimeType, "2", KernelSpecName = PythonKernelName)]
     [JupyterTestData("1+1", PlainTextFormatter.MimeType, "2", KernelSpecName = PythonKernelName)]
-    public async Task can_submit_code_and_get_return_value_produced(JupyterConnectionTestData connectionData, string codeToRun, string mimeType, string outputReturned)
+    public async Task can_submit_code_and_get_return_value_produced(
+        JupyterConnectionTestData connectionData, 
+        string codeToRun, 
+        string mimeType, 
+        string outputReturned)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
-        var kernel = CreateCompositeKernelAsync(options);
+        using var kernel = CreateCompositeKernelAsync(options);
 
         await kernel.SubmitCodeAsync(
             $"#!connect jupyter --kernel-name testKernel --kernel-spec {connectionData.KernelSpecName} {connectionData.ConnectionString}");
@@ -159,7 +169,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("1+1", new[] { "text/plain", "text/html", "text/latex", "text/markdown" }, new[] { "[1] 2", "2", "2", "2" }, KernelSpecName = RKernelName)]
     public async Task can_submit_code_and_get_display_value_produced(JupyterConnectionTestData connectionData, string codeToRun, string[] mimeTypes, string[] valuesToExpect)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -214,7 +224,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("for (x in 1:2) {\n\tprint(x);\n\tflush.console()\n}", new[] { "[1] 1\n", "[1] 2\n" }, KernelSpecName = RKernelName)]
     public async Task can_submit_code_and_get_stream_stdout_produced(JupyterConnectionTestData connectionData, string codeToRun, string[] outputReturned)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -272,7 +282,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("message('stderr')", "stderr\n", KernelSpecName = RKernelName)]
     public async Task can_submit_code_and_get_stderr_produced(JupyterConnectionTestData connectionData, string codeToRun, string outputReturned)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -322,7 +332,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("prin()", new[] { "Error in prin(): could not find function \"prin\"\nTraceback:\n" }, KernelSpecName = RKernelName)]
     public async Task can_submit_code_and_get_error_produced(JupyterConnectionTestData connectionData, string codeToRun, string[] errorMessages)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -377,7 +387,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("dh = display(\"test\", display_id=True)\ndh.update(\"update-test\")", "'test'", "'update-test'", KernelSpecName = PythonKernelName)]
     public async Task can_submit_code_and_get_update_display_produced(JupyterConnectionTestData connectionData, string codeToRun, string displayValue, string updateDisplayValue)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = CreateCompositeKernelAsync(options);
 
@@ -448,7 +458,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("print (\"test\")", 3, new[] { "text/html", "text/latex", "text/plain" }, new[] { "<table width=\"100%\" summary=\"page for print {base}\"><tr><td>print {base}</td><td style=\"text-align: right;\">R Documentation</td>", "\\inputencoding{utf8}\n\\HeaderA{print}{Print Values}{print}\n", "print' prints its argument and returns it _invisibly_" }, KernelSpecName = RKernelName)]
     public async Task can_request_hover_text_and_get_value_produced(JupyterConnectionTestData connectionData, string codeToInspect, int curPosition, string[] mimeTypes, string[] textValueSnippets)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -487,7 +497,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
             .Which
             .LinePositionSpan
             .Should()
-            .BeEquivalentToRespectingRuntimeTypes(new LinePositionSpan(linePosition, linePosition));
+            .BeEquivalentToPreferringRuntimeMemberTypes(new LinePositionSpan(linePosition, linePosition));
 
         for (int i = 0; i < mimeTypes.Length; i++)
         {
@@ -514,7 +524,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("print (\"test\")", 3, new[] { "text/html", "text/latex", "text/plain" }, new[] { "<table width=\"100%\" summary=\"page for print {base}\"><tr><td>print {base}</td><td style=\"text-align: right;\">R Documentation</td>", "\\inputencoding{utf8}\n\\HeaderA{print}{Print Values}{print}\n", "print' prints its argument and returns it _invisibly_" }, KernelSpecName = RKernelName)]
     public async Task can_request_signature_help_and_get_value_produced(JupyterConnectionTestData connectionData, string codeToInspect, int curPosition, string[] mimeTypes, string[] textValueSnippets)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -578,7 +588,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
     [JupyterTestData("pr", 0, 0, 2, new[] { "print", "predict" }, KernelSpecName = RKernelName)]
     public async Task can_request_completions_and_get_value_produced(JupyterConnectionTestData connectionData, string codeToInspect, int linePos, int startPos, int curPosition, string[] exampleMatches)
     {
-        var options = connectionData.GetConnectionOptions();
+        using var options = connectionData.GetConnectionOptions();
 
         var kernel = await CreateJupyterKernelAsync(options, connectionData.KernelSpecName, connectionData.ConnectionString);
 
@@ -619,7 +629,7 @@ public class JupyterKernelCommandTests : JupyterKernelTestBase
             .Which
             .LinePositionSpan
             .Should()
-            .BeEquivalentToRespectingRuntimeTypes(
+            .BeEquivalentToPreferringRuntimeMemberTypes(
                     new LinePositionSpan(
                             new LinePosition(linePos, startPos),
                             new LinePosition(linePos, curPosition)));

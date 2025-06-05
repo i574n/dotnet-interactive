@@ -111,31 +111,12 @@ public static class Formatter
         // In the lists of default formatters, the highest priority ones come first,
         // so register those last.
 
-        // TODO: (ResetToDefault) remove the need to reverse these
-
-        TabularDataResourceFormatter.DefaultFormatters.Reverse();
-        _defaultTypeFormatters.PushRange(TabularDataResourceFormatter.DefaultFormatters.ToArray());
-        TabularDataResourceFormatter.DefaultFormatters.Reverse();
-
-        CsvFormatter.DefaultFormatters.Reverse();
-        _defaultTypeFormatters.PushRange(CsvFormatter.DefaultFormatters.ToArray());
-        CsvFormatter.DefaultFormatters.Reverse();
-
-        HtmlFormatter.DefaultFormatters.Reverse();
-        _defaultTypeFormatters.PushRange(HtmlFormatter.DefaultFormatters.ToArray());
-        HtmlFormatter.DefaultFormatters.Reverse();
-
-        JsonFormatter.DefaultFormatters.Reverse();
-        _defaultTypeFormatters.PushRange(JsonFormatter.DefaultFormatters.ToArray());
-        JsonFormatter.DefaultFormatters.Reverse();
-
-        PlainTextSummaryFormatter.DefaultFormatters.Reverse();
-        _defaultTypeFormatters.PushRange(PlainTextSummaryFormatter.DefaultFormatters.ToArray());
-        PlainTextSummaryFormatter.DefaultFormatters.Reverse();
-
-        PlainTextFormatter.DefaultFormatters.Reverse();
-        _defaultTypeFormatters.PushRange(PlainTextFormatter.DefaultFormatters.ToArray());
-        PlainTextFormatter.DefaultFormatters.Reverse();
+        _defaultTypeFormatters.PushRange(((IEnumerable<ITypeFormatter>)TabularDataResourceFormatter.DefaultFormatters).Reverse().ToArray());
+        _defaultTypeFormatters.PushRange(((IEnumerable<ITypeFormatter>)CsvFormatter.DefaultFormatters).Reverse().ToArray());
+        _defaultTypeFormatters.PushRange(((IEnumerable<ITypeFormatter>)HtmlFormatter.DefaultFormatters).Reverse().ToArray());
+        _defaultTypeFormatters.PushRange(((IEnumerable<ITypeFormatter>)JsonFormatter.DefaultFormatters).Reverse().ToArray());
+        _defaultTypeFormatters.PushRange(((IEnumerable<ITypeFormatter>)PlainTextSummaryFormatter.DefaultFormatters).Reverse().ToArray());
+        _defaultTypeFormatters.PushRange(((IEnumerable<ITypeFormatter>)PlainTextFormatter.DefaultFormatters).Reverse().ToArray());
 
         _defaultPreferredMimeTypes.Push((typeof(string), PlainTextFormatter.MimeType));
 
@@ -718,7 +699,7 @@ public static class Formatter
         {
             return false;
         }
-
+        
         if (type.FullName.StartsWith("Microsoft.FSharp.Collections.FSharpList`1"))
         {
             return false;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation and contributors. All rights reserved.
+// Copyright (c) .NET Foundation and contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -8,8 +8,12 @@ using System.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions.Extensions;
 using Microsoft.DotNet.Interactive.Jupyter.Messaging;
 using Microsoft.DotNet.Interactive.Jupyter.Protocol;
+using Microsoft.DotNet.Interactive.Tests.Utility;
+using Pocket;
+using static Pocket.Logger<Microsoft.DotNet.Interactive.Jupyter.Tests.MessagePlayback>;
 using Message = Microsoft.DotNet.Interactive.Jupyter.Messaging.Message;
 
 namespace Microsoft.DotNet.Interactive.Jupyter.Tests;
@@ -20,18 +24,14 @@ internal class MessagePlayback : IMessageTracker
     private readonly Subject<Message> _receivedMessages = new();
     private readonly ConcurrentQueue<Message> _processRequests = new();
     private readonly List<Message> _playbackMessages = new();
-    private readonly CancellationTokenSource _cts = new();
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly Task _requestProcessingLoopTask;
 
     public MessagePlayback(IReadOnlyCollection<Message> messages)
     {
         _playbackMessages.AddRange(messages);
 
-        _requestProcessingLoopTask = Task.Factory.StartNew(
-            RequestProcessingLoop,
-            creationOptions: TaskCreationOptions.LongRunning,
-            cancellationToken: CancellationToken.None,
-            scheduler: TaskScheduler.Default);
+        _requestProcessingLoopTask = Task.Factory.StartNew(RequestProcessingLoop);
     }
 
     public IObservable<Message> Messages => _receivedMessages;
@@ -46,42 +46,64 @@ internal class MessagePlayback : IMessageTracker
 
     private async Task RequestProcessingLoop()
     {
-        while (!_cts.IsCancellationRequested)
+        using var operation = Log.OnEnterAndConfirmOnExit();
+
+        while (!_cancellationTokenSource.IsCancellationRequested)
         {
-            if (_processRequests.TryDequeue(out var message))
+            try
             {
-                // find appropriate message from playback to send back since we 
-                // can't match the messageIds.
-                var responses = _playbackMessages
-                                .GroupBy(m => new { MsgId = m.ParentHeader?.MessageId, MsgType = m.ParentHeader?.MessageType })
-                                .FirstOrDefault(g => g.Key.MsgType == message.Header.MessageType);
-
-                if (responses is not null)
+                if (_processRequests.TryDequeue(out var message))
                 {
-                    foreach (var m in responses)
-                    {
-                        var replyMessage = new Message(
-                            m.Header,
-                            GetContent(message, m),
-                            new Header(
-                                m.ParentHeader?.MessageType,
-                                message.Header.MessageId, // reply back with the sent message id
-                                m.ParentHeader.Version,
-                                m.ParentHeader.Session,
-                                m.ParentHeader.Username,
-                                m.ParentHeader.Date),
-                            m.Signature, m.MetaData, m.Identifiers, m.Buffers, m.Channel);
+                    // find appropriate message from playback to send back since we 
+                    // can't match the messageIds.
+                    var responses = _playbackMessages
+                                    .GroupBy(m => new { MsgId = m.ParentHeader?.MessageId, MsgType = m.ParentHeader?.MessageType })
+                                    .FirstOrDefault(g => g.Key.MsgType == message.Header.MessageType);
 
-                        _receivedMessages.OnNext(replyMessage);
-                        _playbackMessages.Remove(m);
+                    if (responses is not null)
+                    {
+                        operation.Info($"Got {responses.Count()} responses");
+
+                        foreach (var m in responses)
+                        {
+                            _playbackMessages.Remove(m);
+
+                            var replyMessage = new Message(
+                                m.Header,
+                                GetContent(message, m),
+                                new Header(
+                                    m.ParentHeader?.MessageType,
+                                    message.Header.MessageId, // reply back with the sent message id
+                                    m.ParentHeader.Version,
+                                    m.ParentHeader.Session,
+                                    m.ParentHeader.Username,
+                                    m.ParentHeader.Date),
+                                m.Signature, m.MetaData, m.Identifiers, m.Buffers, m.Channel);
+
+                            operation.Info($"{nameof(replyMessage)}: {replyMessage.Content.MessageType}. {nameof(_playbackMessages)}.Count is now {_playbackMessages.Count}");
+
+                            if (_receivedMessages.IsDisposed)
+                            {
+                                break;
+                            }
+
+                            await Task.Run(() => _receivedMessages.OnNext(replyMessage)).Timeout(5.Seconds());
+                        }
                     }
                 }
+                else
+                {
+                    await Task.Delay(50);
+                }
             }
-            else
+            catch (Exception exception)
             {
-                await Task.Delay(50);
+                operation.Fail(exception);
+                return;
             }
         }
+
+        operation.Succeed();
     }
 
     private Protocol.Message GetContent(Message message, Message m)
@@ -118,10 +140,18 @@ internal class MessagePlayback : IMessageTracker
 
     public void Dispose()
     {
-        _cts.Cancel();
-        _sentMessages.Dispose();
-        _receivedMessages.Dispose();
-        _requestProcessingLoopTask.Dispose();
+        using var operation = Log.OnEnterAndExit();
+
+        try
+        {
+            _cancellationTokenSource.Cancel();
+            _sentMessages.Dispose();
+            _receivedMessages.Dispose();
+        }
+        catch (Exception exception)
+        {
+            operation.Error(exception);
+        }
     }
 
     public IObservable<Message> SentMessages => _sentMessages;

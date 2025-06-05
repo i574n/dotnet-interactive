@@ -15,7 +15,6 @@
   "description.kernelTransportArgs": "Příkaz a argumenty použité ke spuštění relace poznámkového bloku",
   "description.kernelTransportWorkingDirectory": "Pracovní adresář, ve kterém je spuštěný proces přenosu jádra",
   "description.interactiveToolSource": "Zdroj NuGet, který se má použít při získávání nástroje platformy .NET Interactive",
-  "description.minimumDotNetSdkVersion": "Minimální požadovaná verze sady SDK platformy .NET",
   "description.requiredInteractiveToolVersion": "Požadovaná verze nástroje platformy .NET Interactive",
   "command.acquire": "Instalace platformy .NET Interactive",
   "command.openNotebook": "Polyglot Notebook: Otevření poznámkového bloku",
@@ -29,5 +28,6 @@
   "command.stopAllNotebookKernels": "Polyglot Notebook: Zastavení všech jader poznámkového bloku",
   "command.shareValueWith": "Sdílet hodnotu s…",
   "command.restartKernel": "Restartovat",
-  "command.openValueViewer": "Proměnné"
+  "command.openValueViewer": "Proměnné",
+  "command.connectSubkernel": "Vícejazyčný poznámkový blok: připojení k novému jádru buňky"
 }
