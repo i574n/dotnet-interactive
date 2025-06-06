@@ -184,15 +184,23 @@ public class InteractiveDocument : IEnumerable
         InteractiveDocument document, 
         KernelInfoCollection commonKernelInfos)
     {
+        KernelInfoCollection? kernelInfos = null;
         if (TryGetKernelInfosFromMetadata(document.Metadata, out var documentMetadataKernelInfos))
         {
             MergeKernelInfos(documentMetadataKernelInfos, commonKernelInfos);
-            document.Metadata["kernelInfo"] = documentMetadataKernelInfos;
+            kernelInfos = documentMetadataKernelInfos;
         }
         else
         {
-            document.Metadata["kernelInfo"] = commonKernelInfos;
+            kernelInfos = commonKernelInfos;
         }
+        var items = kernelInfos.Where(x => x.Name == "spiral").ToList();
+        if (items.Count == 0) {
+            items = new [] { new KernelInfo("spiral") }.ToList();
+        }
+        kernelInfos.Clear();
+        kernelInfos.AddRange(items);
+        document.Metadata["kernelInfo"] = kernelInfos;
     }
 
     internal static void MergeKernelInfos(
