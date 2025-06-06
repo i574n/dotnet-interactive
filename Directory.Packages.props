@@ -96,7 +96,7 @@
     <PackageVersion Include="System.Linq.Async" Version="6.0.1" />
     <PackageVersion Include="System.Memory" Version="4.6.0" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
-    <PackageVersion Include="System.Reactive" Version="6.0.0" />
+    <PackageVersion Include="System.Reactive" Version="6.0.1" />
     <PackageVersion Include="System.Reflection.Metadata" Version="9.0.5" />
     <PackageVersion Include="System.Runtime.Caching" Version="9.0.5" />
     <PackageVersion Include="System.Runtime.InteropServices" Version="4.3.0" />
@@ -108,6 +108,16 @@
     <PackageVersion Include="ThreadJob" Version="2.0.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="xunit" Version="2.7.0" />
+
+    <PackageVersion Include="Argu" Version="6.2.4" />
+    <PackageVersion Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
+    <PackageVersion Include="FSharp.Json" Version="0.4.1" />
+    <PackageVersion Include="System.Reactive.Linq" Version="6.0.1" />
+    <PackageVersion Include="System.Management" Version="9.0.4" />
+
+    <PackageVersion Include="FParsec" Version="2.0.0-beta2" />
+    <PackageVersion Include="FSharpx.Collections" Version="3.1.0" />
+    <PackageVersion Include="Hopac" Version="0.5.1" />
   </ItemGroup>
 
 
