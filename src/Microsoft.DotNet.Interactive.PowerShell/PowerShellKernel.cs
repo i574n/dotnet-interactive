@@ -402,15 +402,15 @@ public class PowerShellKernel :
                 {
                     var value = item is PSObject ps ? ps.Unwrap() : item;
 
-                    if (item.TypeNames[0] == "System.String")
-                    {
+                    // if (item.TypeNames[0] == "System.String")
+                    // {
                         var formatted = new FormattedValue("text/plain", value + Environment.NewLine);
                         context.Publish(new StandardOutputValueProduced(context.Command, new[] { formatted } ));
-                    }
-                    else
-                    {
-                        context.Display(value);
-                    }
+                    // }
+                    // else
+                    // {
+                    //     context.Display(value);
+                    // }
                 }
             }
 
