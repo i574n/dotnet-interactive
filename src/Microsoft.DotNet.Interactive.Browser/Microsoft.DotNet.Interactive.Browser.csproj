@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\polyglot-notebooks\lib\polyglot-notebooks.js" />
+    <!-- <EmbeddedResource Include="..\polyglot-notebooks\lib\polyglot-notebooks.js" /> -->
   </ItemGroup>
 
   <ItemGroup>
