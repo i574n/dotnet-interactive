@@ -123,9 +123,9 @@
     <Compile Include="..\Microsoft.DotNet.Interactive.Formatting\JsonConverter.cs" Link="ParserServer\JsonConverter.cs" />
     <Compile Include="..\Microsoft.DotNet.Interactive\Utility\DictionaryExtensions.cs" Link="%28Recipes%29\DictionaryExtensions.cs" />
 
-    <TypescriptOutputFiles Include="$(JsApiRoot)dist/dotnet-interactive.js" />
+    <!-- <TypescriptOutputFiles Include="$(JsApiRoot)dist/dotnet-interactive.js" />
 
-    <EmbeddedResource Include="@(TypescriptOutputFiles)" LogicalName="$(AssemblyName).resources.%(FileName)%(Extension)" />
+    <EmbeddedResource Include="@(TypescriptOutputFiles)" LogicalName="$(AssemblyName).resources.%(FileName)%(Extension)" /> -->
 
     <EmbeddedResource Include="resources\logo-456x456.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
