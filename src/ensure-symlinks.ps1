@@ -1,4 +1,6 @@
 function EnsureSymlink([string]$sourceDirectory, [string] $linkName, [string] $destinationLocation) {
+    New-Item $sourceDirectory -ItemType Directory -Force | Out-Null
+
     Push-Location $sourceDirectory
 
     try {
