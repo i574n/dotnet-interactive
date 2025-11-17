@@ -45,13 +45,7 @@
     "onNotebook:dotnet-interactive-window",
     "onNotebook:jupyter-notebook",
     "onNotebook:polyglot-notebook",
-    "onNotebook:polyglot-notebook-window",
-    "onCommand:dotnet-interactive.acquire",
-    "onCommand:polyglot-notebook.fileNew",
-    "onCommand:polyglot-notebook.newNotebook",
-    "onCommand:polyglot-notebook.openNotebook",
-    "onCommand:polyglot-notebook.saveAsNotebook",
-    "onView:polyglot-notebook-panel-values"
+    "onNotebook:polyglot-notebook-window"
   ],
   "main": "./out/deps/dotnet-interactive/src/polyglot-notebooks-vscode-insiders/src/vscode-common/extension.js",
   "extensionDependencies": [
